@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from '@remix-run/node'
 import { Form, redirect } from '@remix-run/react'
 import { Trash } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Textarea } from '~/components/ui/textarea'
@@ -60,17 +60,72 @@ export default function AppGeneralCommentCreate() {
 		authorThumbnail: '',
 	})
 	const [source, setSource] = useState<string>('manual')
+	const [typeInfo, setTypeInfo] = useState<GeneralCommentTypeTextInfo | null>(null)
 	const videoPreviewRef = useRef<HTMLDivElement>(null)
+	const formRef = useRef<HTMLFormElement>(null)
+	const titleInputRef = useRef<HTMLInputElement>(null)
+	const contentTextareaRef = useRef<HTMLTextAreaElement>(null)
+	const contentZhTextareaRef = useRef<HTMLTextAreaElement>(null)
+
+	// Initialize typeInfo for manual input
+	useEffect(() => {
+		if (source === 'manual' && !typeInfo) {
+			const initialTypeInfo = {
+				title: titleInputRef.current?.value || '',
+				content: contentTextareaRef.current?.value || '',
+				contentZh: contentZhTextareaRef.current?.value || '',
+				images: images,
+			}
+			setTypeInfo(initialTypeInfo)
+
+			// Create hidden input for typeInfo if it doesn't exist
+			if (formRef.current && !formRef.current.querySelector('input[name="typeInfo"]')) {
+				const typeInfoInput = document.createElement('input')
+				typeInfoInput.type = 'hidden'
+				typeInfoInput.name = 'typeInfo'
+				typeInfoInput.value = JSON.stringify(initialTypeInfo)
+				formRef.current.appendChild(typeInfoInput)
+			}
+		}
+	}, [source, typeInfo, images])
 
 	const handleAddImage = () => {
 		if (newImage) {
-			setImages([...images, newImage])
+			const updatedImages = [...images, newImage]
+			setImages(updatedImages)
 			setNewImage('')
+
+			// Update typeInfo with new images
+			if (typeInfo) {
+				const updatedTypeInfo = { ...typeInfo, images: updatedImages }
+				setTypeInfo(updatedTypeInfo)
+
+				// Update the hidden input
+				const form = formRef.current
+				const typeInfoInput = form?.querySelector('input[name="typeInfo"]') as HTMLInputElement
+				if (typeInfoInput) {
+					typeInfoInput.value = JSON.stringify(updatedTypeInfo)
+				}
+			}
 		}
 	}
 
 	const handleRemoveImage = (index: number) => {
-		setImages(images.filter((_, i) => i !== index))
+		const updatedImages = images.filter((_, i) => i !== index)
+		setImages(updatedImages)
+
+		// Update typeInfo with new images
+		if (typeInfo) {
+			const updatedTypeInfo = { ...typeInfo, images: updatedImages }
+			setTypeInfo(updatedTypeInfo)
+
+			// Update the hidden input
+			const form = formRef.current
+			const typeInfoInput = form?.querySelector('input[name="typeInfo"]') as HTMLInputElement
+			if (typeInfoInput) {
+				typeInfoInput.value = JSON.stringify(updatedTypeInfo)
+			}
+		}
 	}
 
 	const handleAddComment = () => {
@@ -98,6 +153,25 @@ export default function AppGeneralCommentCreate() {
 		setComments(comments.filter((_, i) => i !== index))
 	}
 
+	// Function to update typeInfo when content changes
+	const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+		if (typeInfo) {
+			const fieldName = e.target.name
+			const updatedTypeInfo = {
+				...typeInfo,
+				[fieldName]: e.target.value,
+			}
+			setTypeInfo(updatedTypeInfo)
+
+			// Update the hidden input
+			const form = formRef.current
+			const typeInfoInput = form?.querySelector('input[name="typeInfo"]') as HTMLInputElement
+			if (typeInfoInput) {
+				typeInfoInput.value = JSON.stringify(updatedTypeInfo)
+			}
+		}
+	}
+
 	const handleImportTwitterData = async () => {
 		try {
 			const fileInput = document.createElement('input')
@@ -116,8 +190,14 @@ export default function AppGeneralCommentCreate() {
 					const authorInput = document.querySelector('input[name="author"]') as HTMLInputElement
 					if (authorInput) authorInput.value = data.author || ''
 
+					const titleInput = document.querySelector('input[name="title"]') as HTMLInputElement
+					if (titleInput) titleInput.value = data.title || ''
+
 					const contentTextarea = document.querySelector('textarea[name="content"]') as HTMLTextAreaElement
 					if (contentTextarea) contentTextarea.value = data.content || ''
+
+					const contentZhTextarea = document.querySelector('textarea[name="contentZh"]') as HTMLTextAreaElement
+					if (contentZhTextarea) contentZhTextarea.value = data.contentZh || ''
 
 					// Set images and video from media
 					const newImages = data.media?.filter((m: any) => m.type === 'photo').map((m: any) => m.url) || []
@@ -141,21 +221,28 @@ export default function AppGeneralCommentCreate() {
 					// Set source
 					setSource('twitter')
 
-					// Set hidden input for typeInfo
-					const typeInfoInput = document.createElement('input')
-					typeInfoInput.type = 'hidden'
-					typeInfoInput.name = 'typeInfo'
-					typeInfoInput.value = JSON.stringify({
-						title: '',
+					// Create typeInfo object
+					const newTypeInfo = {
+						title: data.title || '',
 						content: data.content,
+						contentZh: data.contentZh || '',
 						images: newImages,
 						...(video && { video: { type: video.type, url: video.url } }),
 						bookmarkCount: Number(data.bookmark_count || 0),
 						replyCount: Number(data.reply_count || 0),
 						likes: Number(data.likes || 0),
 						retweets: Number(data.retweets || 0),
-					})
-					const form = document.querySelector('form')
+					}
+
+					// Update state
+					setTypeInfo(newTypeInfo)
+
+					// Set hidden input for typeInfo
+					const typeInfoInput = document.createElement('input')
+					typeInfoInput.type = 'hidden'
+					typeInfoInput.name = 'typeInfo'
+					typeInfoInput.value = JSON.stringify(newTypeInfo)
+					const form = formRef.current
 					const oldTypeInfo = form?.querySelector('input[name="typeInfo"]')
 					if (oldTypeInfo) {
 						form?.removeChild(oldTypeInfo)
@@ -198,7 +285,7 @@ export default function AppGeneralCommentCreate() {
 						Import Twitter Data
 					</Button>
 				</div>
-				<Form method="post" className="space-y-6">
+				<Form method="post" className="space-y-6" ref={formRef}>
 					{/* Basic Info Card */}
 					<div className="bg-white shadow rounded-lg p-6 space-y-4">
 						<h2 className="text-xl font-semibold text-gray-900 pb-4 border-b">Basic Information</h2>
@@ -215,21 +302,21 @@ export default function AppGeneralCommentCreate() {
 								<label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
 									Title
 								</label>
-								<Input id="title" type="text" name="title" />
+								<Input id="title" type="text" name="title" onChange={handleContentChange} ref={titleInputRef} />
 							</div>
 
 							<div>
 								<label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
 									Content
 								</label>
-								<Textarea id="content" name="content" rows={4} className="resize-none" />
+								<Textarea id="content" name="content" rows={4} className="resize-none" onChange={handleContentChange} ref={contentTextareaRef} />
 							</div>
 
 							<div>
 								<label htmlFor="contentZh" className="block text-sm font-medium text-gray-700 mb-1">
 									Content (Chinese)
 								</label>
-								<Textarea id="contentZh" name="contentZh" rows={4} className="resize-none" />
+								<Textarea id="contentZh" name="contentZh" rows={4} className="resize-none" onChange={handleContentChange} ref={contentZhTextareaRef} />
 							</div>
 
 							{/* Content Preview */}

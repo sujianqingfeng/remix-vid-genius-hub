@@ -106,10 +106,15 @@ export const Comments: React.FC<CommentsProps> = ({ comments, totalDurationInFra
 										)}
 										<div className="min-w-0 flex-1">
 											<h3 className="text-lg font-semibold text-gray-900 truncate">{comment.author}</h3>
-											<div className="flex items-center gap-2 mt-1">
-												<ThumbsUp className="w-4 h-4 text-blue-500" />
-												<span className="text-base text-gray-600 font-medium">{formatLikes(likes)}</span>
-											</div>
+
+											{comment.likes ? (
+												<div className="flex items-center gap-2 mt-1">
+													<ThumbsUp className="w-4 h-4 text-blue-500" />
+													<span className="text-base text-gray-600 font-medium">{formatLikes(likes)}</span>
+												</div>
+											) : (
+												''
+											)}
 										</div>
 									</div>
 

@@ -4,6 +4,7 @@ import AiModelSelect from '~/components/AiModelSelect'
 import LoadingButtonWithState from '~/components/LoadingButtonWithState'
 import { Badge } from '~/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Separator } from '~/components/ui/separator'
 import type { Transcript, WordWithTime } from '~/types'
 import { formatSubTitleTime } from '~/utils/format'
@@ -76,8 +77,16 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 					<div>
 						<label htmlFor="alignmentMethod" className="block text-sm font-medium mb-2">
 							Select Alignment Method
+							<Select name="alignmentMethod" defaultValue="ai">
+								<SelectTrigger>
+									<SelectValue placeholder="Select Alignment Method" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="ai">AI</SelectItem>
+									<SelectItem value="code">Code</SelectItem>
+								</SelectContent>
+							</Select>
 						</label>
-
 						<AiModelSelect name="alignmentMethod" defaultValue="deepseek" />
 					</div>
 

@@ -6,6 +6,7 @@ import { Player } from '@remotion/player'
 import { eq } from 'drizzle-orm'
 import { ArrowLeft, Edit3, Film, Languages, Loader2, Play, Settings, Trash, Upload, Wand2 } from 'lucide-react'
 import { useState } from 'react'
+import AiModelSelect from '~/components/AiModelSelect'
 import LoadingButtonWithState from '~/components/LoadingButtonWithState'
 import { VideoModeSelect } from '~/components/business/general-comment/VideoModeSelect'
 import { Button } from '~/components/ui/button'
@@ -406,16 +407,7 @@ export default function AppGeneralCommentRender() {
 							</div>
 							<div className="flex justify-end gap-2">
 								<translateFetcher.Form action="translate" method="post" className="flex gap-2">
-									<Select name="model" defaultValue="r1">
-										<SelectTrigger className="w-[120px]">
-											<SelectValue placeholder="Select model" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="r1">R1</SelectItem>
-											<SelectItem value="deepseek">DeepSeek</SelectItem>
-											<SelectItem value="openai">OpenAI</SelectItem>
-										</SelectContent>
-									</Select>
+									<AiModelSelect name="model" defaultValue="r1" />
 									<LoadingButtonWithState
 										variant="outline"
 										size="sm"
@@ -497,16 +489,7 @@ export default function AppGeneralCommentRender() {
 								<div className="flex items-center justify-between mb-4">
 									<h4 className="text-sm font-medium text-gray-900">Comments ({comment.comments.length})</h4>
 									<translateCommentsFetcher.Form action="translate-comments" method="post" className="flex gap-2">
-										<Select name="model" defaultValue="r1">
-											<SelectTrigger className="w-[120px]">
-												<SelectValue placeholder="Select model" />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="r1">R1</SelectItem>
-												<SelectItem value="deepseek">DeepSeek</SelectItem>
-												<SelectItem value="openai">OpenAI</SelectItem>
-											</SelectContent>
-										</Select>
+										<AiModelSelect name="model" defaultValue="r1" />
 										<LoadingButtonWithState
 											variant="outline"
 											size="sm"

@@ -6,5 +6,5 @@ alwaysApply: false
 - 组件库使用 shadcn/ui
 - 图标库使用 lucide-react
 - shadcn/ui的组件放置到 app/components/ui
-- 业务组件放置到 app/components/business 里面的各个业务文件夹下面，如果没有文件夹就创建
+- 业务组件放置到 app/components/business 里面的各个业务文件夹下面，如果没有文件夹就创建，如果当前的业务组件模块还需要细分，就在内部使用文件夹来细分
 - 公共组件放置到 app/components
