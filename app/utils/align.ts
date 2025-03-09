@@ -98,6 +98,7 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 
 	// 为每个句子找到在完整转录文本中的位置
 	let startSearchIndex = 0
+	const processedWordIndex = 0 // 跟踪已处理的单词索引
 
 	for (const sentence of sentences) {
 		if (!sentence.trim()) {
@@ -135,6 +136,7 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 		let endWordIndex = -1
 		let currentPosition = 0
 
+		// 重置当前位置计数器，从所有单词的开始计算
 		for (let i = 0; i < words.length; i++) {
 			const word = words[i]
 			const prevPosition = currentPosition
@@ -151,18 +153,30 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 				sentenceLength += word.word.length
 
 				// 检查是否已经覆盖了足够的文本
-				if (
-					sentenceLength >= normalizedSentence.length * 0.8 ||
-					(wordCount > 5 && normalizeText(fullTranscript.substring(sentenceStartIndex, currentPosition)).includes(normalizedSentence))
-				) {
-					endWordIndex = i
+				const currentText = normalizeText(fullTranscript.substring(sentenceStartIndex, currentPosition))
+
+				// 改进匹配逻辑，使用更精确的匹配方式
+				// 确保我们匹配到句子的末尾，特别是句号等标点符号
+				const sentenceEndsWithPunctuation = /[.!?]$/.test(sentence)
+				const foundEndOfSentence = sentenceEndsWithPunctuation
+					? currentText.includes(normalizedSentence) ||
+						(i + 1 < words.length && normalizeText(fullTranscript.substring(sentenceStartIndex, currentPosition + words[i + 1].word.length)).includes(normalizedSentence))
+					: currentText.includes(normalizedSentence)
+
+				if (foundEndOfSentence || (sentenceLength >= normalizedSentence.length * 0.95 && calculateSimilarity(currentText, normalizedSentence) > 0.85)) {
+					// 如果句子以标点结束，确保我们包含了这个标点
+					if (sentenceEndsWithPunctuation && i + 1 < words.length && words[i + 1].word.trim().match(/^[.!?]$/)) {
+						endWordIndex = i + 1
+					} else {
+						endWordIndex = i
+					}
 					sentenceEndIndex = currentPosition
 					break
 				}
 			}
 
 			// 如果已经处理了太多单词但还没找到匹配，设置一个上限
-			if (startWordIndex !== -1 && wordCount > 30) {
+			if (startWordIndex !== -1 && wordCount > 40) {
 				endWordIndex = i
 				sentenceEndIndex = currentPosition
 				break
@@ -173,27 +187,24 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 		if (startWordIndex !== -1 && endWordIndex !== -1) {
 			const sentenceWords = words.slice(startWordIndex, endWordIndex + 1)
 
-			// 创建句子对象
-			result.push({
-				words: sentenceWords,
-				text: sentence,
-				start: sentenceWords[0].start,
-				end: sentenceWords[sentenceWords.length - 1].end,
-			})
+			// 验证单词组合是否与句子文本匹配
+			const wordsText = sentenceWords.map((w) => w.word).join('')
+			const similarity = calculateSimilarity(normalizeText(wordsText), normalizedSentence)
 
-			// 更新下一次搜索的起始位置
-			startSearchIndex = sentenceEndIndex
+			// 只有当相似度足够高时才添加句子
+			if (similarity > 0.7) {
+				// 创建句子对象
+				result.push({
+					words: sentenceWords,
+					text: sentence,
+					start: sentenceWords[0].start,
+					end: sentenceWords[sentenceWords.length - 1].end,
+				})
+
+				// 更新下一次搜索的起始位置
+				startSearchIndex = sentenceEndIndex
+			}
 		}
-	}
-
-	// 处理剩余的单词
-	const lastWordIndex = result.length > 0 ? words.indexOf(result[result.length - 1].words[result[result.length - 1].words.length - 1]) + 1 : 0
-
-	if (lastWordIndex < words.length && result.length > 0) {
-		const remainingWords = words.slice(lastWordIndex)
-		const lastSentence = result[result.length - 1]
-		lastSentence.words = [...lastSentence.words, ...remainingWords]
-		lastSentence.end = remainingWords[remainingWords.length - 1].end
 	}
 
 	return result
@@ -233,6 +244,52 @@ function findBestMatch(needle: string, haystack: string): number {
 	}
 
 	return -1
+}
+
+// 计算两个字符串的相似度 (0-1)
+function calculateSimilarity(str1: string, str2: string): number {
+	if (!str1 || !str2) return 0
+
+	// 使用 Levenshtein 距离计算相似度
+	const longerStr = str1.length > str2.length ? str1 : str2
+	const shorterStr = str1.length > str2.length ? str2 : str1
+
+	if (longerStr.length === 0) return 1.0
+
+	// 计算编辑距离
+	const distance = levenshteinDistance(longerStr, shorterStr)
+
+	// 计算相似度
+	return (longerStr.length - distance) / longerStr.length
+}
+
+// 计算 Levenshtein 距离
+function levenshteinDistance(str1: string, str2: string): number {
+	const m = str1.length
+	const n = str2.length
+
+	// 创建距离矩阵
+	const dp: number[][] = Array(m + 1)
+		.fill(0)
+		.map(() => Array(n + 1).fill(0))
+
+	// 初始化第一行和第一列
+	for (let i = 0; i <= m; i++) dp[i][0] = i
+	for (let j = 0; j <= n; j++) dp[0][j] = j
+
+	// 填充矩阵
+	for (let i = 1; i <= m; i++) {
+		for (let j = 1; j <= n; j++) {
+			const cost = str1[i - 1] === str2[j - 1] ? 0 : 1
+			dp[i][j] = Math.min(
+				dp[i - 1][j] + 1, // 删除
+				dp[i][j - 1] + 1, // 插入
+				dp[i - 1][j - 1] + cost, // 替换
+			)
+		}
+	}
+
+	return dp[m][n]
 }
 
 export async function splitTextToSentencesWithAI(sentence: string) {

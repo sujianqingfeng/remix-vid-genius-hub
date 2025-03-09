@@ -33,7 +33,7 @@ export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 							<CardTitle className="text-base">Text</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="max-h-60 overflow-y-auto rounded-md bg-muted/20 p-3">
+							<div className="rounded-md bg-muted/20 p-3 whitespace-pre-wrap">
 								{subtitleTranslation.withTimeWords.reduce((acc, word) => {
 									return acc + word.word
 								}, '')}
@@ -50,7 +50,7 @@ export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="max-h-60 overflow-y-auto rounded-md bg-muted/20 p-3">
+							<div className="rounded-md bg-muted/20 p-3">
 								<div className="flex flex-wrap gap-2">
 									{subtitleTranslation.withTimeWords.map((word, index) => (
 										<div key={`word-${word.start}-${word.end}-${index}`} className="flex flex-col items-center mb-2 bg-card p-2 rounded-md shadow-sm">

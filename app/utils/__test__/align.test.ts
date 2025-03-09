@@ -1,8 +1,7 @@
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { splitTextToSentences } from '../align'
-import { alignWordsAndSentences } from '../transcript'
+import { alignWordsAndSentences, splitTextToSentences, splitTextToSentencesWithAI } from '../align'
 
 const getWords = async () => {
 	const currentDir = import.meta.dirname
@@ -23,7627 +22,7239 @@ const getWords = async () => {
 	return { words, text }
 }
 
-describe('align', () => {
-	it('splitTextToSentences', async () => {
-		const { text, words } = await getWords()
-		// console.log(text)
-		const sentences = splitTextToSentences({ text })
-		// expect(sentences).toMatchInlineSnapshot(`
-		// 	[
-		// 	  "You've probably heard all of this talk recently about the amount of aid that's been going to Ukraine",
-		// 	  "about whether the U.S",
-		// 	  "is going to be able to get billions of dollars back for that aid",
-		// 	  "What's really going on",
-		// 	  "Well I'm going to give you a little primer here a quick guide to all of this stuff",
-		// 	  "starting with how much money has been given in terms of aid",
-		// 	  "There's various different categories of aid",
-		// 	  "So military aid, that's Europe, 62 billion euros",
-		// 	  "The U.S",
-		// 	  "slightly further ahead, 64 billion euros of military aid from the U.S",
-		// 	  "But of course",
-		// 	  "that's not the only kind of thing and the only kind of support gone out to Ukraine. There's also other aid",
-		// 	  "There's humanitarian, there's financial aid",
-		// 	  "That brings up the European total to about 132 and it's higher than the U.S",
-		// 	  "Europe looks even further ahead",
-		// 	  "And if you include other things so the aid that's been promised but hasn't yet been delivered",
-		// 	  "And interestingly",
-		// 	  "if you look back through the kind of history of this conflict and just how much that aid has crept up",
-		// 	  "that's European aid and how much it's crept up since 2022",
-		// 	  "that's Europe. It's gone up relatively steadily",
-		// 	  "Look at the U.S",
-		// 	  "That's gone up",
-		// 	  "It was steady for a while. Then it was flatlining and then it went up again",
-		// 	  "What was going on there? It was that when Congress was blocking the new support",
-		// 	  "So you really see it there kind of visually in terms of the aid that was handed over or wasn't handed over to Ukraine. But kind of back to this",
-		// 	  "the big picture here okay so this includes a lot of different countries",
-		// 	  "So if we want to get a better sense of comparing different countries and how much they've given",
-		// 	  "you really need to divide it by every single individual nation",
-		// 	  "And we can do that here. Okay so this is individual countries not just Europe as a whole",
-		// 	  "individual countries",
-		// 	  "And it's clear the U.S",
-		// 	  "is comfortably the single biggest donor in cash terms",
-		// 	  "There you've got the U.K",
-		// 	  "down there and Germany among the biggest donors, but nowhere near where the U.S",
-		// 	  "is",
-		// 	  "But that's the key point, the cash terms",
-		// 	  "Okay, now do it as a percentage of the size of the economy",
-		// 	  "And it's a different picture. Okay, so same data, but as a percentage of GDP",
-		// 	  "And look, it's different",
-		// 	  "Okay, so the U.S",
-		// 	  "and the U.K",
-		// 	  "about 0.5% of their GDP, which is a better way of comparing it, really",
-		// 	  "Whereas it's countries like Estonia and Denmark the Baltics Finland Sweden places like that",
-		// 	  "which are giving much more of their national income to support Ukraine. And then places like Germany",
-		// 	  "even further down because it's got a bigger GDP",
-		// 	  "So quite striking there. Worth saying though to get a bit of a historical context here",
-		// 	  "let's compare how much aid has been given this time around with previous conflicts",
-		// 	  "So this is specifically U.S",
-		// 	  "aid to Ukraine this time around",
-		// 	  "That bar is there. It's 0.3 because it's just that's the annual figure rather than for the entire period",
-		// 	  "This is World War II",
-		// 	  "So World War II lend-lease far more. U.S",
-		// 	  "and Korea far more. Vietnam far more. Gulf War",
-		// 	  "far more. Ukraine is tiny in comparison to all of those things",
-		// 	  "Still, you know, sizable in cash terms, but compared with those, really quite small",
-		// 	  "And it's not just the U.S",
-		// 	  "So take the Gulf War and look at how much different countries paid for the Gulf War in terms of support",
-		// 	  "particularly for Kuwait",
-		// 	  "U.S., Germany, U.K., Japan, that's Gulf War, those bars",
-		// 	  "Now compare it to Ukraine. I'll bring up those bars",
-		// 	  "So it was smaller",
-		// 	  "So less money going to support Ukraine this time around than went for the Gulf War from basically all of those major economies",
-		// 	  "Quite striking, really, isn't it",
-		// 	  "However okay every country can contribute to more. Worth just saying okay",
-		// 	  "so when it comes to these bars there's been so much debate recently particularly from Donald Trump",
-		// 	  "a bit of a conversation with Emmanuel Macron about this",
-		// 	  "about how much of this European money was actually a loan",
-		// 	  "So it's going to come back",
-		// 	  "And that's what Donald Trump claimed",
-		// 	  "It's not entirely true. It's about kind of one third true because some of this money",
-		// 	  "particularly the financial aid was structured as a loan",
-		// 	  "So some of that money theoretically will come back to Europe after a long period",
-		// 	  "It's a pretty lax loan",
-		// 	  "But still, it is a loan, whereas that's a grant",
-		// 	  "And that is why Donald Trump is saying, look, we take that money",
-		// 	  "We need to get something back",
-		// 	  "Okay",
-		// 	  "And he says he's done a deal or at least he's in the process of doing a deal",
-		// 	  "certainly nothing's been signed yet with the Ukrainian president",
-		// 	  "where he thinks it could be $500 billion back in return for all of that aid given",
-		// 	  "You're probably wondering at this stage how on earth do you get $500 billion out of Ukraine? Well",
-		// 	  "the answer he says is rare earths",
-		// 	  "What are rare earths",
-		// 	  "They're a type of critical mineral, mostly used in electronics and military equipment as well",
-		// 	  "And there are some rare earths deposits in Ukraine. This is a kind of mineral map of the country",
-		// 	  "If we zoom into this area here it's in actually the occupied territory which is I think",
-		// 	  "part of the point here. And the Ukrainians were suggesting this",
-		// 	  "Old Soviet deposit here supposedly has lots of rare earths",
-		// 	  "The issue though and the reason of course obviously Donald Trump wants to do this",
-		// 	  "is when you look at total rare earth production around the world",
-		// 	  "and you need rare earths for like electric cars for the magnets in those cars",
-		// 	  "for all of those wind turbines it's magnets it's military equipment",
-		// 	  "China is massively dominant when it comes to mining rare earths",
-		// 	  "It's massively dominant when it comes to refining rare earths",
-		// 	  "which is really the hardest thing to do when it comes to rare earths",
-		// 	  "because it's really expensive. It's really energy intensive. Totally totally dominant",
-		// 	  "So you can see again",
-		// 	  "the geopolitical reasons why Donald Trump might want to think Ukraine might solve you know",
-		// 	  "kill two birds with one stone here. However look at the actual data",
-		// 	  "and it's not altogether obvious that there are many rare earths in Ukraine. Even if you take account of that mine",
-		// 	  "which like I say it's been around for a long time",
-		// 	  "entirely sure if you can get those rare earths out of it",
-		// 	  "It's still China way in the lead",
-		// 	  "Brazil, India, Russia, Vietnam, the US",
-		// 	  "Actually",
-		// 	  "Ukraine doesn't even show up in the most definitive measures of how much rare earths there are around the world",
-		// 	  "So some people have been wondering some people have wondered",
-		// 	  "was he not really talking about critical minerals in general",
-		// 	  "Maybe he was talking not about rare earths but about lithium",
-		// 	  "which technically speaking is a different part of the periodic table. Well if that's the case yes",
-		// 	  "there's a big lithium deposit in Ukraine potentially the biggest in Europe. But here's the thing",
-		// 	  "Europe doesn't have that much lithium",
-		// 	  "And compare this with other deposits around the world",
-		// 	  "I've put it over here. And that, by the way, is a best case scenario",
-		// 	  "And Ukraine is still a minnow",
-		// 	  "It's smaller than Canada",
-		// 	  "It's smaller than the US when it comes to lithium, even bearing that in mind",
-		// 	  "And so perhaps it just might be you know there are lots of minerals in Ukraine. But for the most part",
-		// 	  "it's the old fashioned stuff",
-		// 	  "It's coal it's iron ore there's lots of iron ore around",
-		// 	  "around there. And it's also things like titanium",
-		// 	  "And so probably the most plausible explanation is that the president maybe thinks he can make some money out of those things",
-		// 	  "But I would still question even bearing all of that in mind",
-		// 	  "it's going to be very difficult to get to that $500 billion total",
-		// 	]
-		// `)
+describe(
+	'align',
+	() => {
+		it('splitTextToSentences', async () => {
+			const { text, words } = await getWords()
+			// console.log(text)
+			// const sentences = await splitTextToSentencesWithAI(text)
+			// expect(sentences).toMatchInlineSnapshot(`
 
-		const result = alignWordsAndSentences(words, sentences)
-		expect(result).toMatchInlineSnapshot(`
-			[
-			  {
-			    "end": 4.12,
-			    "start": 0.36,
-			    "text": "You've probably heard all of this talk recently about the amount of aid that's been going to Ukraine",
-			    "words": [
-			      {
-			        "end": 0.18,
-			        "start": 0.36,
-			        "word": " You",
-			      },
-			      {
-			        "end": 0.58,
-			        "start": 0.18,
-			        "word": "'ve",
-			      },
-			      {
-			        "end": 0.86,
-			        "start": 0.58,
-			        "word": " probably",
-			      },
-			      {
-			        "end": 1.27,
-			        "start": 0.86,
-			        "word": " heard",
-			      },
-			      {
-			        "end": 1.35,
-			        "start": 1.27,
-			        "word": " all",
-			      },
-			      {
-			        "end": 1.47,
-			        "start": 1.35,
-			        "word": " of",
-			      },
-			      {
-			        "end": 1.72,
-			        "start": 1.47,
-			        "word": " this",
-			      },
-			      {
-			        "end": 1.97,
-			        "start": 1.72,
-			        "word": " talk",
-			      },
-			      {
-			        "end": 2.52,
-			        "start": 1.97,
-			        "word": " recently",
-			      },
-			      {
-			        "end": 2.85,
-			        "start": 2.52,
-			        "word": " about",
-			      },
-			      {
-			        "end": 3.04,
-			        "start": 2.85,
-			        "word": " the",
-			      },
-			      {
-			        "end": 3.52,
-			        "start": 3.04,
-			        "word": " amount",
-			      },
-			      {
-			        "end": 3.56,
-			        "start": 3.52,
-			        "word": " of",
-			      },
-			      {
-			        "end": 3.78,
-			        "start": 3.56,
-			        "word": " aid",
-			      },
-			      {
-			        "end": 3.92,
-			        "start": 3.78,
-			        "word": " that",
-			      },
-			      {
-			        "end": 4.02,
-			        "start": 3.92,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 4.12,
-			        "start": 4.02,
-			        "word": " been",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 5.7,
-			    "start": 4.91,
-			    "text": "about whether the U.S",
-			    "words": [
-			      {
-			        "end": 5.17,
-			        "start": 4.91,
-			        "word": " about",
-			      },
-			      {
-			        "end": 5.54,
-			        "start": 5.17,
-			        "word": " whether",
-			      },
-			      {
-			        "end": 5.7,
-			        "start": 5.54,
-			        "word": " the",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 8.25,
-			    "start": 6.12,
-			    "text": "is going to be able to get billions of dollars back for that aid",
-			    "words": [
-			      {
-			        "end": 6.22,
-			        "start": 6.12,
-			        "word": " is",
-			      },
-			      {
-			        "end": 6.48,
-			        "start": 6.22,
-			        "word": " going",
-			      },
-			      {
-			        "end": 6.62,
-			        "start": 6.48,
-			        "word": " to",
-			      },
-			      {
-			        "end": 6.78,
-			        "start": 6.62,
-			        "word": " be",
-			      },
-			      {
-			        "end": 6.89,
-			        "start": 6.78,
-			        "word": " able",
-			      },
-			      {
-			        "end": 6.99,
-			        "start": 6.89,
-			        "word": " to",
-			      },
-			      {
-			        "end": 7.15,
-			        "start": 6.99,
-			        "word": " get",
-			      },
-			      {
-			        "end": 7.57,
-			        "start": 7.15,
-			        "word": " billions",
-			      },
-			      {
-			        "end": 7.65,
-			        "start": 7.57,
-			        "word": " of",
-			      },
-			      {
-			        "end": 8.16,
-			        "start": 7.65,
-			        "word": " dollars",
-			      },
-			      {
-			        "end": 8.25,
-			        "start": 8.16,
-			        "word": " back",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 9.76,
-			    "start": 9.04,
-			    "text": "What's really going on",
-			    "words": [
-			      {
-			        "end": 9.08,
-			        "start": 9.04,
-			        "word": " What",
-			      },
-			      {
-			        "end": 9.49,
-			        "start": 9.08,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 9.55,
-			        "start": 9.49,
-			        "word": " really",
-			      },
-			      {
-			        "end": 9.76,
-			        "start": 9.55,
-			        "word": " going",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 12.62,
-			    "start": 9.97,
-			    "text": "Well I'm going to give you a little primer here a quick guide to all of this stuff",
-			    "words": [
-			      {
-			        "end": 10.14,
-			        "start": 9.97,
-			        "word": " Well",
-			      },
-			      {
-			        "end": 10.22,
-			        "start": 10.14,
-			        "word": ",",
-			      },
-			      {
-			        "end": 10.26,
-			        "start": 10.22,
-			        "word": " I",
-			      },
-			      {
-			        "end": 10.34,
-			        "start": 10.26,
-			        "word": "'m",
-			      },
-			      {
-			        "end": 10.54,
-			        "start": 10.34,
-			        "word": " going",
-			      },
-			      {
-			        "end": 10.63,
-			        "start": 10.54,
-			        "word": " to",
-			      },
-			      {
-			        "end": 10.8,
-			        "start": 10.63,
-			        "word": " give",
-			      },
-			      {
-			        "end": 10.93,
-			        "start": 10.8,
-			        "word": " you",
-			      },
-			      {
-			        "end": 10.97,
-			        "start": 10.93,
-			        "word": " a",
-			      },
-			      {
-			        "end": 11.31,
-			        "start": 10.97,
-			        "word": " little",
-			      },
-			      {
-			        "end": 11.49,
-			        "start": 11.31,
-			        "word": " primer",
-			      },
-			      {
-			        "end": 11.66,
-			        "start": 11.49,
-			        "word": " here",
-			      },
-			      {
-			        "end": 11.84,
-			        "start": 11.66,
-			        "word": ",",
-			      },
-			      {
-			        "end": 11.93,
-			        "start": 11.84,
-			        "word": " a",
-			      },
-			      {
-			        "end": 12.29,
-			        "start": 11.93,
-			        "word": " quick",
-			      },
-			      {
-			        "end": 12.5,
-			        "start": 12.29,
-			        "word": " guide",
-			      },
-			      {
-			        "end": 12.62,
-			        "start": 12.5,
-			        "word": " to",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 15.85,
-			    "start": 13.69,
-			    "text": "starting with how much money has been given in terms of aid",
-			    "words": [
-			      {
-			        "end": 13.95,
-			        "start": 13.69,
-			        "word": " starting",
-			      },
-			      {
-			        "end": 14.22,
-			        "start": 13.95,
-			        "word": " with",
-			      },
-			      {
-			        "end": 14.33,
-			        "start": 14.22,
-			        "word": " how",
-			      },
-			      {
-			        "end": 14.59,
-			        "start": 14.33,
-			        "word": " much",
-			      },
-			      {
-			        "end": 14.82,
-			        "start": 14.59,
-			        "word": " money",
-			      },
-			      {
-			        "end": 14.98,
-			        "start": 14.82,
-			        "word": " has",
-			      },
-			      {
-			        "end": 15.2,
-			        "start": 14.98,
-			        "word": " been",
-			      },
-			      {
-			        "end": 15.48,
-			        "start": 15.2,
-			        "word": " given",
-			      },
-			      {
-			        "end": 15.7,
-			        "start": 15.48,
-			        "word": " in",
-			      },
-			      {
-			        "end": 15.85,
-			        "start": 15.7,
-			        "word": " terms",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 18.29,
-			    "start": 16.28,
-			    "text": "There's various different categories of aid",
-			    "words": [
-			      {
-			        "end": 16.55,
-			        "start": 16.28,
-			        "word": " There",
-			      },
-			      {
-			        "end": 16.66,
-			        "start": 16.55,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 17.14,
-			        "start": 16.66,
-			        "word": " various",
-			      },
-			      {
-			        "end": 17.69,
-			        "start": 17.14,
-			        "word": " different",
-			      },
-			      {
-			        "end": 18.29,
-			        "start": 17.69,
-			        "word": " categories",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 21.29,
-			    "start": 18.79,
-			    "text": "So military aid, that's Europe, 62 billion euros",
-			    "words": [
-			      {
-			        "end": 18.89,
-			        "start": 18.79,
-			        "word": " So",
-			      },
-			      {
-			        "end": 19.55,
-			        "start": 18.89,
-			        "word": " military",
-			      },
-			      {
-			        "end": 19.59,
-			        "start": 19.55,
-			        "word": " aid",
-			      },
-			      {
-			        "end": 19.67,
-			        "start": 19.59,
-			        "word": ",",
-			      },
-			      {
-			        "end": 19.91,
-			        "start": 19.67,
-			        "word": " that",
-			      },
-			      {
-			        "end": 20.03,
-			        "start": 19.91,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 20.4,
-			        "start": 20.03,
-			        "word": " Europe",
-			      },
-			      {
-			        "end": 20.51,
-			        "start": 20.4,
-			        "word": ",",
-			      },
-			      {
-			        "end": 21.13,
-			        "start": 20.51,
-			        "word": " 62",
-			      },
-			      {
-			        "end": 21.29,
-			        "start": 21.13,
-			        "word": " billion",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 22.07,
-			    "start": 21.77,
-			    "text": "The U.S",
-			    "words": [
-			      {
-			        "end": 21.95,
-			        "start": 21.77,
-			        "word": " The",
-			      },
-			      {
-			        "end": 22.07,
-			        "start": 21.95,
-			        "word": " U",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 25.61,
-			    "start": 22.54,
-			    "text": "slightly further ahead, 64 billion euros of military aid from the U.S",
-			    "words": [
-			      {
-			        "end": 23.16,
-			        "start": 22.54,
-			        "word": " slightly",
-			      },
-			      {
-			        "end": 23.54,
-			        "start": 23.16,
-			        "word": " further",
-			      },
-			      {
-			        "end": 23.84,
-			        "start": 23.54,
-			        "word": " ahead",
-			      },
-			      {
-			        "end": 23.92,
-			        "start": 23.84,
-			        "word": ",",
-			      },
-			      {
-			        "end": 24.36,
-			        "start": 23.92,
-			        "word": " 64",
-			      },
-			      {
-			        "end": 24.63,
-			        "start": 24.36,
-			        "word": " billion",
-			      },
-			      {
-			        "end": 24.9,
-			        "start": 24.63,
-			        "word": " euros",
-			      },
-			      {
-			        "end": 25.01,
-			        "start": 24.9,
-			        "word": " of",
-			      },
-			      {
-			        "end": 25.53,
-			        "start": 25.01,
-			        "word": " military",
-			      },
-			      {
-			        "end": 25.61,
-			        "start": 25.53,
-			        "word": " aid",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 27.01,
-			    "start": 26.52,
-			    "text": "But of course",
-			    "words": [
-			      {
-			        "end": 26.57,
-			        "start": 26.52,
-			        "word": " But",
-			      },
-			      {
-			        "end": 26.68,
-			        "start": 26.57,
-			        "word": " of",
-			      },
-			      {
-			        "end": 27.01,
-			        "start": 26.68,
-			        "word": " course",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 31.38,
-			    "start": 27.12,
-			    "text": "that's not the only kind of thing and the only kind of support gone out to Ukraine. There's also other aid",
-			    "words": [
-			      {
-			        "end": 27.38,
-			        "start": 27.12,
-			        "word": " that",
-			      },
-			      {
-			        "end": 27.45,
-			        "start": 27.38,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 27.65,
-			        "start": 27.45,
-			        "word": " not",
-			      },
-			      {
-			        "end": 27.86,
-			        "start": 27.65,
-			        "word": " the",
-			      },
-			      {
-			        "end": 28.04,
-			        "start": 27.86,
-			        "word": " only",
-			      },
-			      {
-			        "end": 28.04,
-			        "start": 28.04,
-			        "word": "",
-			      },
-			      {
-			        "end": 28.27,
-			        "start": 28.04,
-			        "word": " kind",
-			      },
-			      {
-			        "end": 28.47,
-			        "start": 28.27,
-			        "word": " of",
-			      },
-			      {
-			        "end": 28.67,
-			        "start": 28.47,
-			        "word": " thing",
-			      },
-			      {
-			        "end": 28.97,
-			        "start": 28.67,
-			        "word": " and",
-			      },
-			      {
-			        "end": 29.01,
-			        "start": 28.97,
-			        "word": " the",
-			      },
-			      {
-			        "end": 29.24,
-			        "start": 29.01,
-			        "word": " only",
-			      },
-			      {
-			        "end": 29.47,
-			        "start": 29.24,
-			        "word": " kind",
-			      },
-			      {
-			        "end": 29.58,
-			        "start": 29.47,
-			        "word": " of",
-			      },
-			      {
-			        "end": 30.02,
-			        "start": 29.58,
-			        "word": " support",
-			      },
-			      {
-			        "end": 30.22,
-			        "start": 30.02,
-			        "word": " gone",
-			      },
-			      {
-			        "end": 30.39,
-			        "start": 30.22,
-			        "word": " out",
-			      },
-			      {
-			        "end": 30.5,
-			        "start": 30.39,
-			        "word": " to",
-			      },
-			      {
-			        "end": 30.93,
-			        "start": 30.5,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 31.18,
-			        "start": 30.93,
-			        "word": ".",
-			      },
-			      {
-			        "end": 31.38,
-			        "start": 31.18,
-			        "word": " There",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 33.71,
-			    "start": 32.1,
-			    "text": "There's humanitarian, there's financial aid",
-			    "words": [
-			      {
-			        "end": 32.37,
-			        "start": 32.1,
-			        "word": " There",
-			      },
-			      {
-			        "end": 32.4,
-			        "start": 32.37,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 32.93,
-			        "start": 32.4,
-			        "word": " humanitarian",
-			      },
-			      {
-			        "end": 33.01,
-			        "start": 32.93,
-			        "word": ",",
-			      },
-			      {
-			        "end": 33.23,
-			        "start": 33.01,
-			        "word": " there",
-			      },
-			      {
-			        "end": 33.31,
-			        "start": 33.23,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 33.71,
-			        "start": 33.31,
-			        "word": " financial",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 37.32,
-			    "start": 34.12,
-			    "text": "That brings up the European total to about 132 and it's higher than the U.S",
-			    "words": [
-			      {
-			        "end": 34.14,
-			        "start": 34.12,
-			        "word": " That",
-			      },
-			      {
-			        "end": 34.4,
-			        "start": 34.14,
-			        "word": " brings",
-			      },
-			      {
-			        "end": 34.5,
-			        "start": 34.4,
-			        "word": " up",
-			      },
-			      {
-			        "end": 34.62,
-			        "start": 34.5,
-			        "word": " the",
-			      },
-			      {
-			        "end": 34.96,
-			        "start": 34.62,
-			        "word": " European",
-			      },
-			      {
-			        "end": 35.18,
-			        "start": 34.96,
-			        "word": " total",
-			      },
-			      {
-			        "end": 35.26,
-			        "start": 35.18,
-			        "word": " to",
-			      },
-			      {
-			        "end": 35.6,
-			        "start": 35.26,
-			        "word": " about",
-			      },
-			      {
-			        "end": 36.12,
-			        "start": 35.6,
-			        "word": " 13",
-			      },
-			      {
-			        "end": 36.4,
-			        "start": 36.12,
-			        "word": "2",
-			      },
-			      {
-			        "end": 36.68,
-			        "start": 36.4,
-			        "word": " and",
-			      },
-			      {
-			        "end": 36.73,
-			        "start": 36.68,
-			        "word": " it",
-			      },
-			      {
-			        "end": 36.79,
-			        "start": 36.73,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 37.32,
-			        "start": 36.79,
-			        "word": " higher",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 41.68,
-			    "start": 37.98,
-			    "text": "And if you include other things so the aid that's been promised but hasn't yet been delivered",
-			    "words": [
-			      {
-			        "end": 38.15,
-			        "start": 37.98,
-			        "word": " And",
-			      },
-			      {
-			        "end": 38.26,
-			        "start": 38.15,
-			        "word": " if",
-			      },
-			      {
-			        "end": 38.49,
-			        "start": 38.26,
-			        "word": " you",
-			      },
-			      {
-			        "end": 38.84,
-			        "start": 38.49,
-			        "word": " include",
-			      },
-			      {
-			        "end": 39.13,
-			        "start": 38.84,
-			        "word": " other",
-			      },
-			      {
-			        "end": 39.48,
-			        "start": 39.13,
-			        "word": " things",
-			      },
-			      {
-			        "end": 39.59,
-			        "start": 39.48,
-			        "word": ",",
-			      },
-			      {
-			        "end": 39.72,
-			        "start": 39.59,
-			        "word": " so",
-			      },
-			      {
-			        "end": 39.87,
-			        "start": 39.72,
-			        "word": " the",
-			      },
-			      {
-			        "end": 40.06,
-			        "start": 39.87,
-			        "word": " aid",
-			      },
-			      {
-			        "end": 40.27,
-			        "start": 40.06,
-			        "word": " that",
-			      },
-			      {
-			        "end": 40.56,
-			        "start": 40.27,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 40.78,
-			        "start": 40.56,
-			        "word": " been",
-			      },
-			      {
-			        "end": 40.96,
-			        "start": 40.78,
-			        "word": " promised",
-			      },
-			      {
-			        "end": 41.16,
-			        "start": 40.96,
-			        "word": " but",
-			      },
-			      {
-			        "end": 41.43,
-			        "start": 41.16,
-			        "word": " hasn",
-			      },
-			      {
-			        "end": 41.68,
-			        "start": 41.43,
-			        "word": "'t",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 44.25,
-			    "start": 42.77,
-			    "text": "Europe looks even further ahead",
-			    "words": [
-			      {
-			        "end": 43.42,
-			        "start": 42.77,
-			        "word": " Europe",
-			      },
-			      {
-			        "end": 43.51,
-			        "start": 43.42,
-			        "word": " looks",
-			      },
-			      {
-			        "end": 43.77,
-			        "start": 43.51,
-			        "word": " even",
-			      },
-			      {
-			        "end": 44.25,
-			        "start": 43.77,
-			        "word": " further",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 45.82,
-			    "start": 44.83,
-			    "text": "And interestingly",
-			    "words": [
-			      {
-			        "end": 45.43,
-			        "start": 44.83,
-			        "word": " And",
-			      },
-			      {
-			        "end": 45.82,
-			        "start": 45.43,
-			        "word": " interestingly",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 50.61,
-			    "start": 45.96,
-			    "text": "if you look back through the kind of history of this conflict and just how much that aid has crept up",
-			    "words": [
-			      {
-			        "end": 46.12,
-			        "start": 45.96,
-			        "word": " if",
-			      },
-			      {
-			        "end": 46.38,
-			        "start": 46.12,
-			        "word": " you",
-			      },
-			      {
-			        "end": 46.74,
-			        "start": 46.38,
-			        "word": " look",
-			      },
-			      {
-			        "end": 46.92,
-			        "start": 46.74,
-			        "word": " back",
-			      },
-			      {
-			        "end": 47.39,
-			        "start": 46.92,
-			        "word": " through",
-			      },
-			      {
-			        "end": 47.63,
-			        "start": 47.39,
-			        "word": " the",
-			      },
-			      {
-			        "end": 47.86,
-			        "start": 47.63,
-			        "word": " kind",
-			      },
-			      {
-			        "end": 47.99,
-			        "start": 47.86,
-			        "word": " of",
-			      },
-			      {
-			        "end": 48.45,
-			        "start": 47.99,
-			        "word": " history",
-			      },
-			      {
-			        "end": 48.59,
-			        "start": 48.45,
-			        "word": " of",
-			      },
-			      {
-			        "end": 48.86,
-			        "start": 48.59,
-			        "word": " this",
-			      },
-			      {
-			        "end": 49.41,
-			        "start": 48.86,
-			        "word": " conflict",
-			      },
-			      {
-			        "end": 49.6,
-			        "start": 49.41,
-			        "word": " and",
-			      },
-			      {
-			        "end": 49.87,
-			        "start": 49.6,
-			        "word": " just",
-			      },
-			      {
-			        "end": 50.07,
-			        "start": 49.87,
-			        "word": " how",
-			      },
-			      {
-			        "end": 50.34,
-			        "start": 50.07,
-			        "word": " much",
-			      },
-			      {
-			        "end": 50.61,
-			        "start": 50.34,
-			        "word": " that",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 53.32,
-			    "start": 51.58,
-			    "text": "that's European aid and how much it's crept up since 2022",
-			    "words": [
-			      {
-			        "end": 51.83,
-			        "start": 51.58,
-			        "word": " that",
-			      },
-			      {
-			        "end": 51.85,
-			        "start": 51.83,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 52.22,
-			        "start": 51.85,
-			        "word": " European",
-			      },
-			      {
-			        "end": 52.37,
-			        "start": 52.22,
-			        "word": " aid",
-			      },
-			      {
-			        "end": 52.5,
-			        "start": 52.37,
-			        "word": " and",
-			      },
-			      {
-			        "end": 52.64,
-			        "start": 52.5,
-			        "word": " how",
-			      },
-			      {
-			        "end": 52.88,
-			        "start": 52.64,
-			        "word": " much",
-			      },
-			      {
-			        "end": 52.91,
-			        "start": 52.88,
-			        "word": " it",
-			      },
-			      {
-			        "end": 53.01,
-			        "start": 52.91,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 53.16,
-			        "start": 53.01,
-			        "word": " cre",
-			      },
-			      {
-			        "end": 53.22,
-			        "start": 53.16,
-			        "word": "pt",
-			      },
-			      {
-			        "end": 53.32,
-			        "start": 53.22,
-			        "word": " up",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 56,
-			    "start": 54.19,
-			    "text": "that's Europe. It's gone up relatively steadily",
-			    "words": [
-			      {
-			        "end": 54.19,
-			        "start": 54.19,
-			        "word": " that",
-			      },
-			      {
-			        "end": 54.58,
-			        "start": 54.19,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 54.8,
-			        "start": 54.58,
-			        "word": " Europe",
-			      },
-			      {
-			        "end": 54.86,
-			        "start": 54.8,
-			        "word": ".",
-			      },
-			      {
-			        "end": 54.95,
-			        "start": 54.86,
-			        "word": " It",
-			      },
-			      {
-			        "end": 55.09,
-			        "start": 54.95,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 55.32,
-			        "start": 55.09,
-			        "word": " gone",
-			      },
-			      {
-			        "end": 55.46,
-			        "start": 55.32,
-			        "word": " up",
-			      },
-			      {
-			        "end": 56,
-			        "start": 55.46,
-			        "word": " relatively",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 57.22,
-			    "start": 56.68,
-			    "text": "Look at the U.S",
-			    "words": [
-			      {
-			        "end": 56.81,
-			        "start": 56.68,
-			        "word": " Look",
-			      },
-			      {
-			        "end": 57.18,
-			        "start": 56.81,
-			        "word": " at",
-			      },
-			      {
-			        "end": 57.22,
-			        "start": 57.18,
-			        "word": " the",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 58.33,
-			    "start": 57.66,
-			    "text": "That's gone up",
-			    "words": [
-			      {
-			        "end": 57.89,
-			        "start": 57.66,
-			        "word": " That",
-			      },
-			      {
-			        "end": 58.05,
-			        "start": 57.89,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 58.33,
-			        "start": 58.05,
-			        "word": " gone",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 61.57,
-			    "start": 58.6,
-			    "text": "It was steady for a while. Then it was flatlining and then it went up again",
-			    "words": [
-			      {
-			        "end": 58.7,
-			        "start": 58.6,
-			        "word": " It",
-			      },
-			      {
-			        "end": 58.93,
-			        "start": 58.7,
-			        "word": " was",
-			      },
-			      {
-			        "end": 59.26,
-			        "start": 58.93,
-			        "word": " steady",
-			      },
-			      {
-			        "end": 59.34,
-			        "start": 59.26,
-			        "word": " for",
-			      },
-			      {
-			        "end": 59.39,
-			        "start": 59.34,
-			        "word": " a",
-			      },
-			      {
-			        "end": 59.66,
-			        "start": 59.39,
-			        "word": " while",
-			      },
-			      {
-			        "end": 59.86,
-			        "start": 59.66,
-			        "word": ".",
-			      },
-			      {
-			        "end": 60.25,
-			        "start": 59.86,
-			        "word": " Then",
-			      },
-			      {
-			        "end": 60.28,
-			        "start": 60.25,
-			        "word": " it",
-			      },
-			      {
-			        "end": 60.44,
-			        "start": 60.28,
-			        "word": " was",
-			      },
-			      {
-			        "end": 60.69,
-			        "start": 60.44,
-			        "word": " flat",
-			      },
-			      {
-			        "end": 61.12,
-			        "start": 60.69,
-			        "word": "lining",
-			      },
-			      {
-			        "end": 61.27,
-			        "start": 61.12,
-			        "word": " and",
-			      },
-			      {
-			        "end": 61.47,
-			        "start": 61.27,
-			        "word": " then",
-			      },
-			      {
-			        "end": 61.57,
-			        "start": 61.47,
-			        "word": " it",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 65.94,
-			    "start": 62.3,
-			    "text": "What was going on there? It was that when Congress was blocking the new support",
-			    "words": [
-			      {
-			        "end": 62.48,
-			        "start": 62.3,
-			        "word": " What",
-			      },
-			      {
-			        "end": 62.86,
-			        "start": 62.48,
-			        "word": " was",
-			      },
-			      {
-			        "end": 63.19,
-			        "start": 62.86,
-			        "word": " going",
-			      },
-			      {
-			        "end": 63.22,
-			        "start": 63.19,
-			        "word": " on",
-			      },
-			      {
-			        "end": 63.55,
-			        "start": 63.22,
-			        "word": " there",
-			      },
-			      {
-			        "end": 63.75,
-			        "start": 63.55,
-			        "word": "?",
-			      },
-			      {
-			        "end": 63.88,
-			        "start": 63.75,
-			        "word": " It",
-			      },
-			      {
-			        "end": 64.08,
-			        "start": 63.88,
-			        "word": " was",
-			      },
-			      {
-			        "end": 64.34,
-			        "start": 64.08,
-			        "word": " that",
-			      },
-			      {
-			        "end": 64.6,
-			        "start": 64.34,
-			        "word": " when",
-			      },
-			      {
-			        "end": 65.23,
-			        "start": 64.6,
-			        "word": " Congress",
-			      },
-			      {
-			        "end": 65.33,
-			        "start": 65.23,
-			        "word": " was",
-			      },
-			      {
-			        "end": 65.94,
-			        "start": 65.33,
-			        "word": " blocking",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 73.3,
-			    "start": 67.01,
-			    "text": "So you really see it there kind of visually in terms of the aid that was handed over or wasn't handed over to Ukraine. But kind of back to this",
-			    "words": [
-			      {
-			        "end": 67.14,
-			        "start": 67.01,
-			        "word": " So",
-			      },
-			      {
-			        "end": 67.36,
-			        "start": 67.14,
-			        "word": " you",
-			      },
-			      {
-			        "end": 67.74,
-			        "start": 67.36,
-			        "word": " really",
-			      },
-			      {
-			        "end": 67.94,
-			        "start": 67.74,
-			        "word": " see",
-			      },
-			      {
-			        "end": 68.07,
-			        "start": 67.94,
-			        "word": " it",
-			      },
-			      {
-			        "end": 68.4,
-			        "start": 68.07,
-			        "word": " there",
-			      },
-			      {
-			        "end": 68.68,
-			        "start": 68.4,
-			        "word": " kind",
-			      },
-			      {
-			        "end": 68.93,
-			        "start": 68.68,
-			        "word": " of",
-			      },
-			      {
-			        "end": 69.33,
-			        "start": 68.93,
-			        "word": " visually",
-			      },
-			      {
-			        "end": 69.45,
-			        "start": 69.33,
-			        "word": " in",
-			      },
-			      {
-			        "end": 69.78,
-			        "start": 69.45,
-			        "word": " terms",
-			      },
-			      {
-			        "end": 70.11,
-			        "start": 69.78,
-			        "word": " of",
-			      },
-			      {
-			        "end": 70.15,
-			        "start": 70.11,
-			        "word": " the",
-			      },
-			      {
-			        "end": 70.31,
-			        "start": 70.15,
-			        "word": " aid",
-			      },
-			      {
-			        "end": 70.61,
-			        "start": 70.31,
-			        "word": " that",
-			      },
-			      {
-			        "end": 70.86,
-			        "start": 70.61,
-			        "word": " was",
-			      },
-			      {
-			        "end": 71.25,
-			        "start": 70.86,
-			        "word": " handed",
-			      },
-			      {
-			        "end": 71.51,
-			        "start": 71.25,
-			        "word": " over",
-			      },
-			      {
-			        "end": 71.64,
-			        "start": 71.51,
-			        "word": " or",
-			      },
-			      {
-			        "end": 71.9,
-			        "start": 71.64,
-			        "word": " wasn",
-			      },
-			      {
-			        "end": 72.03,
-			        "start": 71.9,
-			        "word": "'t",
-			      },
-			      {
-			        "end": 72.67,
-			        "start": 72.03,
-			        "word": " handed",
-			      },
-			      {
-			        "end": 72.68,
-			        "start": 72.67,
-			        "word": " over",
-			      },
-			      {
-			        "end": 72.81,
-			        "start": 72.68,
-			        "word": " to",
-			      },
-			      {
-			        "end": 73.3,
-			        "start": 72.81,
-			        "word": " Ukraine",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 77.86,
-			    "start": 75.08,
-			    "text": "the big picture here okay so this includes a lot of different countries",
-			    "words": [
-			      {
-			        "end": 75.12,
-			        "start": 75.08,
-			        "word": " the",
-			      },
-			      {
-			        "end": 75.32,
-			        "start": 75.12,
-			        "word": " big",
-			      },
-			      {
-			        "end": 75.84,
-			        "start": 75.32,
-			        "word": " picture",
-			      },
-			      {
-			        "end": 76.02,
-			        "start": 75.84,
-			        "word": " here",
-			      },
-			      {
-			        "end": 76.12,
-			        "start": 76.02,
-			        "word": ",",
-			      },
-			      {
-			        "end": 76.32,
-			        "start": 76.12,
-			        "word": " okay",
-			      },
-			      {
-			        "end": 76.45,
-			        "start": 76.32,
-			        "word": ",",
-			      },
-			      {
-			        "end": 76.52,
-			        "start": 76.45,
-			        "word": " so",
-			      },
-			      {
-			        "end": 76.71,
-			        "start": 76.52,
-			        "word": " this",
-			      },
-			      {
-			        "end": 77.17,
-			        "start": 76.71,
-			        "word": " includes",
-			      },
-			      {
-			        "end": 77.19,
-			        "start": 77.17,
-			        "word": " a",
-			      },
-			      {
-			        "end": 77.33,
-			        "start": 77.19,
-			        "word": " lot",
-			      },
-			      {
-			        "end": 77.42,
-			        "start": 77.33,
-			        "word": " of",
-			      },
-			      {
-			        "end": 77.86,
-			        "start": 77.42,
-			        "word": " different",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 81.8,
-			    "start": 78.47,
-			    "text": "So if we want to get a better sense of comparing different countries and how much they've given",
-			    "words": [
-			      {
-			        "end": 78.57,
-			        "start": 78.47,
-			        "word": " So",
-			      },
-			      {
-			        "end": 78.68,
-			        "start": 78.57,
-			        "word": " if",
-			      },
-			      {
-			        "end": 78.78,
-			        "start": 78.68,
-			        "word": " we",
-			      },
-			      {
-			        "end": 78.97,
-			        "start": 78.78,
-			        "word": " want",
-			      },
-			      {
-			        "end": 79.07,
-			        "start": 78.97,
-			        "word": " to",
-			      },
-			      {
-			        "end": 79.22,
-			        "start": 79.07,
-			        "word": " get",
-			      },
-			      {
-			        "end": 79.27,
-			        "start": 79.22,
-			        "word": " a",
-			      },
-			      {
-			        "end": 79.57,
-			        "start": 79.27,
-			        "word": " better",
-			      },
-			      {
-			        "end": 79.86,
-			        "start": 79.57,
-			        "word": " sense",
-			      },
-			      {
-			        "end": 80,
-			        "start": 79.86,
-			        "word": " of",
-			      },
-			      {
-			        "end": 80.44,
-			        "start": 80,
-			        "word": " comparing",
-			      },
-			      {
-			        "end": 81.01,
-			        "start": 80.44,
-			        "word": " different",
-			      },
-			      {
-			        "end": 81.48,
-			        "start": 81.01,
-			        "word": " countries",
-			      },
-			      {
-			        "end": 81.71,
-			        "start": 81.48,
-			        "word": " and",
-			      },
-			      {
-			        "end": 81.8,
-			        "start": 81.71,
-			        "word": " how",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 85.34,
-			    "start": 82.86,
-			    "text": "you really need to divide it by every single individual nation",
-			    "words": [
-			      {
-			        "end": 82.97,
-			        "start": 82.86,
-			        "word": " you",
-			      },
-			      {
-			        "end": 83.31,
-			        "start": 82.97,
-			        "word": " really",
-			      },
-			      {
-			        "end": 83.56,
-			        "start": 83.31,
-			        "word": " need",
-			      },
-			      {
-			        "end": 83.84,
-			        "start": 83.56,
-			        "word": " to",
-			      },
-			      {
-			        "end": 83.98,
-			        "start": 83.84,
-			        "word": " divide",
-			      },
-			      {
-			        "end": 84.13,
-			        "start": 83.98,
-			        "word": " it",
-			      },
-			      {
-			        "end": 84.2,
-			        "start": 84.13,
-			        "word": " by",
-			      },
-			      {
-			        "end": 84.48,
-			        "start": 84.2,
-			        "word": " every",
-			      },
-			      {
-			        "end": 84.92,
-			        "start": 84.48,
-			        "word": " single",
-			      },
-			      {
-			        "end": 84.92,
-			        "start": 84.92,
-			        "word": "",
-			      },
-			      {
-			        "end": 85.34,
-			        "start": 84.92,
-			        "word": " individual",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 89.46,
-			    "start": 85.71,
-			    "text": "And we can do that here. Okay so this is individual countries not just Europe as a whole",
-			    "words": [
-			      {
-			        "end": 85.83,
-			        "start": 85.71,
-			        "word": " And",
-			      },
-			      {
-			        "end": 85.94,
-			        "start": 85.83,
-			        "word": " we",
-			      },
-			      {
-			        "end": 86.07,
-			        "start": 85.94,
-			        "word": " can",
-			      },
-			      {
-			        "end": 86.11,
-			        "start": 86.07,
-			        "word": " do",
-			      },
-			      {
-			        "end": 86.28,
-			        "start": 86.11,
-			        "word": " that",
-			      },
-			      {
-			        "end": 86.44,
-			        "start": 86.28,
-			        "word": " here",
-			      },
-			      {
-			        "end": 86.79,
-			        "start": 86.44,
-			        "word": ".",
-			      },
-			      {
-			        "end": 87,
-			        "start": 86.79,
-			        "word": " Okay",
-			      },
-			      {
-			        "end": 87.04,
-			        "start": 87,
-			        "word": ",",
-			      },
-			      {
-			        "end": 87.17,
-			        "start": 87.04,
-			        "word": " so",
-			      },
-			      {
-			        "end": 87.44,
-			        "start": 87.17,
-			        "word": " this",
-			      },
-			      {
-			        "end": 87.6,
-			        "start": 87.44,
-			        "word": " is",
-			      },
-			      {
-			        "end": 88.25,
-			        "start": 87.6,
-			        "word": " individual",
-			      },
-			      {
-			        "end": 88.86,
-			        "start": 88.25,
-			        "word": " countries",
-			      },
-			      {
-			        "end": 89.04,
-			        "start": 88.86,
-			        "word": ",",
-			      },
-			      {
-			        "end": 89.22,
-			        "start": 89.04,
-			        "word": " not",
-			      },
-			      {
-			        "end": 89.46,
-			        "start": 89.22,
-			        "word": " just",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 91.08,
-			    "start": 90.29,
-			    "text": "individual countries",
-			    "words": [
-			      {
-			        "end": 90.77,
-			        "start": 90.29,
-			        "word": " individual",
-			      },
-			      {
-			        "end": 91.08,
-			        "start": 90.77,
-			        "word": " countries",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 92.14,
-			    "start": 91.54,
-			    "text": "And it's clear the U.S",
-			    "words": [
-			      {
-			        "end": 91.6,
-			        "start": 91.54,
-			        "word": " And",
-			      },
-			      {
-			        "end": 91.64,
-			        "start": 91.6,
-			        "word": " it",
-			      },
-			      {
-			        "end": 91.74,
-			        "start": 91.64,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 91.99,
-			        "start": 91.74,
-			        "word": " clear",
-			      },
-			      {
-			        "end": 92.14,
-			        "start": 91.99,
-			        "word": " the",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 94.67,
-			    "start": 92.54,
-			    "text": "is comfortably the single biggest donor in cash terms",
-			    "words": [
-			      {
-			        "end": 92.76,
-			        "start": 92.54,
-			        "word": " is",
-			      },
-			      {
-			        "end": 93.2,
-			        "start": 92.76,
-			        "word": " comfortably",
-			      },
-			      {
-			        "end": 93.35,
-			        "start": 93.2,
-			        "word": " the",
-			      },
-			      {
-			        "end": 93.76,
-			        "start": 93.35,
-			        "word": " single",
-			      },
-			      {
-			        "end": 94.21,
-			        "start": 93.76,
-			        "word": " biggest",
-			      },
-			      {
-			        "end": 94.54,
-			        "start": 94.21,
-			        "word": " donor",
-			      },
-			      {
-			        "end": 94.67,
-			        "start": 94.54,
-			        "word": " in",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 96.63,
-			    "start": 95.63,
-			    "text": "There you've got the U.K",
-			    "words": [
-			      {
-			        "end": 95.8,
-			        "start": 95.63,
-			        "word": " There",
-			      },
-			      {
-			        "end": 96,
-			        "start": 95.8,
-			        "word": " you",
-			      },
-			      {
-			        "end": 96.22,
-			        "start": 96,
-			        "word": "'ve",
-			      },
-			      {
-			        "end": 96.4,
-			        "start": 96.22,
-			        "word": " got",
-			      },
-			      {
-			        "end": 96.63,
-			        "start": 96.4,
-			        "word": " the",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 100.54,
-			    "start": 97.16,
-			    "text": "down there and Germany among the biggest donors, but nowhere near where the U.S",
-			    "words": [
-			      {
-			        "end": 97.38,
-			        "start": 97.16,
-			        "word": " down",
-			      },
-			      {
-			        "end": 97.71,
-			        "start": 97.38,
-			        "word": " there",
-			      },
-			      {
-			        "end": 97.91,
-			        "start": 97.71,
-			        "word": " and",
-			      },
-			      {
-			        "end": 98.37,
-			        "start": 97.91,
-			        "word": " Germany",
-			      },
-			      {
-			        "end": 98.78,
-			        "start": 98.37,
-			        "word": " among",
-			      },
-			      {
-			        "end": 99.32,
-			        "start": 98.78,
-			        "word": " the",
-			      },
-			      {
-			        "end": 99.56,
-			        "start": 99.32,
-			        "word": " biggest",
-			      },
-			      {
-			        "end": 99.82,
-			        "start": 99.56,
-			        "word": " donors",
-			      },
-			      {
-			        "end": 99.91,
-			        "start": 99.82,
-			        "word": ",",
-			      },
-			      {
-			        "end": 100.05,
-			        "start": 99.91,
-			        "word": " but",
-			      },
-			      {
-			        "end": 100.36,
-			        "start": 100.05,
-			        "word": " nowhere",
-			      },
-			      {
-			        "end": 100.54,
-			        "start": 100.36,
-			        "word": " near",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 101.32,
-			    "start": 101.23,
-			    "text": "is",
-			    "words": [
-			      {
-			        "end": 101.32,
-			        "start": 101.23,
-			        "word": " is",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 103.29,
-			    "start": 101.7,
-			    "text": "But that's the key point, the cash terms",
-			    "words": [
-			      {
-			        "end": 101.7,
-			        "start": 101.7,
-			        "word": " But",
-			      },
-			      {
-			        "end": 101.95,
-			        "start": 101.7,
-			        "word": " that",
-			      },
-			      {
-			        "end": 102.07,
-			        "start": 101.95,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 102.34,
-			        "start": 102.07,
-			        "word": " the",
-			      },
-			      {
-			        "end": 102.43,
-			        "start": 102.34,
-			        "word": " key",
-			      },
-			      {
-			        "end": 102.74,
-			        "start": 102.43,
-			        "word": " point",
-			      },
-			      {
-			        "end": 102.86,
-			        "start": 102.74,
-			        "word": ",",
-			      },
-			      {
-			        "end": 103.04,
-			        "start": 102.86,
-			        "word": " the",
-			      },
-			      {
-			        "end": 103.29,
-			        "start": 103.04,
-			        "word": " cash",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 105.94,
-			    "start": 103.86,
-			    "text": "Okay, now do it as a percentage of the size of the economy",
-			    "words": [
-			      {
-			        "end": 104.09,
-			        "start": 103.86,
-			        "word": " Okay",
-			      },
-			      {
-			        "end": 104.2,
-			        "start": 104.09,
-			        "word": ",",
-			      },
-			      {
-			        "end": 104.37,
-			        "start": 104.2,
-			        "word": " now",
-			      },
-			      {
-			        "end": 104.48,
-			        "start": 104.37,
-			        "word": " do",
-			      },
-			      {
-			        "end": 104.59,
-			        "start": 104.48,
-			        "word": " it",
-			      },
-			      {
-			        "end": 104.7,
-			        "start": 104.59,
-			        "word": " as",
-			      },
-			      {
-			        "end": 104.98,
-			        "start": 104.7,
-			        "word": " a",
-			      },
-			      {
-			        "end": 105.33,
-			        "start": 104.98,
-			        "word": " percentage",
-			      },
-			      {
-			        "end": 105.44,
-			        "start": 105.33,
-			        "word": " of",
-			      },
-			      {
-			        "end": 105.61,
-			        "start": 105.44,
-			        "word": " the",
-			      },
-			      {
-			        "end": 105.84,
-			        "start": 105.61,
-			        "word": " size",
-			      },
-			      {
-			        "end": 105.94,
-			        "start": 105.84,
-			        "word": " of",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 110.61,
-			    "start": 106.69,
-			    "text": "And it's a different picture. Okay, so same data, but as a percentage of GDP",
-			    "words": [
-			      {
-			        "end": 106.86,
-			        "start": 106.69,
-			        "word": " And",
-			      },
-			      {
-			        "end": 106.97,
-			        "start": 106.86,
-			        "word": " it",
-			      },
-			      {
-			        "end": 107.08,
-			        "start": 106.97,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 107.55,
-			        "start": 107.08,
-			        "word": " a",
-			      },
-			      {
-			        "end": 107.65,
-			        "start": 107.55,
-			        "word": " different",
-			      },
-			      {
-			        "end": 108.05,
-			        "start": 107.65,
-			        "word": " picture",
-			      },
-			      {
-			        "end": 108.36,
-			        "start": 108.05,
-			        "word": ".",
-			      },
-			      {
-			        "end": 108.53,
-			        "start": 108.5,
-			        "word": "",
-			      },
-			      {
-			        "end": 108.75,
-			        "start": 108.53,
-			        "word": " Okay",
-			      },
-			      {
-			        "end": 108.87,
-			        "start": 108.75,
-			        "word": ",",
-			      },
-			      {
-			        "end": 108.99,
-			        "start": 108.87,
-			        "word": " so",
-			      },
-			      {
-			        "end": 109.28,
-			        "start": 108.99,
-			        "word": " same",
-			      },
-			      {
-			        "end": 109.61,
-			        "start": 109.28,
-			        "word": " data",
-			      },
-			      {
-			        "end": 109.69,
-			        "start": 109.61,
-			        "word": ",",
-			      },
-			      {
-			        "end": 109.8,
-			        "start": 109.69,
-			        "word": " but",
-			      },
-			      {
-			        "end": 109.93,
-			        "start": 109.8,
-			        "word": " as",
-			      },
-			      {
-			        "end": 109.99,
-			        "start": 109.93,
-			        "word": " a",
-			      },
-			      {
-			        "end": 110.61,
-			        "start": 109.99,
-			        "word": " percentage",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 112.49,
-			    "start": 111.11,
-			    "text": "And look, it's different",
-			    "words": [
-			      {
-			        "end": 111.3,
-			        "start": 111.11,
-			        "word": " And",
-			      },
-			      {
-			        "end": 111.67,
-			        "start": 111.3,
-			        "word": " look",
-			      },
-			      {
-			        "end": 111.77,
-			        "start": 111.67,
-			        "word": ",",
-			      },
-			      {
-			        "end": 111.79,
-			        "start": 111.77,
-			        "word": " it",
-			      },
-			      {
-			        "end": 111.91,
-			        "start": 111.79,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 112.49,
-			        "start": 111.91,
-			        "word": " different",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 113.6,
-			    "start": 112.67,
-			    "text": "Okay, so the U.S",
-			    "words": [
-			      {
-			        "end": 112.92,
-			        "start": 112.67,
-			        "word": " Okay",
-			      },
-			      {
-			        "end": 113.14,
-			        "start": 112.92,
-			        "word": ",",
-			      },
-			      {
-			        "end": 113.32,
-			        "start": 113.14,
-			        "word": " so",
-			      },
-			      {
-			        "end": 113.6,
-			        "start": 113.32,
-			        "word": " the",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 114.35,
-			    "start": 114,
-			    "text": "and the U.K",
-			    "words": [
-			      {
-			        "end": 114.18,
-			        "start": 114,
-			        "word": " and",
-			      },
-			      {
-			        "end": 114.3,
-			        "start": 114.18,
-			        "word": " the",
-			      },
-			      {
-			        "end": 114.35,
-			        "start": 114.3,
-			        "word": " U",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 117.45,
-			    "start": 114.71,
-			    "text": "about 0.5% of their GDP, which is a better way of comparing it, really",
-			    "words": [
-			      {
-			        "end": 114.95,
-			        "start": 114.71,
-			        "word": " about",
-			      },
-			      {
-			        "end": 115.14,
-			        "start": 114.95,
-			        "word": " 0",
-			      },
-			      {
-			        "end": 115.27,
-			        "start": 115.14,
-			        "word": ".",
-			      },
-			      {
-			        "end": 115.4,
-			        "start": 115.27,
-			        "word": "5",
-			      },
-			      {
-			        "end": 115.55,
-			        "start": 115.4,
-			        "word": "%",
-			      },
-			      {
-			        "end": 115.59,
-			        "start": 115.55,
-			        "word": " of",
-			      },
-			      {
-			        "end": 115.8,
-			        "start": 115.59,
-			        "word": " their",
-			      },
-			      {
-			        "end": 115.95,
-			        "start": 115.8,
-			        "word": " GDP",
-			      },
-			      {
-			        "end": 116.12,
-			        "start": 115.95,
-			        "word": ",",
-			      },
-			      {
-			        "end": 116.3,
-			        "start": 116.12,
-			        "word": " which",
-			      },
-			      {
-			        "end": 116.4,
-			        "start": 116.3,
-			        "word": " is",
-			      },
-			      {
-			        "end": 116.45,
-			        "start": 116.4,
-			        "word": " a",
-			      },
-			      {
-			        "end": 116.75,
-			        "start": 116.45,
-			        "word": " better",
-			      },
-			      {
-			        "end": 116.91,
-			        "start": 116.75,
-			        "word": " way",
-			      },
-			      {
-			        "end": 116.99,
-			        "start": 116.91,
-			        "word": " of",
-			      },
-			      {
-			        "end": 117.45,
-			        "start": 116.99,
-			        "word": " comparing",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 122.86,
-			    "start": 118.2,
-			    "text": "Whereas it's countries like Estonia and Denmark the Baltics Finland Sweden places like that",
-			    "words": [
-			      {
-			        "end": 118.65,
-			        "start": 118.2,
-			        "word": " Whereas",
-			      },
-			      {
-			        "end": 118.78,
-			        "start": 118.65,
-			        "word": " it",
-			      },
-			      {
-			        "end": 118.95,
-			        "start": 118.78,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 119.48,
-			        "start": 118.95,
-			        "word": " countries",
-			      },
-			      {
-			        "end": 119.72,
-			        "start": 119.48,
-			        "word": " like",
-			      },
-			      {
-			        "end": 120.09,
-			        "start": 119.72,
-			        "word": " Est",
-			      },
-			      {
-			        "end": 120.18,
-			        "start": 120.09,
-			        "word": "onia",
-			      },
-			      {
-			        "end": 120.37,
-			        "start": 120.18,
-			        "word": " and",
-			      },
-			      {
-			        "end": 120.83,
-			        "start": 120.37,
-			        "word": " Denmark",
-			      },
-			      {
-			        "end": 120.94,
-			        "start": 120.83,
-			        "word": ",",
-			      },
-			      {
-			        "end": 121.13,
-			        "start": 120.94,
-			        "word": " the",
-			      },
-			      {
-			        "end": 121.43,
-			        "start": 121.13,
-			        "word": " Balt",
-			      },
-			      {
-			        "end": 121.58,
-			        "start": 121.43,
-			        "word": "ics",
-			      },
-			      {
-			        "end": 121.73,
-			        "start": 121.58,
-			        "word": ",",
-			      },
-			      {
-			        "end": 122.15,
-			        "start": 121.73,
-			        "word": " Finland",
-			      },
-			      {
-			        "end": 122.36,
-			        "start": 122.15,
-			        "word": ",",
-			      },
-			      {
-			        "end": 122.86,
-			        "start": 122.36,
-			        "word": " Sweden",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 129.6,
-			    "start": 123.98,
-			    "text": "which are giving much more of their national income to support Ukraine. And then places like Germany",
-			    "words": [
-			      {
-			        "end": 124.38,
-			        "start": 123.98,
-			        "word": " which",
-			      },
-			      {
-			        "end": 124.62,
-			        "start": 124.38,
-			        "word": " are",
-			      },
-			      {
-			        "end": 125.1,
-			        "start": 124.62,
-			        "word": " giving",
-			      },
-			      {
-			        "end": 125.42,
-			        "start": 125.1,
-			        "word": " much",
-			      },
-			      {
-			        "end": 125.74,
-			        "start": 125.42,
-			        "word": " more",
-			      },
-			      {
-			        "end": 125.89,
-			        "start": 125.74,
-			        "word": " of",
-			      },
-			      {
-			        "end": 126.3,
-			        "start": 125.89,
-			        "word": " their",
-			      },
-			      {
-			        "end": 127.38,
-			        "start": 126.3,
-			        "word": " national",
-			      },
-			      {
-			        "end": 127.42,
-			        "start": 127.38,
-			        "word": " income",
-			      },
-			      {
-			        "end": 127.58,
-			        "start": 127.42,
-			        "word": " to",
-			      },
-			      {
-			        "end": 128.14,
-			        "start": 127.58,
-			        "word": " support",
-			      },
-			      {
-			        "end": 128.7,
-			        "start": 128.14,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 129.04,
-			        "start": 128.7,
-			        "word": ".",
-			      },
-			      {
-			        "end": 129.18,
-			        "start": 129.04,
-			        "word": " And",
-			      },
-			      {
-			        "end": 129.6,
-			        "start": 129.18,
-			        "word": " then",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 132.49,
-			    "start": 130.62,
-			    "text": "even further down because it's got a bigger GDP",
-			    "words": [
-			      {
-			        "end": 130.85,
-			        "start": 130.62,
-			        "word": " even",
-			      },
-			      {
-			        "end": 131.38,
-			        "start": 130.85,
-			        "word": " further",
-			      },
-			      {
-			        "end": 131.49,
-			        "start": 131.38,
-			        "word": " down",
-			      },
-			      {
-			        "end": 131.6,
-			        "start": 131.49,
-			        "word": ",",
-			      },
-			      {
-			        "end": 132,
-			        "start": 131.6,
-			        "word": " because",
-			      },
-			      {
-			        "end": 132.12,
-			        "start": 132,
-			        "word": " it",
-			      },
-			      {
-			        "end": 132.27,
-			        "start": 132.12,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 132.4,
-			        "start": 132.27,
-			        "word": " got",
-			      },
-			      {
-			        "end": 132.49,
-			        "start": 132.4,
-			        "word": " a",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 138.24,
-			    "start": 133,
-			    "text": "So quite striking there. Worth saying though to get a bit of a historical context here",
-			    "words": [
-			      {
-			        "end": 133.42,
-			        "start": 133,
-			        "word": " So",
-			      },
-			      {
-			        "end": 133.58,
-			        "start": 133.42,
-			        "word": " quite",
-			      },
-			      {
-			        "end": 134.01,
-			        "start": 133.58,
-			        "word": " striking",
-			      },
-			      {
-			        "end": 134.3,
-			        "start": 134.01,
-			        "word": " there",
-			      },
-			      {
-			        "end": 134.58,
-			        "start": 134.3,
-			        "word": ".",
-			      },
-			      {
-			        "end": 135.01,
-			        "start": 134.58,
-			        "word": " Worth",
-			      },
-			      {
-			        "end": 135.53,
-			        "start": 135.01,
-			        "word": " saying",
-			      },
-			      {
-			        "end": 135.72,
-			        "start": 135.53,
-			        "word": ",",
-			      },
-			      {
-			        "end": 135.91,
-			        "start": 135.72,
-			        "word": " though",
-			      },
-			      {
-			        "end": 135.98,
-			        "start": 135.91,
-			        "word": ",",
-			      },
-			      {
-			        "end": 136.77,
-			        "start": 136.76,
-			        "word": "",
-			      },
-			      {
-			        "end": 136.92,
-			        "start": 136.77,
-			        "word": " to",
-			      },
-			      {
-			        "end": 137.09,
-			        "start": 136.92,
-			        "word": " get",
-			      },
-			      {
-			        "end": 137.15,
-			        "start": 137.09,
-			        "word": " a",
-			      },
-			      {
-			        "end": 137.35,
-			        "start": 137.15,
-			        "word": " bit",
-			      },
-			      {
-			        "end": 137.48,
-			        "start": 137.35,
-			        "word": " of",
-			      },
-			      {
-			        "end": 137.54,
-			        "start": 137.48,
-			        "word": " a",
-			      },
-			      {
-			        "end": 138.24,
-			        "start": 137.54,
-			        "word": " historical",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 142.95,
-			    "start": 139.27,
-			    "text": "let's compare how much aid has been given this time around with previous conflicts",
-			    "words": [
-			      {
-			        "end": 139.27,
-			        "start": 139.27,
-			        "word": " let",
-			      },
-			      {
-			        "end": 139.52,
-			        "start": 139.27,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 139.87,
-			        "start": 139.52,
-			        "word": " compare",
-			      },
-			      {
-			        "end": 140.07,
-			        "start": 139.87,
-			        "word": " how",
-			      },
-			      {
-			        "end": 140.33,
-			        "start": 140.07,
-			        "word": " much",
-			      },
-			      {
-			        "end": 140.53,
-			        "start": 140.33,
-			        "word": " aid",
-			      },
-			      {
-			        "end": 140.73,
-			        "start": 140.53,
-			        "word": " has",
-			      },
-			      {
-			        "end": 141.04,
-			        "start": 140.73,
-			        "word": " been",
-			      },
-			      {
-			        "end": 141.4,
-			        "start": 141.04,
-			        "word": " given",
-			      },
-			      {
-			        "end": 141.68,
-			        "start": 141.4,
-			        "word": " this",
-			      },
-			      {
-			        "end": 141.94,
-			        "start": 141.68,
-			        "word": " time",
-			      },
-			      {
-			        "end": 142.5,
-			        "start": 141.94,
-			        "word": " around",
-			      },
-			      {
-			        "end": 142.57,
-			        "start": 142.5,
-			        "word": " with",
-			      },
-			      {
-			        "end": 142.95,
-			        "start": 142.57,
-			        "word": " previous",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 144.75,
-			    "start": 143.7,
-			    "text": "So this is specifically U.S",
-			    "words": [
-			      {
-			        "end": 143.74,
-			        "start": 143.7,
-			        "word": " So",
-			      },
-			      {
-			        "end": 143.96,
-			        "start": 143.74,
-			        "word": " this",
-			      },
-			      {
-			        "end": 144.07,
-			        "start": 143.96,
-			        "word": " is",
-			      },
-			      {
-			        "end": 144.75,
-			        "start": 144.07,
-			        "word": " specifically",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 146.38,
-			    "start": 145.36,
-			    "text": "aid to Ukraine this time around",
-			    "words": [
-			      {
-			        "end": 145.36,
-			        "start": 145.36,
-			        "word": " aid",
-			      },
-			      {
-			        "end": 145.53,
-			        "start": 145.36,
-			        "word": " to",
-			      },
-			      {
-			        "end": 145.86,
-			        "start": 145.53,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 146.08,
-			        "start": 145.86,
-			        "word": " this",
-			      },
-			      {
-			        "end": 146.38,
-			        "start": 146.08,
-			        "word": " time",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 150.2,
-			    "start": 146.74,
-			    "text": "That bar is there. It's 0.3 because it's just that's the annual figure rather than for the entire period",
-			    "words": [
-			      {
-			        "end": 146.9,
-			        "start": 146.74,
-			        "word": " That",
-			      },
-			      {
-			        "end": 147.02,
-			        "start": 146.9,
-			        "word": " bar",
-			      },
-			      {
-			        "end": 147.1,
-			        "start": 147.02,
-			        "word": " is",
-			      },
-			      {
-			        "end": 147.3,
-			        "start": 147.1,
-			        "word": " there",
-			      },
-			      {
-			        "end": 147.42,
-			        "start": 147.3,
-			        "word": ".",
-			      },
-			      {
-			        "end": 147.5,
-			        "start": 147.42,
-			        "word": " It",
-			      },
-			      {
-			        "end": 147.59,
-			        "start": 147.5,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 147.7,
-			        "start": 147.59,
-			        "word": " 0",
-			      },
-			      {
-			        "end": 147.82,
-			        "start": 147.7,
-			        "word": ".",
-			      },
-			      {
-			        "end": 148.03,
-			        "start": 147.82,
-			        "word": "3",
-			      },
-			      {
-			        "end": 148.21,
-			        "start": 148.03,
-			        "word": " because",
-			      },
-			      {
-			        "end": 148.3,
-			        "start": 148.21,
-			        "word": " it",
-			      },
-			      {
-			        "end": 148.45,
-			        "start": 148.3,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 148.54,
-			        "start": 148.45,
-			        "word": " just",
-			      },
-			      {
-			        "end": 148.7,
-			        "start": 148.54,
-			        "word": " that",
-			      },
-			      {
-			        "end": 148.78,
-			        "start": 148.7,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 148.9,
-			        "start": 148.78,
-			        "word": " the",
-			      },
-			      {
-			        "end": 149.19,
-			        "start": 148.9,
-			        "word": " annual",
-			      },
-			      {
-			        "end": 149.38,
-			        "start": 149.19,
-			        "word": " figure",
-			      },
-			      {
-			        "end": 149.62,
-			        "start": 149.38,
-			        "word": " rather",
-			      },
-			      {
-			        "end": 149.84,
-			        "start": 149.62,
-			        "word": " than",
-			      },
-			      {
-			        "end": 150.2,
-			        "start": 149.84,
-			        "word": " for",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 152.59,
-			    "start": 151.7,
-			    "text": "This is World War II",
-			    "words": [
-			      {
-			        "end": 151.76,
-			        "start": 151.7,
-			        "word": " This",
-			      },
-			      {
-			        "end": 151.91,
-			        "start": 151.76,
-			        "word": " is",
-			      },
-			      {
-			        "end": 152.3,
-			        "start": 151.91,
-			        "word": " World",
-			      },
-			      {
-			        "end": 152.59,
-			        "start": 152.3,
-			        "word": " War",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 155.13,
-			    "start": 153.06,
-			    "text": "So World War II lend-lease far more. U.S",
-			    "words": [
-			      {
-			        "end": 153.26,
-			        "start": 153.06,
-			        "word": " So",
-			      },
-			      {
-			        "end": 153.45,
-			        "start": 153.26,
-			        "word": " World",
-			      },
-			      {
-			        "end": 153.68,
-			        "start": 153.45,
-			        "word": " War",
-			      },
-			      {
-			        "end": 153.91,
-			        "start": 153.68,
-			        "word": " II",
-			      },
-			      {
-			        "end": 154.14,
-			        "start": 153.91,
-			        "word": " lend",
-			      },
-			      {
-			        "end": 154.21,
-			        "start": 154.14,
-			        "word": "-",
-			      },
-			      {
-			        "end": 154.82,
-			        "start": 154.21,
-			        "word": "lease",
-			      },
-			      {
-			        "end": 154.84,
-			        "start": 154.82,
-			        "word": " far",
-			      },
-			      {
-			        "end": 155.13,
-			        "start": 154.84,
-			        "word": " more",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 158.33,
-			    "start": 156.04,
-			    "text": "and Korea far more. Vietnam far more. Gulf War",
-			    "words": [
-			      {
-			        "end": 156.34,
-			        "start": 156.04,
-			        "word": " and",
-			      },
-			      {
-			        "end": 156.5,
-			        "start": 156.34,
-			        "word": " Korea",
-			      },
-			      {
-			        "end": 156.5,
-			        "start": 156.5,
-			        "word": ",",
-			      },
-			      {
-			        "end": 156.73,
-			        "start": 156.5,
-			        "word": " far",
-			      },
-			      {
-			        "end": 156.99,
-			        "start": 156.73,
-			        "word": " more",
-			      },
-			      {
-			        "end": 157.2,
-			        "start": 156.99,
-			        "word": ".",
-			      },
-			      {
-			        "end": 157.7,
-			        "start": 157.2,
-			        "word": " Vietnam",
-			      },
-			      {
-			        "end": 157.84,
-			        "start": 157.7,
-			        "word": ",",
-			      },
-			      {
-			        "end": 158.05,
-			        "start": 157.84,
-			        "word": " far",
-			      },
-			      {
-			        "end": 158.33,
-			        "start": 158.05,
-			        "word": " more",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 162.23,
-			    "start": 159.17,
-			    "text": "far more. Ukraine is tiny in comparison to all of those things",
-			    "words": [
-			      {
-			        "end": 159.38,
-			        "start": 159.17,
-			        "word": " far",
-			      },
-			      {
-			        "end": 159.87,
-			        "start": 159.38,
-			        "word": " more",
-			      },
-			      {
-			        "end": 159.94,
-			        "start": 159.87,
-			        "word": ".",
-			      },
-			      {
-			        "end": 160.37,
-			        "start": 159.94,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 160.51,
-			        "start": 160.37,
-			        "word": " is",
-			      },
-			      {
-			        "end": 160.79,
-			        "start": 160.51,
-			        "word": " tiny",
-			      },
-			      {
-			        "end": 160.93,
-			        "start": 160.79,
-			        "word": " in",
-			      },
-			      {
-			        "end": 161.64,
-			        "start": 160.93,
-			        "word": " comparison",
-			      },
-			      {
-			        "end": 161.78,
-			        "start": 161.64,
-			        "word": " to",
-			      },
-			      {
-			        "end": 161.99,
-			        "start": 161.78,
-			        "word": " all",
-			      },
-			      {
-			        "end": 162.23,
-			        "start": 161.99,
-			        "word": " of",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 166.01,
-			    "start": 162.84,
-			    "text": "Still, you know, sizable in cash terms, but compared with those, really quite small",
-			    "words": [
-			      {
-			        "end": 163.08,
-			        "start": 162.84,
-			        "word": " Still",
-			      },
-			      {
-			        "end": 163.17,
-			        "start": 163.08,
-			        "word": ",",
-			      },
-			      {
-			        "end": 163.5,
-			        "start": 163.17,
-			        "word": " you",
-			      },
-			      {
-			        "end": 163.5,
-			        "start": 163.5,
-			        "word": " know",
-			      },
-			      {
-			        "end": 163.59,
-			        "start": 163.5,
-			        "word": ",",
-			      },
-			      {
-			        "end": 163.73,
-			        "start": 163.59,
-			        "word": " siz",
-			      },
-			      {
-			        "end": 163.92,
-			        "start": 163.73,
-			        "word": "able",
-			      },
-			      {
-			        "end": 164.02,
-			        "start": 163.92,
-			        "word": " in",
-			      },
-			      {
-			        "end": 164.21,
-			        "start": 164.02,
-			        "word": " cash",
-			      },
-			      {
-			        "end": 164.48,
-			        "start": 164.21,
-			        "word": " terms",
-			      },
-			      {
-			        "end": 164.54,
-			        "start": 164.48,
-			        "word": ",",
-			      },
-			      {
-			        "end": 164.68,
-			        "start": 164.54,
-			        "word": " but",
-			      },
-			      {
-			        "end": 165.08,
-			        "start": 164.68,
-			        "word": " compared",
-			      },
-			      {
-			        "end": 165.26,
-			        "start": 165.08,
-			        "word": " with",
-			      },
-			      {
-			        "end": 165.59,
-			        "start": 165.26,
-			        "word": " those",
-			      },
-			      {
-			        "end": 165.59,
-			        "start": 165.59,
-			        "word": ",",
-			      },
-			      {
-			        "end": 166.01,
-			        "start": 165.59,
-			        "word": " really",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 167.96,
-			    "start": 166.68,
-			    "text": "And it's not just the U.S",
-			    "words": [
-			      {
-			        "end": 167.26,
-			        "start": 166.68,
-			        "word": " And",
-			      },
-			      {
-			        "end": 167.32,
-			        "start": 167.26,
-			        "word": " it",
-			      },
-			      {
-			        "end": 167.39,
-			        "start": 167.32,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 167.55,
-			        "start": 167.39,
-			        "word": " not",
-			      },
-			      {
-			        "end": 167.76,
-			        "start": 167.55,
-			        "word": " just",
-			      },
-			      {
-			        "end": 167.96,
-			        "start": 167.76,
-			        "word": " the",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 172.96,
-			    "start": 168.46,
-			    "text": "So take the Gulf War and look at how much different countries paid for the Gulf War in terms of support",
-			    "words": [
-			      {
-			        "end": 168.62,
-			        "start": 168.46,
-			        "word": " So",
-			      },
-			      {
-			        "end": 168.85,
-			        "start": 168.62,
-			        "word": " take",
-			      },
-			      {
-			        "end": 169.05,
-			        "start": 168.85,
-			        "word": " the",
-			      },
-			      {
-			        "end": 169.31,
-			        "start": 169.05,
-			        "word": " Gulf",
-			      },
-			      {
-			        "end": 169.49,
-			        "start": 169.31,
-			        "word": " War",
-			      },
-			      {
-			        "end": 169.7,
-			        "start": 169.49,
-			        "word": " and",
-			      },
-			      {
-			        "end": 170,
-			        "start": 169.7,
-			        "word": " look",
-			      },
-			      {
-			        "end": 170.3,
-			        "start": 170,
-			        "word": " at",
-			      },
-			      {
-			        "end": 170.3,
-			        "start": 170.3,
-			        "word": " how",
-			      },
-			      {
-			        "end": 170.56,
-			        "start": 170.3,
-			        "word": " much",
-			      },
-			      {
-			        "end": 171.17,
-			        "start": 170.56,
-			        "word": " different",
-			      },
-			      {
-			        "end": 171.77,
-			        "start": 171.17,
-			        "word": " countries",
-			      },
-			      {
-			        "end": 172,
-			        "start": 171.77,
-			        "word": " paid",
-			      },
-			      {
-			        "end": 172.4,
-			        "start": 172,
-			        "word": " for",
-			      },
-			      {
-			        "end": 172.48,
-			        "start": 172.4,
-			        "word": " the",
-			      },
-			      {
-			        "end": 172.66,
-			        "start": 172.48,
-			        "word": " Gulf",
-			      },
-			      {
-			        "end": 172.96,
-			        "start": 172.66,
-			        "word": " War",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 174.85,
-			    "start": 173.82,
-			    "text": "particularly for Kuwait",
-			    "words": [
-			      {
-			        "end": 174.44,
-			        "start": 173.82,
-			        "word": " particularly",
-			      },
-			      {
-			        "end": 174.64,
-			        "start": 174.44,
-			        "word": " for",
-			      },
-			      {
-			        "end": 174.85,
-			        "start": 174.64,
-			        "word": " Ku",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 177.58,
-			    "start": 175.04,
-			    "text": "U.S., Germany, U.K., Japan, that's Gulf War, those bars",
-			    "words": [
-			      {
-			        "end": 175.09,
-			        "start": 175.04,
-			        "word": " U",
-			      },
-			      {
-			        "end": 175.26,
-			        "start": 175.09,
-			        "word": ".",
-			      },
-			      {
-			        "end": 175.29,
-			        "start": 175.26,
-			        "word": "S",
-			      },
-			      {
-			        "end": 175.55,
-			        "start": 175.29,
-			        "word": ".,",
-			      },
-			      {
-			        "end": 175.94,
-			        "start": 175.55,
-			        "word": " Germany",
-			      },
-			      {
-			        "end": 176.01,
-			        "start": 175.94,
-			        "word": ",",
-			      },
-			      {
-			        "end": 176.06,
-			        "start": 176.01,
-			        "word": " U",
-			      },
-			      {
-			        "end": 176.26,
-			        "start": 176.06,
-			        "word": ".",
-			      },
-			      {
-			        "end": 176.32,
-			        "start": 176.26,
-			        "word": "K",
-			      },
-			      {
-			        "end": 176.52,
-			        "start": 176.32,
-			        "word": ".,",
-			      },
-			      {
-			        "end": 176.88,
-			        "start": 176.52,
-			        "word": " Japan",
-			      },
-			      {
-			        "end": 177.08,
-			        "start": 176.88,
-			        "word": ",",
-			      },
-			      {
-			        "end": 177.11,
-			        "start": 177.08,
-			        "word": " that",
-			      },
-			      {
-			        "end": 177.18,
-			        "start": 177.11,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 177.38,
-			        "start": 177.18,
-			        "word": " Gulf",
-			      },
-			      {
-			        "end": 177.58,
-			        "start": 177.38,
-			        "word": " War",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 180.51,
-			    "start": 178.24,
-			    "text": "Now compare it to Ukraine. I'll bring up those bars",
-			    "words": [
-			      {
-			        "end": 178.54,
-			        "start": 178.24,
-			        "word": " Now",
-			      },
-			      {
-			        "end": 178.84,
-			        "start": 178.54,
-			        "word": " compare",
-			      },
-			      {
-			        "end": 179.07,
-			        "start": 178.84,
-			        "word": " it",
-			      },
-			      {
-			        "end": 179.1,
-			        "start": 179.07,
-			        "word": " to",
-			      },
-			      {
-			        "end": 179.7,
-			        "start": 179.1,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 179.8,
-			        "start": 179.7,
-			        "word": ".",
-			      },
-			      {
-			        "end": 179.85,
-			        "start": 179.8,
-			        "word": " I",
-			      },
-			      {
-			        "end": 180.05,
-			        "start": 179.85,
-			        "word": "'ll",
-			      },
-			      {
-			        "end": 180.39,
-			        "start": 180.05,
-			        "word": " bring",
-			      },
-			      {
-			        "end": 180.51,
-			        "start": 180.39,
-			        "word": " up",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 182.18,
-			    "start": 181.33,
-			    "text": "So it was smaller",
-			    "words": [
-			      {
-			        "end": 181.47,
-			        "start": 181.33,
-			        "word": " So",
-			      },
-			      {
-			        "end": 181.59,
-			        "start": 181.47,
-			        "word": " it",
-			      },
-			      {
-			        "end": 181.79,
-			        "start": 181.59,
-			        "word": " was",
-			      },
-			      {
-			        "end": 182.18,
-			        "start": 181.79,
-			        "word": " smaller",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 188.51,
-			    "start": 182.54,
-			    "text": "So less money going to support Ukraine this time around than went for the Gulf War from basically all of those major economies",
-			    "words": [
-			      {
-			        "end": 182.6,
-			        "start": 182.54,
-			        "word": " So",
-			      },
-			      {
-			        "end": 182.87,
-			        "start": 182.6,
-			        "word": " less",
-			      },
-			      {
-			        "end": 183.21,
-			        "start": 182.87,
-			        "word": " money",
-			      },
-			      {
-			        "end": 183.55,
-			        "start": 183.21,
-			        "word": " going",
-			      },
-			      {
-			        "end": 183.68,
-			        "start": 183.55,
-			        "word": " to",
-			      },
-			      {
-			        "end": 184.24,
-			        "start": 183.68,
-			        "word": " support",
-			      },
-			      {
-			        "end": 184.84,
-			        "start": 184.24,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 185.3,
-			        "start": 184.84,
-			        "word": " this",
-			      },
-			      {
-			        "end": 185.4,
-			        "start": 185.3,
-			        "word": " time",
-			      },
-			      {
-			        "end": 185.82,
-			        "start": 185.4,
-			        "word": " around",
-			      },
-			      {
-			        "end": 186.1,
-			        "start": 185.82,
-			        "word": " than",
-			      },
-			      {
-			        "end": 186.42,
-			        "start": 186.1,
-			        "word": " went",
-			      },
-			      {
-			        "end": 186.59,
-			        "start": 186.42,
-			        "word": " for",
-			      },
-			      {
-			        "end": 186.8,
-			        "start": 186.59,
-			        "word": " the",
-			      },
-			      {
-			        "end": 187.22,
-			        "start": 186.8,
-			        "word": " Gulf",
-			      },
-			      {
-			        "end": 187.29,
-			        "start": 187.22,
-			        "word": " War",
-			      },
-			      {
-			        "end": 187.6,
-			        "start": 187.29,
-			        "word": " from",
-			      },
-			      {
-			        "end": 188.24,
-			        "start": 187.6,
-			        "word": " basically",
-			      },
-			      {
-			        "end": 188.51,
-			        "start": 188.24,
-			        "word": " all",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 191.55,
-			    "start": 190.2,
-			    "text": "Quite striking, really, isn't it",
-			    "words": [
-			      {
-			        "end": 190.48,
-			        "start": 190.2,
-			        "word": " Quite",
-			      },
-			      {
-			        "end": 190.96,
-			        "start": 190.48,
-			        "word": " striking",
-			      },
-			      {
-			        "end": 190.96,
-			        "start": 190.96,
-			        "word": ",",
-			      },
-			      {
-			        "end": 190.96,
-			        "start": 190.96,
-			        "word": "",
-			      },
-			      {
-			        "end": 191.29,
-			        "start": 190.96,
-			        "word": " really",
-			      },
-			      {
-			        "end": 191.4,
-			        "start": 191.29,
-			        "word": ",",
-			      },
-			      {
-			        "end": 191.55,
-			        "start": 191.4,
-			        "word": " isn",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 195.27,
-			    "start": 192.08,
-			    "text": "However okay every country can contribute to more. Worth just saying okay",
-			    "words": [
-			      {
-			        "end": 192.32,
-			        "start": 192.08,
-			        "word": " However",
-			      },
-			      {
-			        "end": 192.42,
-			        "start": 192.32,
-			        "word": ",",
-			      },
-			      {
-			        "end": 192.73,
-			        "start": 192.42,
-			        "word": " okay",
-			      },
-			      {
-			        "end": 192.76,
-			        "start": 192.73,
-			        "word": ",",
-			      },
-			      {
-			        "end": 193.03,
-			        "start": 192.76,
-			        "word": " every",
-			      },
-			      {
-			        "end": 193.41,
-			        "start": 193.03,
-			        "word": " country",
-			      },
-			      {
-			        "end": 193.57,
-			        "start": 193.41,
-			        "word": " can",
-			      },
-			      {
-			        "end": 194.12,
-			        "start": 193.57,
-			        "word": " contribute",
-			      },
-			      {
-			        "end": 194.23,
-			        "start": 194.12,
-			        "word": " to",
-			      },
-			      {
-			        "end": 194.46,
-			        "start": 194.23,
-			        "word": " more",
-			      },
-			      {
-			        "end": 194.66,
-			        "start": 194.46,
-			        "word": ".",
-			      },
-			      {
-			        "end": 195.27,
-			        "start": 194.66,
-			        "word": " Worth",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 200.06,
-			    "start": 196.34,
-			    "text": "so when it comes to these bars there's been so much debate recently particularly from Donald Trump",
-			    "words": [
-			      {
-			        "end": 196.65,
-			        "start": 196.34,
-			        "word": " so",
-			      },
-			      {
-			        "end": 196.75,
-			        "start": 196.65,
-			        "word": " when",
-			      },
-			      {
-			        "end": 196.81,
-			        "start": 196.75,
-			        "word": " it",
-			      },
-			      {
-			        "end": 197.01,
-			        "start": 196.81,
-			        "word": " comes",
-			      },
-			      {
-			        "end": 197.11,
-			        "start": 197.01,
-			        "word": " to",
-			      },
-			      {
-			        "end": 197.37,
-			        "start": 197.11,
-			        "word": " these",
-			      },
-			      {
-			        "end": 197.58,
-			        "start": 197.37,
-			        "word": " bars",
-			      },
-			      {
-			        "end": 197.68,
-			        "start": 197.58,
-			        "word": ",",
-			      },
-			      {
-			        "end": 197.94,
-			        "start": 197.68,
-			        "word": " there",
-			      },
-			      {
-			        "end": 198.04,
-			        "start": 197.94,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 198.25,
-			        "start": 198.04,
-			        "word": " been",
-			      },
-			      {
-			        "end": 198.41,
-			        "start": 198.25,
-			        "word": " so",
-			      },
-			      {
-			        "end": 198.56,
-			        "start": 198.41,
-			        "word": " much",
-			      },
-			      {
-			        "end": 198.87,
-			        "start": 198.56,
-			        "word": " debate",
-			      },
-			      {
-			        "end": 199.29,
-			        "start": 198.87,
-			        "word": " recently",
-			      },
-			      {
-			        "end": 199.38,
-			        "start": 199.29,
-			        "word": ",",
-			      },
-			      {
-			        "end": 200.06,
-			        "start": 199.38,
-			        "word": " particularly",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 202.78,
-			    "start": 200.94,
-			    "text": "a bit of a conversation with Emmanuel Macron about this",
-			    "words": [
-			      {
-			        "end": 200.98,
-			        "start": 200.94,
-			        "word": " a",
-			      },
-			      {
-			        "end": 201.21,
-			        "start": 200.98,
-			        "word": " bit",
-			      },
-			      {
-			        "end": 201.24,
-			        "start": 201.21,
-			        "word": " of",
-			      },
-			      {
-			        "end": 201.29,
-			        "start": 201.24,
-			        "word": " a",
-			      },
-			      {
-			        "end": 201.9,
-			        "start": 201.29,
-			        "word": " conversation",
-			      },
-			      {
-			        "end": 202.09,
-			        "start": 201.9,
-			        "word": " with",
-			      },
-			      {
-			        "end": 202.49,
-			        "start": 202.09,
-			        "word": " Emmanuel",
-			      },
-			      {
-			        "end": 202.78,
-			        "start": 202.49,
-			        "word": " Macron",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 205.86,
-			    "start": 203.59,
-			    "text": "about how much of this European money was actually a loan",
-			    "words": [
-			      {
-			        "end": 203.62,
-			        "start": 203.59,
-			        "word": " about",
-			      },
-			      {
-			        "end": 203.74,
-			        "start": 203.62,
-			        "word": " how",
-			      },
-			      {
-			        "end": 203.94,
-			        "start": 203.74,
-			        "word": " much",
-			      },
-			      {
-			        "end": 204.04,
-			        "start": 203.94,
-			        "word": " of",
-			      },
-			      {
-			        "end": 204.24,
-			        "start": 204.04,
-			        "word": " this",
-			      },
-			      {
-			        "end": 204.71,
-			        "start": 204.24,
-			        "word": " European",
-			      },
-			      {
-			        "end": 205.08,
-			        "start": 204.71,
-			        "word": " money",
-			      },
-			      {
-			        "end": 205.28,
-			        "start": 205.08,
-			        "word": " was",
-			      },
-			      {
-			        "end": 205.86,
-			        "start": 205.28,
-			        "word": " actually",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 207.45,
-			    "start": 206.31,
-			    "text": "So it's going to come back",
-			    "words": [
-			      {
-			        "end": 206.44,
-			        "start": 206.31,
-			        "word": " So",
-			      },
-			      {
-			        "end": 206.57,
-			        "start": 206.44,
-			        "word": " it",
-			      },
-			      {
-			        "end": 206.7,
-			        "start": 206.57,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 207.02,
-			        "start": 206.7,
-			        "word": " going",
-			      },
-			      {
-			        "end": 207.15,
-			        "start": 207.02,
-			        "word": " to",
-			      },
-			      {
-			        "end": 207.45,
-			        "start": 207.15,
-			        "word": " come",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 209.44,
-			    "start": 207.86,
-			    "text": "And that's what Donald Trump claimed",
-			    "words": [
-			      {
-			        "end": 208.06,
-			        "start": 207.86,
-			        "word": " And",
-			      },
-			      {
-			        "end": 208.31,
-			        "start": 208.06,
-			        "word": " that",
-			      },
-			      {
-			        "end": 208.66,
-			        "start": 208.31,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 208.7,
-			        "start": 208.66,
-			        "word": " what",
-			      },
-			      {
-			        "end": 209.17,
-			        "start": 208.7,
-			        "word": " Donald",
-			      },
-			      {
-			        "end": 209.44,
-			        "start": 209.17,
-			        "word": " Trump",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 213.34,
-			    "start": 210.05,
-			    "text": "It's not entirely true. It's about kind of one third true because some of this money",
-			    "words": [
-			      {
-			        "end": 210.18,
-			        "start": 210.05,
-			        "word": " It",
-			      },
-			      {
-			        "end": 210.31,
-			        "start": 210.18,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 210.58,
-			        "start": 210.31,
-			        "word": " not",
-			      },
-			      {
-			        "end": 211.12,
-			        "start": 210.58,
-			        "word": " entirely",
-			      },
-			      {
-			        "end": 211.32,
-			        "start": 211.12,
-			        "word": " true",
-			      },
-			      {
-			        "end": 211.45,
-			        "start": 211.32,
-			        "word": ".",
-			      },
-			      {
-			        "end": 211.54,
-			        "start": 211.45,
-			        "word": " It",
-			      },
-			      {
-			        "end": 211.63,
-			        "start": 211.54,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 211.87,
-			        "start": 211.63,
-			        "word": " about",
-			      },
-			      {
-			        "end": 212.06,
-			        "start": 211.87,
-			        "word": " kind",
-			      },
-			      {
-			        "end": 212.15,
-			        "start": 212.06,
-			        "word": " of",
-			      },
-			      {
-			        "end": 212.36,
-			        "start": 212.15,
-			        "word": " one",
-			      },
-			      {
-			        "end": 212.52,
-			        "start": 212.36,
-			        "word": " third",
-			      },
-			      {
-			        "end": 212.72,
-			        "start": 212.52,
-			        "word": " true",
-			      },
-			      {
-			        "end": 213.06,
-			        "start": 212.72,
-			        "word": " because",
-			      },
-			      {
-			        "end": 213.34,
-			        "start": 213.06,
-			        "word": " some",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 217.6,
-			    "start": 213.86,
-			    "text": "particularly the financial aid was structured as a loan",
-			    "words": [
-			      {
-			        "end": 214.53,
-			        "start": 213.86,
-			        "word": " particularly",
-			      },
-			      {
-			        "end": 214.59,
-			        "start": 214.53,
-			        "word": " the",
-			      },
-			      {
-			        "end": 215.2,
-			        "start": 214.59,
-			        "word": " financial",
-			      },
-			      {
-			        "end": 215.92,
-			        "start": 215.2,
-			        "word": " aid",
-			      },
-			      {
-			        "end": 216.4,
-			        "start": 215.92,
-			        "word": ",",
-			      },
-			      {
-			        "end": 217.02,
-			        "start": 216.96,
-			        "word": "",
-			      },
-			      {
-			        "end": 217.09,
-			        "start": 217.02,
-			        "word": " was",
-			      },
-			      {
-			        "end": 217.6,
-			        "start": 217.09,
-			        "word": " structured",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 220.61,
-			    "start": 217.96,
-			    "text": "So some of that money theoretically will come back to Europe after a long period",
-			    "words": [
-			      {
-			        "end": 218.04,
-			        "start": 217.96,
-			        "word": " So",
-			      },
-			      {
-			        "end": 218.24,
-			        "start": 218.04,
-			        "word": " some",
-			      },
-			      {
-			        "end": 218.35,
-			        "start": 218.24,
-			        "word": " of",
-			      },
-			      {
-			        "end": 218.48,
-			        "start": 218.35,
-			        "word": " that",
-			      },
-			      {
-			        "end": 218.7,
-			        "start": 218.48,
-			        "word": " money",
-			      },
-			      {
-			        "end": 219.29,
-			        "start": 218.7,
-			        "word": " theoretically",
-			      },
-			      {
-			        "end": 219.45,
-			        "start": 219.29,
-			        "word": " will",
-			      },
-			      {
-			        "end": 219.62,
-			        "start": 219.45,
-			        "word": " come",
-			      },
-			      {
-			        "end": 219.79,
-			        "start": 219.62,
-			        "word": " back",
-			      },
-			      {
-			        "end": 219.88,
-			        "start": 219.79,
-			        "word": " to",
-			      },
-			      {
-			        "end": 220.24,
-			        "start": 219.88,
-			        "word": " Europe",
-			      },
-			      {
-			        "end": 220.61,
-			        "start": 220.24,
-			        "word": " after",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 222.41,
-			    "start": 221.6,
-			    "text": "It's a pretty lax loan",
-			    "words": [
-			      {
-			        "end": 221.75,
-			        "start": 221.6,
-			        "word": " It",
-			      },
-			      {
-			        "end": 221.8,
-			        "start": 221.75,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 221.86,
-			        "start": 221.8,
-			        "word": " a",
-			      },
-			      {
-			        "end": 222.35,
-			        "start": 221.86,
-			        "word": " pretty",
-			      },
-			      {
-			        "end": 222.37,
-			        "start": 222.35,
-			        "word": " la",
-			      },
-			      {
-			        "end": 222.41,
-			        "start": 222.37,
-			        "word": "x",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 224.81,
-			    "start": 222.87,
-			    "text": "But still, it is a loan, whereas that's a grant",
-			    "words": [
-			      {
-			        "end": 223.11,
-			        "start": 222.87,
-			        "word": " But",
-			      },
-			      {
-			        "end": 223.45,
-			        "start": 223.11,
-			        "word": " still",
-			      },
-			      {
-			        "end": 223.5,
-			        "start": 223.45,
-			        "word": ",",
-			      },
-			      {
-			        "end": 223.57,
-			        "start": 223.5,
-			        "word": " it",
-			      },
-			      {
-			        "end": 223.73,
-			        "start": 223.57,
-			        "word": " is",
-			      },
-			      {
-			        "end": 223.75,
-			        "start": 223.73,
-			        "word": " a",
-			      },
-			      {
-			        "end": 224,
-			        "start": 223.75,
-			        "word": " loan",
-			      },
-			      {
-			        "end": 224.11,
-			        "start": 224,
-			        "word": ",",
-			      },
-			      {
-			        "end": 224.6,
-			        "start": 224.11,
-			        "word": " whereas",
-			      },
-			      {
-			        "end": 224.81,
-			        "start": 224.6,
-			        "word": " that",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 228.22,
-			    "start": 225.62,
-			    "text": "And that is why Donald Trump is saying, look, we take that money",
-			    "words": [
-			      {
-			        "end": 226.09,
-			        "start": 225.62,
-			        "word": " And",
-			      },
-			      {
-			        "end": 226.34,
-			        "start": 226.09,
-			        "word": " that",
-			      },
-			      {
-			        "end": 226.42,
-			        "start": 226.34,
-			        "word": " is",
-			      },
-			      {
-			        "end": 226.54,
-			        "start": 226.42,
-			        "word": " why",
-			      },
-			      {
-			        "end": 226.87,
-			        "start": 226.54,
-			        "word": " Donald",
-			      },
-			      {
-			        "end": 227.18,
-			        "start": 226.87,
-			        "word": " Trump",
-			      },
-			      {
-			        "end": 227.21,
-			        "start": 227.18,
-			        "word": " is",
-			      },
-			      {
-			        "end": 227.52,
-			        "start": 227.21,
-			        "word": " saying",
-			      },
-			      {
-			        "end": 227.64,
-			        "start": 227.52,
-			        "word": ",",
-			      },
-			      {
-			        "end": 227.87,
-			        "start": 227.64,
-			        "word": " look",
-			      },
-			      {
-			        "end": 227.92,
-			        "start": 227.87,
-			        "word": ",",
-			      },
-			      {
-			        "end": 228.02,
-			        "start": 227.92,
-			        "word": " we",
-			      },
-			      {
-			        "end": 228.22,
-			        "start": 228.02,
-			        "word": " take",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 229.84,
-			    "start": 228.84,
-			    "text": "We need to get something back",
-			    "words": [
-			      {
-			        "end": 228.93,
-			        "start": 228.84,
-			        "word": " We",
-			      },
-			      {
-			        "end": 229.13,
-			        "start": 228.93,
-			        "word": " need",
-			      },
-			      {
-			        "end": 229.23,
-			        "start": 229.13,
-			        "word": " to",
-			      },
-			      {
-			        "end": 229.38,
-			        "start": 229.23,
-			        "word": " get",
-			      },
-			      {
-			        "end": 229.84,
-			        "start": 229.38,
-			        "word": " something",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 230.54,
-			    "start": 230.18,
-			    "text": "Okay",
-			    "words": [
-			      {
-			        "end": 230.54,
-			        "start": 230.18,
-			        "word": " Okay",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 233.07,
-			    "start": 230.62,
-			    "text": "And he says he's done a deal or at least he's in the process of doing a deal",
-			    "words": [
-			      {
-			        "end": 230.71,
-			        "start": 230.62,
-			        "word": " And",
-			      },
-			      {
-			        "end": 230.79,
-			        "start": 230.71,
-			        "word": " he",
-			      },
-			      {
-			        "end": 231.12,
-			        "start": 230.79,
-			        "word": " says",
-			      },
-			      {
-			        "end": 231.2,
-			        "start": 231.12,
-			        "word": " he",
-			      },
-			      {
-			        "end": 231.28,
-			        "start": 231.2,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 231.47,
-			        "start": 231.28,
-			        "word": " done",
-			      },
-			      {
-			        "end": 231.58,
-			        "start": 231.47,
-			        "word": " a",
-			      },
-			      {
-			        "end": 231.71,
-			        "start": 231.58,
-			        "word": " deal",
-			      },
-			      {
-			        "end": 231.8,
-			        "start": 231.71,
-			        "word": ",",
-			      },
-			      {
-			        "end": 231.89,
-			        "start": 231.8,
-			        "word": " or",
-			      },
-			      {
-			        "end": 232.2,
-			        "start": 231.89,
-			        "word": " at",
-			      },
-			      {
-			        "end": 232.24,
-			        "start": 232.2,
-			        "word": " least",
-			      },
-			      {
-			        "end": 232.34,
-			        "start": 232.24,
-			        "word": " he",
-			      },
-			      {
-			        "end": 232.42,
-			        "start": 232.34,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 232.53,
-			        "start": 232.42,
-			        "word": " in",
-			      },
-			      {
-			        "end": 232.67,
-			        "start": 232.53,
-			        "word": " the",
-			      },
-			      {
-			        "end": 233.07,
-			        "start": 232.67,
-			        "word": " process",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 237.01,
-			    "start": 233.68,
-			    "text": "certainly nothing's been signed yet with the Ukrainian president",
-			    "words": [
-			      {
-			        "end": 234.27,
-			        "start": 233.68,
-			        "word": " certainly",
-			      },
-			      {
-			        "end": 234.46,
-			        "start": 234.27,
-			        "word": " nothing",
-			      },
-			      {
-			        "end": 234.55,
-			        "start": 234.46,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 234.74,
-			        "start": 234.55,
-			        "word": " been",
-			      },
-			      {
-			        "end": 235.06,
-			        "start": 234.74,
-			        "word": " signed",
-			      },
-			      {
-			        "end": 235.17,
-			        "start": 235.06,
-			        "word": " yet",
-			      },
-			      {
-			        "end": 235.42,
-			        "start": 235.17,
-			        "word": ",",
-			      },
-			      {
-			        "end": 235.77,
-			        "start": 235.76,
-			        "word": "",
-			      },
-			      {
-			        "end": 236.07,
-			        "start": 235.77,
-			        "word": " with",
-			      },
-			      {
-			        "end": 236.3,
-			        "start": 236.07,
-			        "word": " the",
-			      },
-			      {
-			        "end": 237.01,
-			        "start": 236.3,
-			        "word": " Ukrainian",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 242.42,
-			    "start": 237.87,
-			    "text": "where he thinks it could be $500 billion back in return for all of that aid given",
-			    "words": [
-			      {
-			        "end": 238.32,
-			        "start": 237.87,
-			        "word": " where",
-			      },
-			      {
-			        "end": 238.46,
-			        "start": 238.32,
-			        "word": " he",
-			      },
-			      {
-			        "end": 238.89,
-			        "start": 238.46,
-			        "word": " thinks",
-			      },
-			      {
-			        "end": 239.03,
-			        "start": 238.89,
-			        "word": " it",
-			      },
-			      {
-			        "end": 239.42,
-			        "start": 239.03,
-			        "word": " could",
-			      },
-			      {
-			        "end": 239.57,
-			        "start": 239.42,
-			        "word": " be",
-			      },
-			      {
-			        "end": 239.64,
-			        "start": 239.57,
-			        "word": " $",
-			      },
-			      {
-			        "end": 240.35,
-			        "start": 239.64,
-			        "word": "500",
-			      },
-			      {
-			        "end": 241.17,
-			        "start": 240.35,
-			        "word": " billion",
-			      },
-			      {
-			        "end": 241.21,
-			        "start": 241.17,
-			        "word": " back",
-			      },
-			      {
-			        "end": 241.36,
-			        "start": 241.21,
-			        "word": " in",
-			      },
-			      {
-			        "end": 241.9,
-			        "start": 241.36,
-			        "word": " return",
-			      },
-			      {
-			        "end": 242.18,
-			        "start": 241.9,
-			        "word": " for",
-			      },
-			      {
-			        "end": 242.3,
-			        "start": 242.18,
-			        "word": " all",
-			      },
-			      {
-			        "end": 242.42,
-			        "start": 242.3,
-			        "word": " of",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 246.42,
-			    "start": 243.08,
-			    "text": "You're probably wondering at this stage how on earth do you get $500 billion out of Ukraine? Well",
-			    "words": [
-			      {
-			        "end": 243.22,
-			        "start": 243.08,
-			        "word": " You",
-			      },
-			      {
-			        "end": 243.33,
-			        "start": 243.22,
-			        "word": "'re",
-			      },
-			      {
-			        "end": 243.87,
-			        "start": 243.33,
-			        "word": " probably",
-			      },
-			      {
-			        "end": 244.12,
-			        "start": 243.87,
-			        "word": " wondering",
-			      },
-			      {
-			        "end": 244.21,
-			        "start": 244.12,
-			        "word": " at",
-			      },
-			      {
-			        "end": 244.39,
-			        "start": 244.21,
-			        "word": " this",
-			      },
-			      {
-			        "end": 244.62,
-			        "start": 244.39,
-			        "word": " stage",
-			      },
-			      {
-			        "end": 244.73,
-			        "start": 244.62,
-			        "word": ",",
-			      },
-			      {
-			        "end": 244.85,
-			        "start": 244.73,
-			        "word": " how",
-			      },
-			      {
-			        "end": 245.01,
-			        "start": 244.85,
-			        "word": " on",
-			      },
-			      {
-			        "end": 245.16,
-			        "start": 245.01,
-			        "word": " earth",
-			      },
-			      {
-			        "end": 245.25,
-			        "start": 245.16,
-			        "word": " do",
-			      },
-			      {
-			        "end": 245.45,
-			        "start": 245.25,
-			        "word": " you",
-			      },
-			      {
-			        "end": 245.51,
-			        "start": 245.45,
-			        "word": " get",
-			      },
-			      {
-			        "end": 245.54,
-			        "start": 245.51,
-			        "word": " $",
-			      },
-			      {
-			        "end": 246.06,
-			        "start": 245.54,
-			        "word": "500",
-			      },
-			      {
-			        "end": 246.42,
-			        "start": 246.06,
-			        "word": " billion",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 249.52,
-			    "start": 247.91,
-			    "text": "the answer he says is rare earths",
-			    "words": [
-			      {
-			        "end": 248.12,
-			        "start": 247.91,
-			        "word": " the",
-			      },
-			      {
-			        "end": 248.46,
-			        "start": 248.12,
-			        "word": " answer",
-			      },
-			      {
-			        "end": 248.58,
-			        "start": 248.46,
-			        "word": ",",
-			      },
-			      {
-			        "end": 248.7,
-			        "start": 248.58,
-			        "word": " he",
-			      },
-			      {
-			        "end": 248.94,
-			        "start": 248.7,
-			        "word": " says",
-			      },
-			      {
-			        "end": 249.06,
-			        "start": 248.94,
-			        "word": ",",
-			      },
-			      {
-			        "end": 249.17,
-			        "start": 249.06,
-			        "word": " is",
-			      },
-			      {
-			        "end": 249.52,
-			        "start": 249.17,
-			        "word": " rare",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 250.91,
-			    "start": 249.97,
-			    "text": "What are rare earths",
-			    "words": [
-			      {
-			        "end": 250.25,
-			        "start": 249.97,
-			        "word": " What",
-			      },
-			      {
-			        "end": 250.39,
-			        "start": 250.25,
-			        "word": " are",
-			      },
-			      {
-			        "end": 250.63,
-			        "start": 250.39,
-			        "word": " rare",
-			      },
-			      {
-			        "end": 250.91,
-			        "start": 250.63,
-			        "word": " earth",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 255.48,
-			    "start": 251.42,
-			    "text": "They're a type of critical mineral, mostly used in electronics and military equipment as well",
-			    "words": [
-			      {
-			        "end": 251.5,
-			        "start": 251.42,
-			        "word": " They",
-			      },
-			      {
-			        "end": 251.6,
-			        "start": 251.5,
-			        "word": "'re",
-			      },
-			      {
-			        "end": 251.66,
-			        "start": 251.6,
-			        "word": " a",
-			      },
-			      {
-			        "end": 252.05,
-			        "start": 251.66,
-			        "word": " type",
-			      },
-			      {
-			        "end": 252.18,
-			        "start": 252.05,
-			        "word": " of",
-			      },
-			      {
-			        "end": 252.7,
-			        "start": 252.18,
-			        "word": " critical",
-			      },
-			      {
-			        "end": 253.22,
-			        "start": 252.7,
-			        "word": " mineral",
-			      },
-			      {
-			        "end": 253.28,
-			        "start": 253.22,
-			        "word": ",",
-			      },
-			      {
-			        "end": 253.67,
-			        "start": 253.28,
-			        "word": " mostly",
-			      },
-			      {
-			        "end": 253.94,
-			        "start": 253.67,
-			        "word": " used",
-			      },
-			      {
-			        "end": 254.06,
-			        "start": 253.94,
-			        "word": " in",
-			      },
-			      {
-			        "end": 254.82,
-			        "start": 254.06,
-			        "word": " electronics",
-			      },
-			      {
-			        "end": 254.96,
-			        "start": 254.82,
-			        "word": " and",
-			      },
-			      {
-			        "end": 255.48,
-			        "start": 254.96,
-			        "word": " military",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 260.79,
-			    "start": 256.83,
-			    "text": "And there are some rare earths deposits in Ukraine. This is a kind of mineral map of the country",
-			    "words": [
-			      {
-			        "end": 256.92,
-			        "start": 256.83,
-			        "word": " And",
-			      },
-			      {
-			        "end": 257.15,
-			        "start": 256.92,
-			        "word": " there",
-			      },
-			      {
-			        "end": 257.4,
-			        "start": 257.15,
-			        "word": " are",
-			      },
-			      {
-			        "end": 257.66,
-			        "start": 257.4,
-			        "word": " some",
-			      },
-			      {
-			        "end": 257.92,
-			        "start": 257.66,
-			        "word": " rare",
-			      },
-			      {
-			        "end": 258.27,
-			        "start": 257.92,
-			        "word": " earth",
-			      },
-			      {
-			        "end": 258.29,
-			        "start": 258.27,
-			        "word": "s",
-			      },
-			      {
-			        "end": 258.85,
-			        "start": 258.29,
-			        "word": " deposits",
-			      },
-			      {
-			        "end": 259,
-			        "start": 258.85,
-			        "word": " in",
-			      },
-			      {
-			        "end": 259.38,
-			        "start": 259,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 259.55,
-			        "start": 259.38,
-			        "word": ".",
-			      },
-			      {
-			        "end": 259.8,
-			        "start": 259.55,
-			        "word": " This",
-			      },
-			      {
-			        "end": 259.92,
-			        "start": 259.8,
-			        "word": " is",
-			      },
-			      {
-			        "end": 259.98,
-			        "start": 259.92,
-			        "word": " a",
-			      },
-			      {
-			        "end": 260.25,
-			        "start": 259.98,
-			        "word": " kind",
-			      },
-			      {
-			        "end": 260.38,
-			        "start": 260.25,
-			        "word": " of",
-			      },
-			      {
-			        "end": 260.79,
-			        "start": 260.38,
-			        "word": " mineral",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 265.9,
-			    "start": 261.92,
-			    "text": "If we zoom into this area here it's in actually the occupied territory which is I think",
-			    "words": [
-			      {
-			        "end": 262.1,
-			        "start": 261.92,
-			        "word": " If",
-			      },
-			      {
-			        "end": 262.16,
-			        "start": 262.1,
-			        "word": " we",
-			      },
-			      {
-			        "end": 262.41,
-			        "start": 262.16,
-			        "word": " zoom",
-			      },
-			      {
-			        "end": 262.66,
-			        "start": 262.41,
-			        "word": " into",
-			      },
-			      {
-			        "end": 263.04,
-			        "start": 262.66,
-			        "word": " this",
-			      },
-			      {
-			        "end": 263.36,
-			        "start": 263.04,
-			        "word": " area",
-			      },
-			      {
-			        "end": 263.73,
-			        "start": 263.36,
-			        "word": " here",
-			      },
-			      {
-			        "end": 263.92,
-			        "start": 263.73,
-			        "word": ",",
-			      },
-			      {
-			        "end": 263.92,
-			        "start": 263.92,
-			        "word": "",
-			      },
-			      {
-			        "end": 264.14,
-			        "start": 263.92,
-			        "word": " it",
-			      },
-			      {
-			        "end": 264.14,
-			        "start": 264.14,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 264.59,
-			        "start": 264.14,
-			        "word": " in",
-			      },
-			      {
-			        "end": 264.75,
-			        "start": 264.59,
-			        "word": " actually",
-			      },
-			      {
-			        "end": 264.88,
-			        "start": 264.75,
-			        "word": " the",
-			      },
-			      {
-			        "end": 265.34,
-			        "start": 264.88,
-			        "word": " occupied",
-			      },
-			      {
-			        "end": 265.9,
-			        "start": 265.34,
-			        "word": " territory",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 270.27,
-			    "start": 266.96,
-			    "text": "part of the point here. And the Ukrainians were suggesting this",
-			    "words": [
-			      {
-			        "end": 267.13,
-			        "start": 266.96,
-			        "word": " part",
-			      },
-			      {
-			        "end": 267.27,
-			        "start": 267.13,
-			        "word": " of",
-			      },
-			      {
-			        "end": 267.41,
-			        "start": 267.27,
-			        "word": " the",
-			      },
-			      {
-			        "end": 267.73,
-			        "start": 267.41,
-			        "word": " point",
-			      },
-			      {
-			        "end": 267.92,
-			        "start": 267.73,
-			        "word": " here",
-			      },
-			      {
-			        "end": 268.44,
-			        "start": 267.92,
-			        "word": ".",
-			      },
-			      {
-			        "end": 268.52,
-			        "start": 268.44,
-			        "word": " And",
-			      },
-			      {
-			        "end": 268.7,
-			        "start": 268.52,
-			        "word": " the",
-			      },
-			      {
-			        "end": 268.91,
-			        "start": 268.7,
-			        "word": " Ukrain",
-			      },
-			      {
-			        "end": 269.06,
-			        "start": 268.91,
-			        "word": "ians",
-			      },
-			      {
-			        "end": 269.34,
-			        "start": 269.06,
-			        "word": " were",
-			      },
-			      {
-			        "end": 270.27,
-			        "start": 269.34,
-			        "word": " suggesting",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 273.28,
-			    "start": 270.75,
-			    "text": "Old Soviet deposit here supposedly has lots of rare earths",
-			    "words": [
-			      {
-			        "end": 270.82,
-			        "start": 270.75,
-			        "word": " Old",
-			      },
-			      {
-			        "end": 271.18,
-			        "start": 270.82,
-			        "word": " Soviet",
-			      },
-			      {
-			        "end": 271.66,
-			        "start": 271.18,
-			        "word": " deposit",
-			      },
-			      {
-			        "end": 271.94,
-			        "start": 271.66,
-			        "word": " here",
-			      },
-			      {
-			        "end": 272.65,
-			        "start": 271.94,
-			        "word": " supposedly",
-			      },
-			      {
-			        "end": 272.9,
-			        "start": 272.65,
-			        "word": " has",
-			      },
-			      {
-			        "end": 273.14,
-			        "start": 272.9,
-			        "word": " lots",
-			      },
-			      {
-			        "end": 273.28,
-			        "start": 273.14,
-			        "word": " of",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 277.78,
-			    "start": 274.32,
-			    "text": "The issue though and the reason of course obviously Donald Trump wants to do this",
-			    "words": [
-			      {
-			        "end": 274.93,
-			        "start": 274.32,
-			        "word": " The",
-			      },
-			      {
-			        "end": 275.38,
-			        "start": 274.93,
-			        "word": " issue",
-			      },
-			      {
-			        "end": 275.66,
-			        "start": 275.38,
-			        "word": " though",
-			      },
-			      {
-			        "end": 275.75,
-			        "start": 275.66,
-			        "word": ",",
-			      },
-			      {
-			        "end": 275.89,
-			        "start": 275.75,
-			        "word": " and",
-			      },
-			      {
-			        "end": 276.03,
-			        "start": 275.89,
-			        "word": " the",
-			      },
-			      {
-			        "end": 276.35,
-			        "start": 276.03,
-			        "word": " reason",
-			      },
-			      {
-			        "end": 276.4,
-			        "start": 276.35,
-			        "word": ",",
-			      },
-			      {
-			        "end": 276.49,
-			        "start": 276.4,
-			        "word": " of",
-			      },
-			      {
-			        "end": 276.77,
-			        "start": 276.49,
-			        "word": " course",
-			      },
-			      {
-			        "end": 276.86,
-			        "start": 276.77,
-			        "word": ",",
-			      },
-			      {
-			        "end": 277.29,
-			        "start": 276.86,
-			        "word": " obviously",
-			      },
-			      {
-			        "end": 277.56,
-			        "start": 277.29,
-			        "word": " Donald",
-			      },
-			      {
-			        "end": 277.78,
-			        "start": 277.56,
-			        "word": " Trump",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 280.99,
-			    "start": 278.5,
-			    "text": "is when you look at total rare earth production around the world",
-			    "words": [
-			      {
-			        "end": 278.57,
-			        "start": 278.5,
-			        "word": " is",
-			      },
-			      {
-			        "end": 278.76,
-			        "start": 278.57,
-			        "word": " when",
-			      },
-			      {
-			        "end": 278.9,
-			        "start": 278.76,
-			        "word": " you",
-			      },
-			      {
-			        "end": 279.09,
-			        "start": 278.9,
-			        "word": " look",
-			      },
-			      {
-			        "end": 279.27,
-			        "start": 279.09,
-			        "word": " at",
-			      },
-			      {
-			        "end": 279.68,
-			        "start": 279.27,
-			        "word": " total",
-			      },
-			      {
-			        "end": 279.89,
-			        "start": 279.68,
-			        "word": " rare",
-			      },
-			      {
-			        "end": 280.15,
-			        "start": 279.89,
-			        "word": " earth",
-			      },
-			      {
-			        "end": 280.68,
-			        "start": 280.15,
-			        "word": " production",
-			      },
-			      {
-			        "end": 280.99,
-			        "start": 280.68,
-			        "word": " around",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 284.36,
-			    "start": 281.63,
-			    "text": "and you need rare earths for like electric cars for the magnets in those cars",
-			    "words": [
-			      {
-			        "end": 281.65,
-			        "start": 281.63,
-			        "word": " and",
-			      },
-			      {
-			        "end": 281.8,
-			        "start": 281.65,
-			        "word": " you",
-			      },
-			      {
-			        "end": 282.01,
-			        "start": 281.8,
-			        "word": " need",
-			      },
-			      {
-			        "end": 282.22,
-			        "start": 282.01,
-			        "word": " rare",
-			      },
-			      {
-			        "end": 282.46,
-			        "start": 282.22,
-			        "word": " earth",
-			      },
-			      {
-			        "end": 282.61,
-			        "start": 282.46,
-			        "word": "s",
-			      },
-			      {
-			        "end": 282.68,
-			        "start": 282.61,
-			        "word": " for",
-			      },
-			      {
-			        "end": 282.97,
-			        "start": 282.68,
-			        "word": " like",
-			      },
-			      {
-			        "end": 283.31,
-			        "start": 282.97,
-			        "word": " electric",
-			      },
-			      {
-			        "end": 283.52,
-			        "start": 283.31,
-			        "word": " cars",
-			      },
-			      {
-			        "end": 283.62,
-			        "start": 283.52,
-			        "word": ",",
-			      },
-			      {
-			        "end": 283.82,
-			        "start": 283.62,
-			        "word": " for",
-			      },
-			      {
-			        "end": 284.04,
-			        "start": 283.82,
-			        "word": " the",
-			      },
-			      {
-			        "end": 284.36,
-			        "start": 284.04,
-			        "word": " magnets",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 288.73,
-			    "start": 285.26,
-			    "text": "for all of those wind turbines it's magnets it's military equipment",
-			    "words": [
-			      {
-			        "end": 285.63,
-			        "start": 285.26,
-			        "word": " for",
-			      },
-			      {
-			        "end": 285.73,
-			        "start": 285.63,
-			        "word": " all",
-			      },
-			      {
-			        "end": 285.76,
-			        "start": 285.73,
-			        "word": " of",
-			      },
-			      {
-			        "end": 286.1,
-			        "start": 285.76,
-			        "word": " those",
-			      },
-			      {
-			        "end": 286.37,
-			        "start": 286.1,
-			        "word": " wind",
-			      },
-			      {
-			        "end": 286.96,
-			        "start": 286.37,
-			        "word": " turbines",
-			      },
-			      {
-			        "end": 287.05,
-			        "start": 286.96,
-			        "word": ",",
-			      },
-			      {
-			        "end": 287.18,
-			        "start": 287.05,
-			        "word": " it",
-			      },
-			      {
-			        "end": 287.36,
-			        "start": 287.18,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 287.82,
-			        "start": 287.36,
-			        "word": " magnets",
-			      },
-			      {
-			        "end": 287.92,
-			        "start": 287.82,
-			        "word": ",",
-			      },
-			      {
-			        "end": 288.05,
-			        "start": 287.92,
-			        "word": " it",
-			      },
-			      {
-			        "end": 288.26,
-			        "start": 288.05,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 288.73,
-			        "start": 288.26,
-			        "word": " military",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 292.19,
-			    "start": 289.65,
-			    "text": "China is massively dominant when it comes to mining rare earths",
-			    "words": [
-			      {
-			        "end": 289.88,
-			        "start": 289.65,
-			        "word": " China",
-			      },
-			      {
-			        "end": 290.13,
-			        "start": 289.88,
-			        "word": " is",
-			      },
-			      {
-			        "end": 290.64,
-			        "start": 290.13,
-			        "word": " massively",
-			      },
-			      {
-			        "end": 290.64,
-			        "start": 290.64,
-			        "word": "",
-			      },
-			      {
-			        "end": 291.1,
-			        "start": 290.64,
-			        "word": " dominant",
-			      },
-			      {
-			        "end": 291.32,
-			        "start": 291.1,
-			        "word": " when",
-			      },
-			      {
-			        "end": 291.44,
-			        "start": 291.32,
-			        "word": " it",
-			      },
-			      {
-			        "end": 291.73,
-			        "start": 291.44,
-			        "word": " comes",
-			      },
-			      {
-			        "end": 291.84,
-			        "start": 291.73,
-			        "word": " to",
-			      },
-			      {
-			        "end": 292.19,
-			        "start": 291.84,
-			        "word": " mining",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 295.86,
-			    "start": 292.81,
-			    "text": "It's massively dominant when it comes to refining rare earths",
-			    "words": [
-			      {
-			        "end": 293.15,
-			        "start": 292.81,
-			        "word": " It",
-			      },
-			      {
-			        "end": 293.19,
-			        "start": 293.15,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 293.68,
-			        "start": 293.19,
-			        "word": " massively",
-			      },
-			      {
-			        "end": 294.13,
-			        "start": 293.68,
-			        "word": " dominant",
-			      },
-			      {
-			        "end": 294.38,
-			        "start": 294.13,
-			        "word": " when",
-			      },
-			      {
-			        "end": 294.47,
-			        "start": 294.38,
-			        "word": " it",
-			      },
-			      {
-			        "end": 294.76,
-			        "start": 294.47,
-			        "word": " comes",
-			      },
-			      {
-			        "end": 295.22,
-			        "start": 294.76,
-			        "word": " to",
-			      },
-			      {
-			        "end": 295.31,
-			        "start": 295.22,
-			        "word": " ref",
-			      },
-			      {
-			        "end": 295.86,
-			        "start": 295.31,
-			        "word": "ining",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 298.31,
-			    "start": 296.54,
-			    "text": "which is really the hardest thing to do when it comes to rare earths",
-			    "words": [
-			      {
-			        "end": 296.72,
-			        "start": 296.54,
-			        "word": " which",
-			      },
-			      {
-			        "end": 296.8,
-			        "start": 296.72,
-			        "word": " is",
-			      },
-			      {
-			        "end": 297.04,
-			        "start": 296.8,
-			        "word": " really",
-			      },
-			      {
-			        "end": 297.2,
-			        "start": 297.04,
-			        "word": " the",
-			      },
-			      {
-			        "end": 297.52,
-			        "start": 297.2,
-			        "word": " hardest",
-			      },
-			      {
-			        "end": 297.64,
-			        "start": 297.52,
-			        "word": " thing",
-			      },
-			      {
-			        "end": 297.71,
-			        "start": 297.64,
-			        "word": " to",
-			      },
-			      {
-			        "end": 297.83,
-			        "start": 297.71,
-			        "word": " do",
-			      },
-			      {
-			        "end": 298.04,
-			        "start": 297.83,
-			        "word": " when",
-			      },
-			      {
-			        "end": 298.07,
-			        "start": 298.04,
-			        "word": " it",
-			      },
-			      {
-			        "end": 298.24,
-			        "start": 298.07,
-			        "word": " comes",
-			      },
-			      {
-			        "end": 298.31,
-			        "start": 298.24,
-			        "word": " to",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 301.72,
-			    "start": 298.8,
-			    "text": "because it's really expensive. It's really energy intensive. Totally totally dominant",
-			    "words": [
-			      {
-			        "end": 299.08,
-			        "start": 298.8,
-			        "word": " because",
-			      },
-			      {
-			        "end": 299.21,
-			        "start": 299.08,
-			        "word": " it",
-			      },
-			      {
-			        "end": 299.28,
-			        "start": 299.21,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 299.42,
-			        "start": 299.28,
-			        "word": " really",
-			      },
-			      {
-			        "end": 299.86,
-			        "start": 299.42,
-			        "word": " expensive",
-			      },
-			      {
-			        "end": 300,
-			        "start": 299.86,
-			        "word": ".",
-			      },
-			      {
-			        "end": 300.09,
-			        "start": 300,
-			        "word": " It",
-			      },
-			      {
-			        "end": 300.18,
-			        "start": 300.09,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 300.49,
-			        "start": 300.18,
-			        "word": " really",
-			      },
-			      {
-			        "end": 300.76,
-			        "start": 300.49,
-			        "word": " energy",
-			      },
-			      {
-			        "end": 301.34,
-			        "start": 300.76,
-			        "word": " intensive",
-			      },
-			      {
-			        "end": 301.34,
-			        "start": 301.34,
-			        "word": ".",
-			      },
-			      {
-			        "end": 301.72,
-			        "start": 301.34,
-			        "word": " Totally",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 303.27,
-			    "start": 302.64,
-			    "text": "So you can see again",
-			    "words": [
-			      {
-			        "end": 302.73,
-			        "start": 302.64,
-			        "word": " So",
-			      },
-			      {
-			        "end": 302.89,
-			        "start": 302.73,
-			        "word": " you",
-			      },
-			      {
-			        "end": 303.03,
-			        "start": 302.89,
-			        "word": " can",
-			      },
-			      {
-			        "end": 303.15,
-			        "start": 303.03,
-			        "word": " see",
-			      },
-			      {
-			        "end": 303.27,
-			        "start": 303.15,
-			        "word": ",",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 307.51,
-			    "start": 303.72,
-			    "text": "the geopolitical reasons why Donald Trump might want to think Ukraine might solve you know",
-			    "words": [
-			      {
-			        "end": 304.38,
-			        "start": 303.72,
-			        "word": " the",
-			      },
-			      {
-			        "end": 304.79,
-			        "start": 304.38,
-			        "word": " geopolit",
-			      },
-			      {
-			        "end": 304.99,
-			        "start": 304.79,
-			        "word": "ical",
-			      },
-			      {
-			        "end": 305.35,
-			        "start": 304.99,
-			        "word": " reasons",
-			      },
-			      {
-			        "end": 305.5,
-			        "start": 305.35,
-			        "word": " why",
-			      },
-			      {
-			        "end": 305.83,
-			        "start": 305.5,
-			        "word": " Donald",
-			      },
-			      {
-			        "end": 306.07,
-			        "start": 305.83,
-			        "word": " Trump",
-			      },
-			      {
-			        "end": 306.33,
-			        "start": 306.07,
-			        "word": " might",
-			      },
-			      {
-			        "end": 306.53,
-			        "start": 306.33,
-			        "word": " want",
-			      },
-			      {
-			        "end": 306.63,
-			        "start": 306.53,
-			        "word": " to",
-			      },
-			      {
-			        "end": 307.11,
-			        "start": 306.63,
-			        "word": " think",
-			      },
-			      {
-			        "end": 307.28,
-			        "start": 307.11,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 307.51,
-			        "start": 307.28,
-			        "word": " might",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 311.38,
-			    "start": 308.32,
-			    "text": "kill two birds with one stone here. However look at the actual data",
-			    "words": [
-			      {
-			        "end": 308.52,
-			        "start": 308.32,
-			        "word": " kill",
-			      },
-			      {
-			        "end": 308.78,
-			        "start": 308.52,
-			        "word": " two",
-			      },
-			      {
-			        "end": 308.96,
-			        "start": 308.78,
-			        "word": " birds",
-			      },
-			      {
-			        "end": 309.2,
-			        "start": 308.96,
-			        "word": " with",
-			      },
-			      {
-			        "end": 309.38,
-			        "start": 309.2,
-			        "word": " one",
-			      },
-			      {
-			        "end": 309.68,
-			        "start": 309.38,
-			        "word": " stone",
-			      },
-			      {
-			        "end": 309.91,
-			        "start": 309.68,
-			        "word": " here",
-			      },
-			      {
-			        "end": 310.44,
-			        "start": 309.91,
-			        "word": ".",
-			      },
-			      {
-			        "end": 310.52,
-			        "start": 310.44,
-			        "word": " However",
-			      },
-			      {
-			        "end": 310.64,
-			        "start": 310.52,
-			        "word": ",",
-			      },
-			      {
-			        "end": 310.88,
-			        "start": 310.64,
-			        "word": " look",
-			      },
-			      {
-			        "end": 311.18,
-			        "start": 310.88,
-			        "word": " at",
-			      },
-			      {
-			        "end": 311.38,
-			        "start": 311.18,
-			        "word": " the",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 316.35,
-			    "start": 311.9,
-			    "text": "and it's not altogether obvious that there are many rare earths in Ukraine. Even if you take account of that mine",
-			    "words": [
-			      {
-			        "end": 312.08,
-			        "start": 311.9,
-			        "word": " and",
-			      },
-			      {
-			        "end": 312.2,
-			        "start": 312.08,
-			        "word": " it",
-			      },
-			      {
-			        "end": 312.32,
-			        "start": 312.2,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 312.51,
-			        "start": 312.32,
-			        "word": " not",
-			      },
-			      {
-			        "end": 313.1,
-			        "start": 312.51,
-			        "word": " altogether",
-			      },
-			      {
-			        "end": 313.51,
-			        "start": 313.1,
-			        "word": " obvious",
-			      },
-			      {
-			        "end": 313.83,
-			        "start": 313.51,
-			        "word": " that",
-			      },
-			      {
-			        "end": 314.15,
-			        "start": 313.83,
-			        "word": " there",
-			      },
-			      {
-			        "end": 314.42,
-			        "start": 314.15,
-			        "word": " are",
-			      },
-			      {
-			        "end": 314.7,
-			        "start": 314.42,
-			        "word": " many",
-			      },
-			      {
-			        "end": 314.89,
-			        "start": 314.7,
-			        "word": " rare",
-			      },
-			      {
-			        "end": 315.13,
-			        "start": 314.89,
-			        "word": " earth",
-			      },
-			      {
-			        "end": 315.22,
-			        "start": 315.13,
-			        "word": "s",
-			      },
-			      {
-			        "end": 315.56,
-			        "start": 315.22,
-			        "word": " in",
-			      },
-			      {
-			        "end": 315.6,
-			        "start": 315.56,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 315.74,
-			        "start": 315.6,
-			        "word": ".",
-			      },
-			      {
-			        "end": 315.93,
-			        "start": 315.74,
-			        "word": " Even",
-			      },
-			      {
-			        "end": 316.02,
-			        "start": 315.93,
-			        "word": " if",
-			      },
-			      {
-			        "end": 316.16,
-			        "start": 316.02,
-			        "word": " you",
-			      },
-			      {
-			        "end": 316.35,
-			        "start": 316.16,
-			        "word": " take",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 318.84,
-			    "start": 317.25,
-			    "text": "which like I say it's been around for a long time",
-			    "words": [
-			      {
-			        "end": 317.49,
-			        "start": 317.25,
-			        "word": " which",
-			      },
-			      {
-			        "end": 317.58,
-			        "start": 317.49,
-			        "word": ",",
-			      },
-			      {
-			        "end": 317.81,
-			        "start": 317.58,
-			        "word": " like",
-			      },
-			      {
-			        "end": 317.81,
-			        "start": 317.81,
-			        "word": " I",
-			      },
-			      {
-			        "end": 317.95,
-			        "start": 317.81,
-			        "word": " say",
-			      },
-			      {
-			        "end": 318.04,
-			        "start": 317.95,
-			        "word": ",",
-			      },
-			      {
-			        "end": 318.22,
-			        "start": 318.04,
-			        "word": " it",
-			      },
-			      {
-			        "end": 318.26,
-			        "start": 318.22,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 318.42,
-			        "start": 318.26,
-			        "word": " been",
-			      },
-			      {
-			        "end": 318.75,
-			        "start": 318.42,
-			        "word": " around",
-			      },
-			      {
-			        "end": 318.84,
-			        "start": 318.75,
-			        "word": " for",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 321.77,
-			    "start": 319.78,
-			    "text": "entirely sure if you can get those rare earths out of it",
-			    "words": [
-			      {
-			        "end": 320.2,
-			        "start": 319.78,
-			        "word": " entirely",
-			      },
-			      {
-			        "end": 320.44,
-			        "start": 320.2,
-			        "word": " sure",
-			      },
-			      {
-			        "end": 320.51,
-			        "start": 320.44,
-			        "word": " if",
-			      },
-			      {
-			        "end": 320.67,
-			        "start": 320.51,
-			        "word": " you",
-			      },
-			      {
-			        "end": 320.87,
-			        "start": 320.67,
-			        "word": " can",
-			      },
-			      {
-			        "end": 320.99,
-			        "start": 320.87,
-			        "word": " get",
-			      },
-			      {
-			        "end": 321.27,
-			        "start": 320.99,
-			        "word": " those",
-			      },
-			      {
-			        "end": 321.45,
-			        "start": 321.27,
-			        "word": " rare",
-			      },
-			      {
-			        "end": 321.77,
-			        "start": 321.45,
-			        "word": " earth",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 323.48,
-			    "start": 322.33,
-			    "text": "It's still China way in the lead",
-			    "words": [
-			      {
-			        "end": 322.39,
-			        "start": 322.33,
-			        "word": " It",
-			      },
-			      {
-			        "end": 322.54,
-			        "start": 322.39,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 322.75,
-			        "start": 322.54,
-			        "word": " still",
-			      },
-			      {
-			        "end": 323.01,
-			        "start": 322.75,
-			        "word": " China",
-			      },
-			      {
-			        "end": 323.17,
-			        "start": 323.01,
-			        "word": " way",
-			      },
-			      {
-			        "end": 323.38,
-			        "start": 323.17,
-			        "word": " in",
-			      },
-			      {
-			        "end": 323.48,
-			        "start": 323.38,
-			        "word": " the",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 325.62,
-			    "start": 323.83,
-			    "text": "Brazil, India, Russia, Vietnam, the US",
-			    "words": [
-			      {
-			        "end": 324.05,
-			        "start": 323.83,
-			        "word": " Brazil",
-			      },
-			      {
-			        "end": 324.18,
-			        "start": 324.05,
-			        "word": ",",
-			      },
-			      {
-			        "end": 324.5,
-			        "start": 324.18,
-			        "word": " India",
-			      },
-			      {
-			        "end": 324.62,
-			        "start": 324.5,
-			        "word": ",",
-			      },
-			      {
-			        "end": 325,
-			        "start": 324.62,
-			        "word": " Russia",
-			      },
-			      {
-			        "end": 325.12,
-			        "start": 325,
-			        "word": ",",
-			      },
-			      {
-			        "end": 325.62,
-			        "start": 325.12,
-			        "word": " Vietnam",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 326.7,
-			    "start": 326.5,
-			    "text": "Actually",
-			    "words": [
-			      {
-			        "end": 326.7,
-			        "start": 326.5,
-			        "word": " Actually",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 331.24,
-			    "start": 326.81,
-			    "text": "Ukraine doesn't even show up in the most definitive measures of how much rare earths there are around the world",
-			    "words": [
-			      {
-			        "end": 327.25,
-			        "start": 326.81,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 327.57,
-			        "start": 327.25,
-			        "word": " doesn",
-			      },
-			      {
-			        "end": 327.69,
-			        "start": 327.57,
-			        "word": "'t",
-			      },
-			      {
-			        "end": 327.94,
-			        "start": 327.69,
-			        "word": " even",
-			      },
-			      {
-			        "end": 328.27,
-			        "start": 327.94,
-			        "word": " show",
-			      },
-			      {
-			        "end": 328.31,
-			        "start": 328.27,
-			        "word": " up",
-			      },
-			      {
-			        "end": 328.43,
-			        "start": 328.31,
-			        "word": " in",
-			      },
-			      {
-			        "end": 328.63,
-			        "start": 328.43,
-			        "word": " the",
-			      },
-			      {
-			        "end": 329.04,
-			        "start": 328.63,
-			        "word": " most",
-			      },
-			      {
-			        "end": 329.4,
-			        "start": 329.04,
-			        "word": " definitive",
-			      },
-			      {
-			        "end": 329.8,
-			        "start": 329.4,
-			        "word": " measures",
-			      },
-			      {
-			        "end": 329.91,
-			        "start": 329.8,
-			        "word": " of",
-			      },
-			      {
-			        "end": 330.07,
-			        "start": 329.91,
-			        "word": " how",
-			      },
-			      {
-			        "end": 330.31,
-			        "start": 330.07,
-			        "word": " much",
-			      },
-			      {
-			        "end": 330.49,
-			        "start": 330.31,
-			        "word": " rare",
-			      },
-			      {
-			        "end": 330.76,
-			        "start": 330.49,
-			        "word": " earth",
-			      },
-			      {
-			        "end": 330.81,
-			        "start": 330.76,
-			        "word": "s",
-			      },
-			      {
-			        "end": 331.24,
-			        "start": 330.81,
-			        "word": " there",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 334.32,
-			    "start": 332.15,
-			    "text": "So some people have been wondering some people have wondered",
-			    "words": [
-			      {
-			        "end": 332.26,
-			        "start": 332.15,
-			        "word": " So",
-			      },
-			      {
-			        "end": 332.46,
-			        "start": 332.26,
-			        "word": " some",
-			      },
-			      {
-			        "end": 332.99,
-			        "start": 332.46,
-			        "word": " people",
-			      },
-			      {
-			        "end": 333.07,
-			        "start": 332.99,
-			        "word": " have",
-			      },
-			      {
-			        "end": 333.21,
-			        "start": 333.07,
-			        "word": " been",
-			      },
-			      {
-			        "end": 333.7,
-			        "start": 333.21,
-			        "word": " wondering",
-			      },
-			      {
-			        "end": 333.91,
-			        "start": 333.7,
-			        "word": ",",
-			      },
-			      {
-			        "end": 334.12,
-			        "start": 333.91,
-			        "word": " some",
-			      },
-			      {
-			        "end": 334.32,
-			        "start": 334.12,
-			        "word": " people",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 337.08,
-			    "start": 335.13,
-			    "text": "was he not really talking about critical minerals in general",
-			    "words": [
-			      {
-			        "end": 335.17,
-			        "start": 335.13,
-			        "word": " was",
-			      },
-			      {
-			        "end": 335.23,
-			        "start": 335.17,
-			        "word": " he",
-			      },
-			      {
-			        "end": 335.39,
-			        "start": 335.23,
-			        "word": " not",
-			      },
-			      {
-			        "end": 335.68,
-			        "start": 335.39,
-			        "word": " really",
-			      },
-			      {
-			        "end": 336.03,
-			        "start": 335.68,
-			        "word": " talking",
-			      },
-			      {
-			        "end": 336.28,
-			        "start": 336.03,
-			        "word": " about",
-			      },
-			      {
-			        "end": 336.68,
-			        "start": 336.28,
-			        "word": " critical",
-			      },
-			      {
-			        "end": 337.08,
-			        "start": 336.68,
-			        "word": " minerals",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 339.56,
-			    "start": 337.68,
-			    "text": "Maybe he was talking not about rare earths but about lithium",
-			    "words": [
-			      {
-			        "end": 337.93,
-			        "start": 337.68,
-			        "word": " Maybe",
-			      },
-			      {
-			        "end": 338.03,
-			        "start": 337.93,
-			        "word": " he",
-			      },
-			      {
-			        "end": 338.25,
-			        "start": 338.03,
-			        "word": " was",
-			      },
-			      {
-			        "end": 338.53,
-			        "start": 338.25,
-			        "word": " talking",
-			      },
-			      {
-			        "end": 338.68,
-			        "start": 338.53,
-			        "word": " not",
-			      },
-			      {
-			        "end": 338.96,
-			        "start": 338.68,
-			        "word": " about",
-			      },
-			      {
-			        "end": 339.12,
-			        "start": 338.96,
-			        "word": " rare",
-			      },
-			      {
-			        "end": 339.32,
-			        "start": 339.12,
-			        "word": " earth",
-			      },
-			      {
-			        "end": 339.44,
-			        "start": 339.32,
-			        "word": "s",
-			      },
-			      {
-			        "end": 339.48,
-			        "start": 339.44,
-			        "word": ",",
-			      },
-			      {
-			        "end": 339.56,
-			        "start": 339.48,
-			        "word": " but",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 343.46,
-			    "start": 340.12,
-			    "text": "which technically speaking is a different part of the periodic table. Well if that's the case yes",
-			    "words": [
-			      {
-			        "end": 340.35,
-			        "start": 340.12,
-			        "word": " which",
-			      },
-			      {
-			        "end": 340.76,
-			        "start": 340.35,
-			        "word": " technically",
-			      },
-			      {
-			        "end": 341.08,
-			        "start": 340.76,
-			        "word": " speaking",
-			      },
-			      {
-			        "end": 341.17,
-			        "start": 341.08,
-			        "word": " is",
-			      },
-			      {
-			        "end": 341.2,
-			        "start": 341.17,
-			        "word": " a",
-			      },
-			      {
-			        "end": 341.56,
-			        "start": 341.2,
-			        "word": " different",
-			      },
-			      {
-			        "end": 341.72,
-			        "start": 341.56,
-			        "word": " part",
-			      },
-			      {
-			        "end": 341.8,
-			        "start": 341.72,
-			        "word": " of",
-			      },
-			      {
-			        "end": 341.93,
-			        "start": 341.8,
-			        "word": " the",
-			      },
-			      {
-			        "end": 342.24,
-			        "start": 341.93,
-			        "word": " periodic",
-			      },
-			      {
-			        "end": 342.44,
-			        "start": 342.24,
-			        "word": " table",
-			      },
-			      {
-			        "end": 342.6,
-			        "start": 342.44,
-			        "word": ".",
-			      },
-			      {
-			        "end": 343.03,
-			        "start": 342.6,
-			        "word": " Well",
-			      },
-			      {
-			        "end": 343.04,
-			        "start": 343.03,
-			        "word": ",",
-			      },
-			      {
-			        "end": 343.46,
-			        "start": 343.04,
-			        "word": " if",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 349.41,
-			    "start": 344.61,
-			    "text": "there's a big lithium deposit in Ukraine potentially the biggest in Europe. But here's the thing",
-			    "words": [
-			      {
-			        "end": 344.98,
-			        "start": 344.61,
-			        "word": " there",
-			      },
-			      {
-			        "end": 345.12,
-			        "start": 344.98,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 345.23,
-			        "start": 345.12,
-			        "word": " a",
-			      },
-			      {
-			        "end": 345.41,
-			        "start": 345.23,
-			        "word": " big",
-			      },
-			      {
-			        "end": 345.93,
-			        "start": 345.41,
-			        "word": " lithium",
-			      },
-			      {
-			        "end": 346.59,
-			        "start": 345.93,
-			        "word": " deposit",
-			      },
-			      {
-			        "end": 346.61,
-			        "start": 346.59,
-			        "word": " in",
-			      },
-			      {
-			        "end": 347.25,
-			        "start": 346.61,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 347.47,
-			        "start": 347.25,
-			        "word": ",",
-			      },
-			      {
-			        "end": 348.06,
-			        "start": 347.47,
-			        "word": " potentially",
-			      },
-			      {
-			        "end": 348.4,
-			        "start": 348.06,
-			        "word": " the",
-			      },
-			      {
-			        "end": 348.6,
-			        "start": 348.4,
-			        "word": " biggest",
-			      },
-			      {
-			        "end": 348.86,
-			        "start": 348.6,
-			        "word": " in",
-			      },
-			      {
-			        "end": 348.92,
-			        "start": 348.92,
-			        "word": "",
-			      },
-			      {
-			        "end": 349.25,
-			        "start": 348.92,
-			        "word": " Europe",
-			      },
-			      {
-			        "end": 349.41,
-			        "start": 349.25,
-			        "word": ".",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 351.83,
-			    "start": 350.58,
-			    "text": "Europe doesn't have that much lithium",
-			    "words": [
-			      {
-			        "end": 350.78,
-			        "start": 350.58,
-			        "word": " Europe",
-			      },
-			      {
-			        "end": 351.06,
-			        "start": 350.78,
-			        "word": " doesn",
-			      },
-			      {
-			        "end": 351.17,
-			        "start": 351.06,
-			        "word": "'t",
-			      },
-			      {
-			        "end": 351.4,
-			        "start": 351.17,
-			        "word": " have",
-			      },
-			      {
-			        "end": 351.64,
-			        "start": 351.4,
-			        "word": " that",
-			      },
-			      {
-			        "end": 351.83,
-			        "start": 351.64,
-			        "word": " much",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 354.75,
-			    "start": 352.38,
-			    "text": "And compare this with other deposits around the world",
-			    "words": [
-			      {
-			        "end": 352.55,
-			        "start": 352.38,
-			        "word": " And",
-			      },
-			      {
-			        "end": 352.93,
-			        "start": 352.55,
-			        "word": " compare",
-			      },
-			      {
-			        "end": 353.15,
-			        "start": 352.93,
-			        "word": " this",
-			      },
-			      {
-			        "end": 353.48,
-			        "start": 353.15,
-			        "word": " with",
-			      },
-			      {
-			        "end": 353.86,
-			        "start": 353.48,
-			        "word": " other",
-			      },
-			      {
-			        "end": 354.37,
-			        "start": 353.86,
-			        "word": " deposits",
-			      },
-			      {
-			        "end": 354.75,
-			        "start": 354.37,
-			        "word": " around",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 358.31,
-			    "start": 355.33,
-			    "text": "I've put it over here. And that, by the way, is a best case scenario",
-			    "words": [
-			      {
-			        "end": 355.7,
-			        "start": 355.33,
-			        "word": " I",
-			      },
-			      {
-			        "end": 355.8,
-			        "start": 355.7,
-			        "word": "'ve",
-			      },
-			      {
-			        "end": 355.94,
-			        "start": 355.8,
-			        "word": " put",
-			      },
-			      {
-			        "end": 356.01,
-			        "start": 355.94,
-			        "word": " it",
-			      },
-			      {
-			        "end": 356.26,
-			        "start": 356.01,
-			        "word": " over",
-			      },
-			      {
-			        "end": 356.51,
-			        "start": 356.26,
-			        "word": " here",
-			      },
-			      {
-			        "end": 356.89,
-			        "start": 356.51,
-			        "word": ".",
-			      },
-			      {
-			        "end": 356.89,
-			        "start": 356.89,
-			        "word": " And",
-			      },
-			      {
-			        "end": 357.14,
-			        "start": 356.89,
-			        "word": " that",
-			      },
-			      {
-			        "end": 357.34,
-			        "start": 357.14,
-			        "word": ",",
-			      },
-			      {
-			        "end": 357.38,
-			        "start": 357.34,
-			        "word": " by",
-			      },
-			      {
-			        "end": 357.57,
-			        "start": 357.38,
-			        "word": " the",
-			      },
-			      {
-			        "end": 357.76,
-			        "start": 357.57,
-			        "word": " way",
-			      },
-			      {
-			        "end": 358,
-			        "start": 357.76,
-			        "word": ",",
-			      },
-			      {
-			        "end": 358.02,
-			        "start": 358,
-			        "word": " is",
-			      },
-			      {
-			        "end": 358.06,
-			        "start": 358.02,
-			        "word": " a",
-			      },
-			      {
-			        "end": 358.31,
-			        "start": 358.06,
-			        "word": " best",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 360.98,
-			    "start": 359.4,
-			    "text": "And Ukraine is still a minnow",
-			    "words": [
-			      {
-			        "end": 360,
-			        "start": 359.4,
-			        "word": " And",
-			      },
-			      {
-			        "end": 360.38,
-			        "start": 360,
-			        "word": " Ukraine",
-			      },
-			      {
-			        "end": 360.62,
-			        "start": 360.38,
-			        "word": " is",
-			      },
-			      {
-			        "end": 360.77,
-			        "start": 360.62,
-			        "word": " still",
-			      },
-			      {
-			        "end": 360.82,
-			        "start": 360.77,
-			        "word": " a",
-			      },
-			      {
-			        "end": 360.98,
-			        "start": 360.82,
-			        "word": " min",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 362.46,
-			    "start": 361.3,
-			    "text": "It's smaller than Canada",
-			    "words": [
-			      {
-			        "end": 361.38,
-			        "start": 361.3,
-			        "word": " It",
-			      },
-			      {
-			        "end": 361.63,
-			        "start": 361.38,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 361.91,
-			        "start": 361.63,
-			        "word": " smaller",
-			      },
-			      {
-			        "end": 362.13,
-			        "start": 361.91,
-			        "word": " than",
-			      },
-			      {
-			        "end": 362.46,
-			        "start": 362.13,
-			        "word": " Canada",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 365.89,
-			    "start": 362.62,
-			    "text": "It's smaller than the US when it comes to lithium, even bearing that in mind",
-			    "words": [
-			      {
-			        "end": 362.73,
-			        "start": 362.62,
-			        "word": " It",
-			      },
-			      {
-			        "end": 362.95,
-			        "start": 362.73,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 363.23,
-			        "start": 362.95,
-			        "word": " smaller",
-			      },
-			      {
-			        "end": 363.45,
-			        "start": 363.23,
-			        "word": " than",
-			      },
-			      {
-			        "end": 363.61,
-			        "start": 363.45,
-			        "word": " the",
-			      },
-			      {
-			        "end": 363.77,
-			        "start": 363.61,
-			        "word": " US",
-			      },
-			      {
-			        "end": 364,
-			        "start": 363.77,
-			        "word": " when",
-			      },
-			      {
-			        "end": 364.05,
-			        "start": 364,
-			        "word": " it",
-			      },
-			      {
-			        "end": 364.37,
-			        "start": 364.05,
-			        "word": " comes",
-			      },
-			      {
-			        "end": 364.52,
-			        "start": 364.37,
-			        "word": " to",
-			      },
-			      {
-			        "end": 364.92,
-			        "start": 364.52,
-			        "word": " lithium",
-			      },
-			      {
-			        "end": 365.04,
-			        "start": 364.92,
-			        "word": ",",
-			      },
-			      {
-			        "end": 365.66,
-			        "start": 365.04,
-			        "word": " even",
-			      },
-			      {
-			        "end": 365.89,
-			        "start": 365.66,
-			        "word": " bearing",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 372.11,
-			    "start": 366.89,
-			    "text": "And so perhaps it just might be you know there are lots of minerals in Ukraine. But for the most part",
-			    "words": [
-			      {
-			        "end": 367.16,
-			        "start": 366.89,
-			        "word": " And",
-			      },
-			      {
-			        "end": 367.68,
-			        "start": 367.16,
-			        "word": " so",
-			      },
-			      {
-			        "end": 367.81,
-			        "start": 367.68,
-			        "word": " perhaps",
-			      },
-			      {
-			        "end": 367.96,
-			        "start": 367.81,
-			        "word": " it",
-			      },
-			      {
-			        "end": 368.26,
-			        "start": 367.96,
-			        "word": " just",
-			      },
-			      {
-			        "end": 368.66,
-			        "start": 368.26,
-			        "word": " might",
-			      },
-			      {
-			        "end": 368.81,
-			        "start": 368.66,
-			        "word": " be",
-			      },
-			      {
-			        "end": 368.96,
-			        "start": 368.81,
-			        "word": ",",
-			      },
-			      {
-			        "end": 369.21,
-			        "start": 368.96,
-			        "word": " you",
-			      },
-			      {
-			        "end": 369.5,
-			        "start": 369.21,
-			        "word": " know",
-			      },
-			      {
-			        "end": 369.84,
-			        "start": 369.5,
-			        "word": ",",
-			      },
-			      {
-			        "end": 370.22,
-			        "start": 369.84,
-			        "word": " there",
-			      },
-			      {
-			        "end": 370.27,
-			        "start": 370.22,
-			        "word": " are",
-			      },
-			      {
-			        "end": 370.59,
-			        "start": 370.27,
-			        "word": " lots",
-			      },
-			      {
-			        "end": 370.73,
-			        "start": 370.59,
-			        "word": " of",
-			      },
-			      {
-			        "end": 371.46,
-			        "start": 370.73,
-			        "word": " minerals",
-			      },
-			      {
-			        "end": 371.76,
-			        "start": 371.46,
-			        "word": " in",
-			      },
-			      {
-			        "end": 371.76,
-			        "start": 371.76,
-			        "word": "",
-			      },
-			      {
-			        "end": 372.11,
-			        "start": 371.76,
-			        "word": " Ukraine",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 374.17,
-			    "start": 373.21,
-			    "text": "it's the old fashioned stuff",
-			    "words": [
-			      {
-			        "end": 373.35,
-			        "start": 373.21,
-			        "word": " it",
-			      },
-			      {
-			        "end": 373.41,
-			        "start": 373.35,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 373.57,
-			        "start": 373.41,
-			        "word": " the",
-			      },
-			      {
-			        "end": 373.71,
-			        "start": 373.57,
-			        "word": " old",
-			      },
-			      {
-			        "end": 374.17,
-			        "start": 373.71,
-			        "word": " fashioned",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 377.63,
-			    "start": 374.6,
-			    "text": "It's coal it's iron ore there's lots of iron ore around",
-			    "words": [
-			      {
-			        "end": 375.01,
-			        "start": 374.6,
-			        "word": " It",
-			      },
-			      {
-			        "end": 375.06,
-			        "start": 375.01,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 375.48,
-			        "start": 375.06,
-			        "word": " coal",
-			      },
-			      {
-			        "end": 375.7,
-			        "start": 375.48,
-			        "word": ",",
-			      },
-			      {
-			        "end": 375.95,
-			        "start": 375.7,
-			        "word": " it",
-			      },
-			      {
-			        "end": 376.05,
-			        "start": 375.95,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 376.41,
-			        "start": 376.05,
-			        "word": " iron",
-			      },
-			      {
-			        "end": 376.63,
-			        "start": 376.41,
-			        "word": " ore",
-			      },
-			      {
-			        "end": 376.82,
-			        "start": 376.63,
-			        "word": ",",
-			      },
-			      {
-			        "end": 376.92,
-			        "start": 376.82,
-			        "word": " there",
-			      },
-			      {
-			        "end": 376.98,
-			        "start": 376.92,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 377.24,
-			        "start": 376.98,
-			        "word": " lots",
-			      },
-			      {
-			        "end": 377.37,
-			        "start": 377.24,
-			        "word": " of",
-			      },
-			      {
-			        "end": 377.63,
-			        "start": 377.37,
-			        "word": " iron",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 380.58,
-			    "start": 378.46,
-			    "text": "around there. And it's also things like titanium",
-			    "words": [
-			      {
-			        "end": 378.72,
-			        "start": 378.46,
-			        "word": " around",
-			      },
-			      {
-			        "end": 379.04,
-			        "start": 378.72,
-			        "word": " there",
-			      },
-			      {
-			        "end": 379.42,
-			        "start": 379.04,
-			        "word": ".",
-			      },
-			      {
-			        "end": 379.45,
-			        "start": 379.42,
-			        "word": " And",
-			      },
-			      {
-			        "end": 379.55,
-			        "start": 379.45,
-			        "word": " it",
-			      },
-			      {
-			        "end": 379.67,
-			        "start": 379.55,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 379.93,
-			        "start": 379.67,
-			        "word": " also",
-			      },
-			      {
-			        "end": 380.32,
-			        "start": 379.93,
-			        "word": " things",
-			      },
-			      {
-			        "end": 380.58,
-			        "start": 380.32,
-			        "word": " like",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 386.54,
-			    "start": 381.44,
-			    "text": "And so probably the most plausible explanation is that the president maybe thinks he can make some money out of those things",
-			    "words": [
-			      {
-			        "end": 381.48,
-			        "start": 381.44,
-			        "word": " And",
-			      },
-			      {
-			        "end": 381.61,
-			        "start": 381.48,
-			        "word": " so",
-			      },
-			      {
-			        "end": 382.14,
-			        "start": 381.61,
-			        "word": " probably",
-			      },
-			      {
-			        "end": 382.38,
-			        "start": 382.14,
-			        "word": " the",
-			      },
-			      {
-			        "end": 382.56,
-			        "start": 382.38,
-			        "word": " most",
-			      },
-			      {
-			        "end": 383.09,
-			        "start": 382.56,
-			        "word": " plausible",
-			      },
-			      {
-			        "end": 383.73,
-			        "start": 383.09,
-			        "word": " explanation",
-			      },
-			      {
-			        "end": 383.86,
-			        "start": 383.73,
-			        "word": " is",
-			      },
-			      {
-			        "end": 384.28,
-			        "start": 383.86,
-			        "word": " that",
-			      },
-			      {
-			        "end": 384.31,
-			        "start": 384.28,
-			        "word": " the",
-			      },
-			      {
-			        "end": 384.81,
-			        "start": 384.31,
-			        "word": " president",
-			      },
-			      {
-			        "end": 385.15,
-			        "start": 384.81,
-			        "word": " maybe",
-			      },
-			      {
-			        "end": 385.46,
-			        "start": 385.15,
-			        "word": " thinks",
-			      },
-			      {
-			        "end": 385.58,
-			        "start": 385.46,
-			        "word": " he",
-			      },
-			      {
-			        "end": 385.8,
-			        "start": 385.58,
-			        "word": " can",
-			      },
-			      {
-			        "end": 386,
-			        "start": 385.8,
-			        "word": " make",
-			      },
-			      {
-			        "end": 386.24,
-			        "start": 386,
-			        "word": " some",
-			      },
-			      {
-			        "end": 386.54,
-			        "start": 386.24,
-			        "word": " money",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 390.25,
-			    "start": 387.72,
-			    "text": "But I would still question even bearing all of that in mind",
-			    "words": [
-			      {
-			        "end": 387.91,
-			        "start": 387.72,
-			        "word": " But",
-			      },
-			      {
-			        "end": 387.96,
-			        "start": 387.91,
-			        "word": " I",
-			      },
-			      {
-			        "end": 388.54,
-			        "start": 387.96,
-			        "word": " would",
-			      },
-			      {
-			        "end": 388.61,
-			        "start": 388.54,
-			        "word": " still",
-			      },
-			      {
-			        "end": 389.19,
-			        "start": 388.61,
-			        "word": " question",
-			      },
-			      {
-			        "end": 389.24,
-			        "start": 389.19,
-			        "word": ",",
-			      },
-			      {
-			        "end": 389.49,
-			        "start": 389.24,
-			        "word": " even",
-			      },
-			      {
-			        "end": 389.94,
-			        "start": 389.49,
-			        "word": " bearing",
-			      },
-			      {
-			        "end": 390.13,
-			        "start": 389.94,
-			        "word": " all",
-			      },
-			      {
-			        "end": 390.25,
-			        "start": 390.13,
-			        "word": " of",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 395.28,
-			    "start": 391.08,
-			    "text": "it's going to be very difficult to get to that $500 billion total",
-			    "words": [
-			      {
-			        "end": 391.2,
-			        "start": 391.08,
-			        "word": " it",
-			      },
-			      {
-			        "end": 391.6,
-			        "start": 391.2,
-			        "word": "'s",
-			      },
-			      {
-			        "end": 391.61,
-			        "start": 391.6,
-			        "word": " going",
-			      },
-			      {
-			        "end": 391.75,
-			        "start": 391.61,
-			        "word": " to",
-			      },
-			      {
-			        "end": 391.84,
-			        "start": 391.75,
-			        "word": " be",
-			      },
-			      {
-			        "end": 392.09,
-			        "start": 391.84,
-			        "word": " very",
-			      },
-			      {
-			        "end": 392.64,
-			        "start": 392.09,
-			        "word": " difficult",
-			      },
-			      {
-			        "end": 392.9,
-			        "start": 392.64,
-			        "word": " to",
-			      },
-			      {
-			        "end": 393.11,
-			        "start": 392.9,
-			        "word": " get",
-			      },
-			      {
-			        "end": 393.2,
-			        "start": 393.11,
-			        "word": " to",
-			      },
-			      {
-			        "end": 393.21,
-			        "start": 393.2,
-			        "word": "",
-			      },
-			      {
-			        "end": 393.55,
-			        "start": 393.21,
-			        "word": " that",
-			      },
-			      {
-			        "end": 393.55,
-			        "start": 393.55,
-			        "word": " $",
-			      },
-			      {
-			        "end": 394.38,
-			        "start": 393.55,
-			        "word": "500",
-			      },
-			      {
-			        "end": 394.69,
-			        "start": 394.38,
-			        "word": " billion",
-			      },
-			      {
-			        "end": 395.07,
-			        "start": 394.69,
-			        "word": " total",
-			      },
-			      {
-			        "end": 395.28,
-			        "start": 395.07,
-			        "word": ".",
-			      },
-			    ],
-			  },
+			// `)
+
+			const sentences = [
+				"It's the moment we've all been waiting for.",
+				'A brand new, game-changing, blazingly fast JavaScript framework just hit the timeline.',
+				'Yesterday, ByteDance, the company that gave the world the gift of social media crack via TikTok,',
+				'gave the world another gift in the form of an open-source, multi-platform app development framework called Lynx.',
+				'Developers can throw fossilized relics like React Native and Flutter in the garbage',
+				'and rewrite their native mobile apps from scratch with shiny new Rust-based tooling',
+				'and a high-performance, dual-threaded UI rendering engine.',
+				'Like React Native, it empowers web developers to build shoddy iOS and Android apps with JavaScript,',
+				'but Lynx claims to achieve smoother, pixel-perfect UIs and faster launch times compared to other cross-platform tools.',
+				"That's a big claim, and in today's video we'll try out Lynx and find out if it's a legit React Native killer.",
+				"It is March 6, 2025, and you're watching The Code Report.",
+				'Lynx is not just another half-baked GitHub project written by a 19-year-old on prescription amphetamines.',
+				"It's not the terminal browser with the same name,",
+				"but rather a production-ready framework that's already in use in high-traffic apps at TikTok.",
+				"It doesn't power the main TikTok app where you would post your cringe dance videos,",
+				'but it does power the search panel, TikTok Studio, and a bunch of other ancillary apps.',
+				'I find this very interesting because ByteDance was one of the early adopters of Flutter',
+				'and is still on the Flutter showcase today.',
+				'In addition, if they wanted to use web technologies to build mobile apps,',
+				'why not just use something like React Native, Ionic, or NativeScript instead of reinventing the wheel?',
+				'Well, the unspoken reason is that creating new frameworks gives us developers job security,',
+				'but the official reason in their blog post is mostly about performance.',
+				'Performance.',
+				'Throughout history, many people have criticized React Native for not feeling truly native,',
+				"and that's because it relies on a single-threaded JavaScript bridge",
+				'that allows JavaScript code to communicate with native code, like Swift on iOS or Kotlin on Android,',
+				'but that single-threaded bridge is a big bottleneck that can create performance issues.',
+				"Are you saying there's something wrong with my gear?",
+				"Is that what you're saying to me?",
+				'The React Native team has addressed this by building a custom engine called Hermes',
+				'and released the fabric renderer a few years ago,',
+				'which some have called the new and improved bridge or a bridgeless architecture.',
+				'But ByteDance has taken a different approach with Lynx using a dual-threaded architecture,',
+				'where user code and framework code are split into two distinct runtimes.',
+				'The main thread is powered by Prim.js, which itself is built on Quick.js,',
+				'which is a tiny 210-kilobyte JavaScript engine.',
+				'Its job is to handle synchronous UI tasks like event handling,',
+				'while user code runs on a separate thread,',
+				"which means the crappy, inefficient code you write won't block the main thread and degrade performance.",
+				'And the end result is instant first frame rendering for the end user.',
+				'Or in other words, no blank screens.',
+				"That's pretty cool, but what's even more awesome is that this engine is framework-agnostic.",
+				"You don't have to use React, and could build your app and Svelte, Vue, or whatever framework you want.",
+				'In addition, it supports actual native CSS features for styling,',
+				'like transition animations, variables, gradients, and so on.',
+				"And that's a lot more intuitive for web developers.",
+				"The major problem, though, is that there's virtually no ecosystem around this framework.",
+				"There's no expo tooling to solve all your problems,",
+				"and there's no massive widget library like you have in Flutter.",
+				"That being said, let's go ahead and try it out to find out if it has any potential.",
+				"When you generate a project, the first thing you'll notice is that it uses RSPack,",
+				"which is a Rust-based module bundler that's supposedly even faster than Vite.",
+				"That'll generate a starter template in TypeScript,",
+				'and if we look at the code, it looks like a basic React.js project,',
+				'where the UI is represented with HTML and CSS.',
+				"But if we take a closer look at the markup, you'll notice we're using non-standard elements like Vue, Text, and Image.",
+				'These look like HTML tags, but they actually correspond to native elements on different platforms,',
+				'like Vue is UIView in iOS, or VueGroup in Android,',
+				'but would translate to a div on the web.',
+				"And what's especially awesome here is that we can use regular CSS or even Tailwind to style these elements,",
+				"which is something you can't really do in React Native,",
+				'although you could use tools like NativeWind.',
+				"But now let's go ahead and run it.",
+				'The easiest way to run it on mobile is to use the Lynx Explorer app,',
+				'which allows you to live preview it on your phone.',
+				'But when I tried to compile it on Windows, I immediately got an error.',
+				'So I tried to switch to the Windows subsystem for Linux,',
+				'and while it compiled, I could never actually get it to run on the Explorer app.',
+				'So finally, I had to dust off my old MacBook,',
+				'and everything seemed to work a lot smoother on macOS.',
+				'And as you can see here, when I make changes to my code locally,',
+				"it'll automatically re-render the demo on my phone.",
+				'Impressive, very nice, I think Lynx has a lot of potential.',
+				"And that's bad news because it means I need to rewrite all my code with this shiny new object.",
+				'At least I can review all that code automatically thanks to CodeRabbit,',
+				"the sponsor of today's video.",
+				'An AI co-pilot for code reviews that gives you instant feedback on every pull request.',
+				'Unlike basic linters, it understands your entire code base,',
+				'so it can catch more subtle issues like bad code style or missing test coverage.',
+				'Then it will suggest simple one-click fixes to help you get things cleaned up quickly.',
+				'CodeRabbit keeps learning from your PRs over time,',
+				'so the more you use it, the smarter it gets.',
+				"It's 100% free for open source projects,",
+				'but you can get one month free for your team using the code Fireship with the link below.',
+				'This has been The Code Report, thanks for watching,',
+				'and I will see you in the next one.',
 			]
-		`)
-	})
-})
+
+			const result = alignWordsAndSentences(words, sentences)
+			expect(result).toMatchInlineSnapshot(`
+				[
+				  {
+				    "end": 1.76,
+				    "start": 0.09,
+				    "text": "It's the moment we've all been waiting for.",
+				    "words": [
+				      {
+				        "end": 0.09,
+				        "start": 0.09,
+				        "word": " It",
+				      },
+				      {
+				        "end": 0.18,
+				        "start": 0.09,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 0.31,
+				        "start": 0.18,
+				        "word": " the",
+				      },
+				      {
+				        "end": 0.58,
+				        "start": 0.31,
+				        "word": " moment",
+				      },
+				      {
+				        "end": 0.67,
+				        "start": 0.58,
+				        "word": " we",
+				      },
+				      {
+				        "end": 0.8,
+				        "start": 0.67,
+				        "word": "'ve",
+				      },
+				      {
+				        "end": 0.93,
+				        "start": 0.8,
+				        "word": " all",
+				      },
+				      {
+				        "end": 1.11,
+				        "start": 0.93,
+				        "word": " been",
+				      },
+				      {
+				        "end": 1.43,
+				        "start": 1.11,
+				        "word": " waiting",
+				      },
+				      {
+				        "end": 1.56,
+				        "start": 1.43,
+				        "word": " for",
+				      },
+				      {
+				        "end": 1.76,
+				        "start": 1.56,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 6.16,
+				    "start": 1.76,
+				    "text": "A brand new, game-changing, blazingly fast JavaScript framework just hit the timeline.",
+				    "words": [
+				      {
+				        "end": 1.93,
+				        "start": 1.76,
+				        "word": " A",
+				      },
+				      {
+				        "end": 2.13,
+				        "start": 1.93,
+				        "word": " brand",
+				      },
+				      {
+				        "end": 2.24,
+				        "start": 2.13,
+				        "word": " new",
+				      },
+				      {
+				        "end": 2.35,
+				        "start": 2.24,
+				        "word": ",",
+				      },
+				      {
+				        "end": 2.57,
+				        "start": 2.35,
+				        "word": " game",
+				      },
+				      {
+				        "end": 2.62,
+				        "start": 2.57,
+				        "word": "-",
+				      },
+				      {
+				        "end": 3.06,
+				        "start": 2.62,
+				        "word": "changing",
+				      },
+				      {
+				        "end": 3.17,
+				        "start": 3.06,
+				        "word": ",",
+				      },
+				      {
+				        "end": 3.33,
+				        "start": 3.17,
+				        "word": " bla",
+				      },
+				      {
+				        "end": 3.55,
+				        "start": 3.33,
+				        "word": "zing",
+				      },
+				      {
+				        "end": 3.66,
+				        "start": 3.55,
+				        "word": "ly",
+				      },
+				      {
+				        "end": 3.88,
+				        "start": 3.66,
+				        "word": " fast",
+				      },
+				      {
+				        "end": 4.43,
+				        "start": 3.88,
+				        "word": " JavaScript",
+				      },
+				      {
+				        "end": 4.93,
+				        "start": 4.43,
+				        "word": " framework",
+				      },
+				      {
+				        "end": 5.15,
+				        "start": 4.93,
+				        "word": " just",
+				      },
+				      {
+				        "end": 5.31,
+				        "start": 5.15,
+				        "word": " hit",
+				      },
+				      {
+				        "end": 5.47,
+				        "start": 5.31,
+				        "word": " the",
+				      },
+				      {
+				        "end": 5.91,
+				        "start": 5.47,
+				        "word": " timeline",
+				      },
+				      {
+				        "end": 6.16,
+				        "start": 5.91,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 10.99,
+				    "start": 6.16,
+				    "text": "Yesterday, ByteDance, the company that gave the world the gift of social media crack via TikTok,",
+				    "words": [
+				      {
+				        "end": 6.7,
+				        "start": 6.16,
+				        "word": " Yesterday",
+				      },
+				      {
+				        "end": 6.82,
+				        "start": 6.7,
+				        "word": ",",
+				      },
+				      {
+				        "end": 6.96,
+				        "start": 6.82,
+				        "word": " By",
+				      },
+				      {
+				        "end": 7.06,
+				        "start": 6.96,
+				        "word": "te",
+				      },
+				      {
+				        "end": 7.21,
+				        "start": 7.06,
+				        "word": "D",
+				      },
+				      {
+				        "end": 7.36,
+				        "start": 7.21,
+				        "word": "ance",
+				      },
+				      {
+				        "end": 7.48,
+				        "start": 7.36,
+				        "word": ",",
+				      },
+				      {
+				        "end": 7.66,
+				        "start": 7.48,
+				        "word": " the",
+				      },
+				      {
+				        "end": 8.08,
+				        "start": 7.66,
+				        "word": " company",
+				      },
+				      {
+				        "end": 8.33,
+				        "start": 8.08,
+				        "word": " that",
+				      },
+				      {
+				        "end": 8.56,
+				        "start": 8.33,
+				        "word": " gave",
+				      },
+				      {
+				        "end": 8.74,
+				        "start": 8.56,
+				        "word": " the",
+				      },
+				      {
+				        "end": 9.07,
+				        "start": 8.74,
+				        "word": " world",
+				      },
+				      {
+				        "end": 9.29,
+				        "start": 9.07,
+				        "word": " the",
+				      },
+				      {
+				        "end": 9.46,
+				        "start": 9.29,
+				        "word": " gift",
+				      },
+				      {
+				        "end": 9.58,
+				        "start": 9.46,
+				        "word": " of",
+				      },
+				      {
+				        "end": 9.94,
+				        "start": 9.58,
+				        "word": " social",
+				      },
+				      {
+				        "end": 10.27,
+				        "start": 9.94,
+				        "word": " media",
+				      },
+				      {
+				        "end": 10.54,
+				        "start": 10.27,
+				        "word": " crack",
+				      },
+				      {
+				        "end": 10.74,
+				        "start": 10.54,
+				        "word": " via",
+				      },
+				      {
+				        "end": 10.99,
+				        "start": 10.74,
+				        "word": " TikTok",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 16.48,
+				    "start": 11.08,
+				    "text": "gave the world another gift in the form of an open-source, multi-platform app development framework called Lynx.",
+				    "words": [
+				      {
+				        "end": 11.31,
+				        "start": 11.08,
+				        "word": " gave",
+				      },
+				      {
+				        "end": 11.48,
+				        "start": 11.31,
+				        "word": " the",
+				      },
+				      {
+				        "end": 11.77,
+				        "start": 11.48,
+				        "word": " world",
+				      },
+				      {
+				        "end": 12.18,
+				        "start": 11.77,
+				        "word": " another",
+				      },
+				      {
+				        "end": 12.41,
+				        "start": 12.18,
+				        "word": " gift",
+				      },
+				      {
+				        "end": 12.52,
+				        "start": 12.41,
+				        "word": " in",
+				      },
+				      {
+				        "end": 12.69,
+				        "start": 12.52,
+				        "word": " the",
+				      },
+				      {
+				        "end": 12.92,
+				        "start": 12.69,
+				        "word": " form",
+				      },
+				      {
+				        "end": 13.03,
+				        "start": 12.92,
+				        "word": " of",
+				      },
+				      {
+				        "end": 13.14,
+				        "start": 13.03,
+				        "word": " an",
+				      },
+				      {
+				        "end": 13.37,
+				        "start": 13.14,
+				        "word": " open",
+				      },
+				      {
+				        "end": 13.42,
+				        "start": 13.37,
+				        "word": "-",
+				      },
+				      {
+				        "end": 13.77,
+				        "start": 13.42,
+				        "word": "source",
+				      },
+				      {
+				        "end": 13.98,
+				        "start": 13.77,
+				        "word": ",",
+				      },
+				      {
+				        "end": 14.28,
+				        "start": 13.98,
+				        "word": " multi",
+				      },
+				      {
+				        "end": 14.32,
+				        "start": 14.28,
+				        "word": "-",
+				      },
+				      {
+				        "end": 14.55,
+				        "start": 14.32,
+				        "word": "plat",
+				      },
+				      {
+				        "end": 14.78,
+				        "start": 14.55,
+				        "word": "form",
+				      },
+				      {
+				        "end": 14.95,
+				        "start": 14.78,
+				        "word": " app",
+				      },
+				      {
+				        "end": 15.62,
+				        "start": 14.95,
+				        "word": " development",
+				      },
+				      {
+				        "end": 16.14,
+				        "start": 15.62,
+				        "word": " framework",
+				      },
+				      {
+				        "end": 16.48,
+				        "start": 16.14,
+				        "word": " called",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 20.64,
+				    "start": 16.9,
+				    "text": "Developers can throw fossilized relics like React Native and Flutter in the garbage",
+				    "words": [
+				      {
+				        "end": 17.26,
+				        "start": 16.9,
+				        "word": " Develop",
+				      },
+				      {
+				        "end": 17.41,
+				        "start": 17.26,
+				        "word": "ers",
+				      },
+				      {
+				        "end": 17.57,
+				        "start": 17.41,
+				        "word": " can",
+				      },
+				      {
+				        "end": 17.82,
+				        "start": 17.57,
+				        "word": " throw",
+				      },
+				      {
+				        "end": 18.13,
+				        "start": 17.82,
+				        "word": " fossil",
+				      },
+				      {
+				        "end": 18.34,
+				        "start": 18.13,
+				        "word": "ized",
+				      },
+				      {
+				        "end": 18.5,
+				        "start": 18.34,
+				        "word": " rel",
+				      },
+				      {
+				        "end": 18.64,
+				        "start": 18.5,
+				        "word": "ics",
+				      },
+				      {
+				        "end": 18.85,
+				        "start": 18.64,
+				        "word": " like",
+				      },
+				      {
+				        "end": 19.12,
+				        "start": 18.85,
+				        "word": " React",
+				      },
+				      {
+				        "end": 19.42,
+				        "start": 19.12,
+				        "word": " Native",
+				      },
+				      {
+				        "end": 19.57,
+				        "start": 19.42,
+				        "word": " and",
+				      },
+				      {
+				        "end": 19.67,
+				        "start": 19.57,
+				        "word": " Fl",
+				      },
+				      {
+				        "end": 19.93,
+				        "start": 19.67,
+				        "word": "utter",
+				      },
+				      {
+				        "end": 20.03,
+				        "start": 19.93,
+				        "word": " in",
+				      },
+				      {
+				        "end": 20.18,
+				        "start": 20.03,
+				        "word": " the",
+				      },
+				      {
+				        "end": 20.64,
+				        "start": 20.18,
+				        "word": " garbage",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 24.66,
+				    "start": 20.64,
+				    "text": "and rewrite their native mobile apps from scratch with shiny new Rust-based tooling",
+				    "words": [
+				      {
+				        "end": 20.82,
+				        "start": 20.64,
+				        "word": " and",
+				      },
+				      {
+				        "end": 21.2,
+				        "start": 20.82,
+				        "word": " rewrite",
+				      },
+				      {
+				        "end": 21.48,
+				        "start": 21.2,
+				        "word": " their",
+				      },
+				      {
+				        "end": 21.81,
+				        "start": 21.48,
+				        "word": " native",
+				      },
+				      {
+				        "end": 22.14,
+				        "start": 21.81,
+				        "word": " mobile",
+				      },
+				      {
+				        "end": 22.36,
+				        "start": 22.14,
+				        "word": " apps",
+				      },
+				      {
+				        "end": 22.58,
+				        "start": 22.36,
+				        "word": " from",
+				      },
+				      {
+				        "end": 22.97,
+				        "start": 22.58,
+				        "word": " scratch",
+				      },
+				      {
+				        "end": 23.19,
+				        "start": 22.97,
+				        "word": " with",
+				      },
+				      {
+				        "end": 23.47,
+				        "start": 23.19,
+				        "word": " shiny",
+				      },
+				      {
+				        "end": 23.64,
+				        "start": 23.47,
+				        "word": " new",
+				      },
+				      {
+				        "end": 23.86,
+				        "start": 23.64,
+				        "word": " Rust",
+				      },
+				      {
+				        "end": 23.91,
+				        "start": 23.86,
+				        "word": "-",
+				      },
+				      {
+				        "end": 24.19,
+				        "start": 23.91,
+				        "word": "based",
+				      },
+				      {
+				        "end": 24.66,
+				        "start": 24.19,
+				        "word": " tooling",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 27.64,
+				    "start": 24.66,
+				    "text": "and a high-performance, dual-threaded UI rendering engine.",
+				    "words": [
+				      {
+				        "end": 24.82,
+				        "start": 24.66,
+				        "word": " and",
+				      },
+				      {
+				        "end": 24.87,
+				        "start": 24.82,
+				        "word": " a",
+				      },
+				      {
+				        "end": 25.08,
+				        "start": 24.87,
+				        "word": " high",
+				      },
+				      {
+				        "end": 25.13,
+				        "start": 25.08,
+				        "word": "-",
+				      },
+				      {
+				        "end": 25.72,
+				        "start": 25.13,
+				        "word": "performance",
+				      },
+				      {
+				        "end": 25.82,
+				        "start": 25.72,
+				        "word": ",",
+				      },
+				      {
+				        "end": 26.03,
+				        "start": 25.82,
+				        "word": " dual",
+				      },
+				      {
+				        "end": 26.08,
+				        "start": 26.03,
+				        "word": "-",
+				      },
+				      {
+				        "end": 26.24,
+				        "start": 26.08,
+				        "word": "th",
+				      },
+				      {
+				        "end": 26.39,
+				        "start": 26.24,
+				        "word": "read",
+				      },
+				      {
+				        "end": 26.49,
+				        "start": 26.39,
+				        "word": "ed",
+				      },
+				      {
+				        "end": 26.59,
+				        "start": 26.49,
+				        "word": " UI",
+				      },
+				      {
+				        "end": 27.07,
+				        "start": 26.59,
+				        "word": " rendering",
+				      },
+				      {
+				        "end": 27.39,
+				        "start": 27.07,
+				        "word": " engine",
+				      },
+				      {
+				        "end": 27.64,
+				        "start": 27.39,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 32.44,
+				    "start": 27.64,
+				    "text": "Like React Native, it empowers web developers to build shoddy iOS and Android apps with JavaScript,",
+				    "words": [
+				      {
+				        "end": 27.87,
+				        "start": 27.64,
+				        "word": " Like",
+				      },
+				      {
+				        "end": 28.16,
+				        "start": 27.87,
+				        "word": " React",
+				      },
+				      {
+				        "end": 28.5,
+				        "start": 28.16,
+				        "word": " Native",
+				      },
+				      {
+				        "end": 28.61,
+				        "start": 28.5,
+				        "word": ",",
+				      },
+				      {
+				        "end": 28.75,
+				        "start": 28.61,
+				        "word": " it",
+				      },
+				      {
+				        "end": 28.89,
+				        "start": 28.75,
+				        "word": " emp",
+				      },
+				      {
+				        "end": 29.18,
+				        "start": 28.89,
+				        "word": "owers",
+				      },
+				      {
+				        "end": 29.35,
+				        "start": 29.18,
+				        "word": " web",
+				      },
+				      {
+				        "end": 29.93,
+				        "start": 29.35,
+				        "word": " developers",
+				      },
+				      {
+				        "end": 30.04,
+				        "start": 29.93,
+				        "word": " to",
+				      },
+				      {
+				        "end": 30.33,
+				        "start": 30.04,
+				        "word": " build",
+				      },
+				      {
+				        "end": 30.44,
+				        "start": 30.33,
+				        "word": " sh",
+				      },
+				      {
+				        "end": 30.55,
+				        "start": 30.44,
+				        "word": "od",
+				      },
+				      {
+				        "end": 30.66,
+				        "start": 30.55,
+				        "word": "dy",
+				      },
+				      {
+				        "end": 30.83,
+				        "start": 30.66,
+				        "word": " iOS",
+				      },
+				      {
+				        "end": 31,
+				        "start": 30.83,
+				        "word": " and",
+				      },
+				      {
+				        "end": 31.4,
+				        "start": 31,
+				        "word": " Android",
+				      },
+				      {
+				        "end": 31.63,
+				        "start": 31.4,
+				        "word": " apps",
+				      },
+				      {
+				        "end": 31.86,
+				        "start": 31.63,
+				        "word": " with",
+				      },
+				      {
+				        "end": 32.44,
+				        "start": 31.86,
+				        "word": " JavaScript",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 39.34,
+				    "start": 32.64,
+				    "text": "but Lynx claims to achieve smoother, pixel-perfect UIs and faster launch times compared to other cross-platform tools.",
+				    "words": [
+				      {
+				        "end": 32.88,
+				        "start": 32.64,
+				        "word": " but",
+				      },
+				      {
+				        "end": 33.04,
+				        "start": 32.88,
+				        "word": " Lyn",
+				      },
+				      {
+				        "end": 33.1,
+				        "start": 33.04,
+				        "word": "x",
+				      },
+				      {
+				        "end": 33.51,
+				        "start": 33.1,
+				        "word": " claims",
+				      },
+				      {
+				        "end": 33.64,
+				        "start": 33.51,
+				        "word": " to",
+				      },
+				      {
+				        "end": 34.12,
+				        "start": 33.64,
+				        "word": " achieve",
+				      },
+				      {
+				        "end": 34.67,
+				        "start": 34.12,
+				        "word": " smoother",
+				      },
+				      {
+				        "end": 34.83,
+				        "start": 34.67,
+				        "word": ",",
+				      },
+				      {
+				        "end": 35.16,
+				        "start": 34.83,
+				        "word": " pixel",
+				      },
+				      {
+				        "end": 35.2,
+				        "start": 35.16,
+				        "word": "-",
+				      },
+				      {
+				        "end": 35.4,
+				        "start": 35.2,
+				        "word": "per",
+				      },
+				      {
+				        "end": 35.67,
+				        "start": 35.4,
+				        "word": "fect",
+				      },
+				      {
+				        "end": 35.74,
+				        "start": 35.67,
+				        "word": " U",
+				      },
+				      {
+				        "end": 35.98,
+				        "start": 35.74,
+				        "word": "Is",
+				      },
+				      {
+				        "end": 36.18,
+				        "start": 35.98,
+				        "word": " and",
+				      },
+				      {
+				        "end": 36.59,
+				        "start": 36.18,
+				        "word": " faster",
+				      },
+				      {
+				        "end": 37.01,
+				        "start": 36.59,
+				        "word": " launch",
+				      },
+				      {
+				        "end": 37.36,
+				        "start": 37.01,
+				        "word": " times",
+				      },
+				      {
+				        "end": 37.84,
+				        "start": 37.36,
+				        "word": " compared",
+				      },
+				      {
+				        "end": 37.93,
+				        "start": 37.84,
+				        "word": " to",
+				      },
+				      {
+				        "end": 38.24,
+				        "start": 37.93,
+				        "word": " other",
+				      },
+				      {
+				        "end": 38.5,
+				        "start": 38.24,
+				        "word": " cross",
+				      },
+				      {
+				        "end": 38.58,
+				        "start": 38.5,
+				        "word": "-",
+				      },
+				      {
+				        "end": 38.72,
+				        "start": 38.58,
+				        "word": "plat",
+				      },
+				      {
+				        "end": 38.91,
+				        "start": 38.72,
+				        "word": "form",
+				      },
+				      {
+				        "end": 39.16,
+				        "start": 38.91,
+				        "word": " tools",
+				      },
+				      {
+				        "end": 39.34,
+				        "start": 39.16,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 44.48,
+				    "start": 39.34,
+				    "text": "That's a big claim, and in today's video we'll try out Lynx and find out if it's a legit React Native killer.",
+				    "words": [
+				      {
+				        "end": 39.56,
+				        "start": 39.34,
+				        "word": " That",
+				      },
+				      {
+				        "end": 39.69,
+				        "start": 39.56,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 39.72,
+				        "start": 39.69,
+				        "word": " a",
+				      },
+				      {
+				        "end": 39.88,
+				        "start": 39.72,
+				        "word": " big",
+				      },
+				      {
+				        "end": 40.16,
+				        "start": 39.88,
+				        "word": " claim",
+				      },
+				      {
+				        "end": 40.27,
+				        "start": 40.16,
+				        "word": ",",
+				      },
+				      {
+				        "end": 40.44,
+				        "start": 40.27,
+				        "word": " and",
+				      },
+				      {
+				        "end": 40.54,
+				        "start": 40.44,
+				        "word": " in",
+				      },
+				      {
+				        "end": 40.82,
+				        "start": 40.54,
+				        "word": " today",
+				      },
+				      {
+				        "end": 40.93,
+				        "start": 40.82,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 41.21,
+				        "start": 40.93,
+				        "word": " video",
+				      },
+				      {
+				        "end": 41.32,
+				        "start": 41.21,
+				        "word": " we",
+				      },
+				      {
+				        "end": 41.48,
+				        "start": 41.32,
+				        "word": "'ll",
+				      },
+				      {
+				        "end": 41.64,
+				        "start": 41.48,
+				        "word": " try",
+				      },
+				      {
+				        "end": 41.84,
+				        "start": 41.64,
+				        "word": " out",
+				      },
+				      {
+				        "end": 41.96,
+				        "start": 41.84,
+				        "word": " Lyn",
+				      },
+				      {
+				        "end": 42.01,
+				        "start": 41.96,
+				        "word": "x",
+				      },
+				      {
+				        "end": 42.17,
+				        "start": 42.01,
+				        "word": " and",
+				      },
+				      {
+				        "end": 42.39,
+				        "start": 42.17,
+				        "word": " find",
+				      },
+				      {
+				        "end": 42.55,
+				        "start": 42.39,
+				        "word": " out",
+				      },
+				      {
+				        "end": 42.67,
+				        "start": 42.55,
+				        "word": " if",
+				      },
+				      {
+				        "end": 42.77,
+				        "start": 42.67,
+				        "word": " it",
+				      },
+				      {
+				        "end": 42.88,
+				        "start": 42.77,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 42.92,
+				        "start": 42.88,
+				        "word": " a",
+				      },
+				      {
+				        "end": 43.21,
+				        "start": 42.92,
+				        "word": " legit",
+				      },
+				      {
+				        "end": 43.49,
+				        "start": 43.21,
+				        "word": " React",
+				      },
+				      {
+				        "end": 43.82,
+				        "start": 43.49,
+				        "word": " Native",
+				      },
+				      {
+				        "end": 44.15,
+				        "start": 43.82,
+				        "word": " killer",
+				      },
+				      {
+				        "end": 44.48,
+				        "start": 44.15,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 47.98,
+				    "start": 44.48,
+				    "text": "It is March 6, 2025, and you're watching The Code Report.",
+				    "words": [
+				      {
+				        "end": 44.59,
+				        "start": 44.48,
+				        "word": " It",
+				      },
+				      {
+				        "end": 44.79,
+				        "start": 44.59,
+				        "word": " is",
+				      },
+				      {
+				        "end": 44.98,
+				        "start": 44.79,
+				        "word": " March",
+				      },
+				      {
+				        "end": 45.15,
+				        "start": 44.98,
+				        "word": " 6",
+				      },
+				      {
+				        "end": 45.26,
+				        "start": 45.15,
+				        "word": ",",
+				      },
+				      {
+				        "end": 45.94,
+				        "start": 45.26,
+				        "word": " 2025",
+				      },
+				      {
+				        "end": 46.05,
+				        "start": 45.94,
+				        "word": ",",
+				      },
+				      {
+				        "end": 46.22,
+				        "start": 46.05,
+				        "word": " and",
+				      },
+				      {
+				        "end": 46.39,
+				        "start": 46.22,
+				        "word": " you",
+				      },
+				      {
+				        "end": 46.56,
+				        "start": 46.39,
+				        "word": "'re",
+				      },
+				      {
+				        "end": 47.01,
+				        "start": 46.56,
+				        "word": " watching",
+				      },
+				      {
+				        "end": 47.18,
+				        "start": 47.01,
+				        "word": " The",
+				      },
+				      {
+				        "end": 47.4,
+				        "start": 47.18,
+				        "word": " Code",
+				      },
+				      {
+				        "end": 47.74,
+				        "start": 47.4,
+				        "word": " Report",
+				      },
+				      {
+				        "end": 47.98,
+				        "start": 47.74,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 52.62,
+				    "start": 47.98,
+				    "text": "Lynx is not just another half-baked GitHub project written by a 19-year-old on prescription amphetamines.",
+				    "words": [
+				      {
+				        "end": 48.13,
+				        "start": 47.98,
+				        "word": " Lyn",
+				      },
+				      {
+				        "end": 48.18,
+				        "start": 48.13,
+				        "word": "x",
+				      },
+				      {
+				        "end": 48.28,
+				        "start": 48.18,
+				        "word": " is",
+				      },
+				      {
+				        "end": 48.43,
+				        "start": 48.28,
+				        "word": " not",
+				      },
+				      {
+				        "end": 48.64,
+				        "start": 48.43,
+				        "word": " just",
+				      },
+				      {
+				        "end": 48.99,
+				        "start": 48.64,
+				        "word": " another",
+				      },
+				      {
+				        "end": 49.21,
+				        "start": 48.99,
+				        "word": " half",
+				      },
+				      {
+				        "end": 49.26,
+				        "start": 49.21,
+				        "word": "-",
+				      },
+				      {
+				        "end": 49.31,
+				        "start": 49.26,
+				        "word": "b",
+				      },
+				      {
+				        "end": 49.56,
+				        "start": 49.31,
+				        "word": "aked",
+				      },
+				      {
+				        "end": 49.82,
+				        "start": 49.56,
+				        "word": " GitHub",
+				      },
+				      {
+				        "end": 50.18,
+				        "start": 49.82,
+				        "word": " project",
+				      },
+				      {
+				        "end": 50.54,
+				        "start": 50.18,
+				        "word": " written",
+				      },
+				      {
+				        "end": 50.69,
+				        "start": 50.54,
+				        "word": " by",
+				      },
+				      {
+				        "end": 50.69,
+				        "start": 50.69,
+				        "word": " a",
+				      },
+				      {
+				        "end": 51,
+				        "start": 50.69,
+				        "word": " 19",
+				      },
+				      {
+				        "end": 51.05,
+				        "start": 51,
+				        "word": "-",
+				      },
+				      {
+				        "end": 51.25,
+				        "start": 51.05,
+				        "word": "year",
+				      },
+				      {
+				        "end": 51.3,
+				        "start": 51.25,
+				        "word": "-",
+				      },
+				      {
+				        "end": 51.45,
+				        "start": 51.3,
+				        "word": "old",
+				      },
+				      {
+				        "end": 51.55,
+				        "start": 51.45,
+				        "word": " on",
+				      },
+				      {
+				        "end": 52.18,
+				        "start": 51.55,
+				        "word": " prescription",
+				      },
+				      {
+				        "end": 52.28,
+				        "start": 52.18,
+				        "word": " am",
+				      },
+				      {
+				        "end": 52.48,
+				        "start": 52.28,
+				        "word": "phet",
+				      },
+				      {
+				        "end": 52.62,
+				        "start": 52.48,
+				        "word": "am",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 54.96,
+				    "start": 53.08,
+				    "text": "It's not the terminal browser with the same name,",
+				    "words": [
+				      {
+				        "end": 53.17,
+				        "start": 53.08,
+				        "word": " It",
+				      },
+				      {
+				        "end": 53.26,
+				        "start": 53.17,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 53.4,
+				        "start": 53.26,
+				        "word": " not",
+				      },
+				      {
+				        "end": 53.59,
+				        "start": 53.4,
+				        "word": " the",
+				      },
+				      {
+				        "end": 53.92,
+				        "start": 53.59,
+				        "word": " terminal",
+				      },
+				      {
+				        "end": 54.25,
+				        "start": 53.92,
+				        "word": " browser",
+				      },
+				      {
+				        "end": 54.49,
+				        "start": 54.25,
+				        "word": " with",
+				      },
+				      {
+				        "end": 54.58,
+				        "start": 54.49,
+				        "word": " the",
+				      },
+				      {
+				        "end": 54.77,
+				        "start": 54.58,
+				        "word": " same",
+				      },
+				      {
+				        "end": 54.96,
+				        "start": 54.77,
+				        "word": " name",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 59.24,
+				    "start": 55.05,
+				    "text": "but rather a production-ready framework that's already in use in high-traffic apps at TikTok.",
+				    "words": [
+				      {
+				        "end": 55.19,
+				        "start": 55.05,
+				        "word": " but",
+				      },
+				      {
+				        "end": 55.48,
+				        "start": 55.19,
+				        "word": " rather",
+				      },
+				      {
+				        "end": 55.52,
+				        "start": 55.48,
+				        "word": " a",
+				      },
+				      {
+				        "end": 55.99,
+				        "start": 55.52,
+				        "word": " production",
+				      },
+				      {
+				        "end": 56.04,
+				        "start": 55.99,
+				        "word": "-",
+				      },
+				      {
+				        "end": 56.28,
+				        "start": 56.04,
+				        "word": "ready",
+				      },
+				      {
+				        "end": 56.82,
+				        "start": 56.28,
+				        "word": " framework",
+				      },
+				      {
+				        "end": 57.04,
+				        "start": 56.82,
+				        "word": " that",
+				      },
+				      {
+				        "end": 57.15,
+				        "start": 57.04,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 57.54,
+				        "start": 57.15,
+				        "word": " already",
+				      },
+				      {
+				        "end": 57.65,
+				        "start": 57.54,
+				        "word": " in",
+				      },
+				      {
+				        "end": 57.84,
+				        "start": 57.65,
+				        "word": " use",
+				      },
+				      {
+				        "end": 57.93,
+				        "start": 57.84,
+				        "word": " in",
+				      },
+				      {
+				        "end": 58.12,
+				        "start": 57.93,
+				        "word": " high",
+				      },
+				      {
+				        "end": 58.2,
+				        "start": 58.12,
+				        "word": "-",
+				      },
+				      {
+				        "end": 58.3,
+				        "start": 58.2,
+				        "word": "tra",
+				      },
+				      {
+				        "end": 58.54,
+				        "start": 58.3,
+				        "word": "ffic",
+				      },
+				      {
+				        "end": 58.71,
+				        "start": 58.54,
+				        "word": " apps",
+				      },
+				      {
+				        "end": 58.8,
+				        "start": 58.71,
+				        "word": " at",
+				      },
+				      {
+				        "end": 59.08,
+				        "start": 58.8,
+				        "word": " TikTok",
+				      },
+				      {
+				        "end": 59.24,
+				        "start": 59.08,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 62.64,
+				    "start": 59.24,
+				    "text": "It doesn't power the main TikTok app where you would post your cringe dance videos,",
+				    "words": [
+				      {
+				        "end": 59.34,
+				        "start": 59.24,
+				        "word": " It",
+				      },
+				      {
+				        "end": 59.62,
+				        "start": 59.34,
+				        "word": " doesn",
+				      },
+				      {
+				        "end": 59.69,
+				        "start": 59.62,
+				        "word": "'t",
+				      },
+				      {
+				        "end": 59.94,
+				        "start": 59.69,
+				        "word": " power",
+				      },
+				      {
+				        "end": 60.09,
+				        "start": 59.94,
+				        "word": " the",
+				      },
+				      {
+				        "end": 60.29,
+				        "start": 60.09,
+				        "word": " main",
+				      },
+				      {
+				        "end": 60.59,
+				        "start": 60.29,
+				        "word": " TikTok",
+				      },
+				      {
+				        "end": 60.74,
+				        "start": 60.59,
+				        "word": " app",
+				      },
+				      {
+				        "end": 61.05,
+				        "start": 60.74,
+				        "word": " where",
+				      },
+				      {
+				        "end": 61.14,
+				        "start": 61.05,
+				        "word": " you",
+				      },
+				      {
+				        "end": 61.41,
+				        "start": 61.14,
+				        "word": " would",
+				      },
+				      {
+				        "end": 61.59,
+				        "start": 61.41,
+				        "word": " post",
+				      },
+				      {
+				        "end": 61.82,
+				        "start": 61.59,
+				        "word": " your",
+				      },
+				      {
+				        "end": 62.13,
+				        "start": 61.82,
+				        "word": " cringe",
+				      },
+				      {
+				        "end": 62.34,
+				        "start": 62.13,
+				        "word": " dance",
+				      },
+				      {
+				        "end": 62.64,
+				        "start": 62.34,
+				        "word": " videos",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 67.44,
+				    "start": 62.8,
+				    "text": "but it does power the search panel, TikTok Studio, and a bunch of other ancillary apps.",
+				    "words": [
+				      {
+				        "end": 63.07,
+				        "start": 62.8,
+				        "word": " but",
+				      },
+				      {
+				        "end": 63.1,
+				        "start": 63.07,
+				        "word": " it",
+				      },
+				      {
+				        "end": 63.34,
+				        "start": 63.1,
+				        "word": " does",
+				      },
+				      {
+				        "end": 63.64,
+				        "start": 63.34,
+				        "word": " power",
+				      },
+				      {
+				        "end": 63.82,
+				        "start": 63.64,
+				        "word": " the",
+				      },
+				      {
+				        "end": 64.18,
+				        "start": 63.82,
+				        "word": " search",
+				      },
+				      {
+				        "end": 64.48,
+				        "start": 64.18,
+				        "word": " panel",
+				      },
+				      {
+				        "end": 64.6,
+				        "start": 64.48,
+				        "word": ",",
+				      },
+				      {
+				        "end": 64.98,
+				        "start": 64.6,
+				        "word": " TikTok",
+				      },
+				      {
+				        "end": 65.32,
+				        "start": 64.98,
+				        "word": " Studio",
+				      },
+				      {
+				        "end": 65.44,
+				        "start": 65.32,
+				        "word": ",",
+				      },
+				      {
+				        "end": 65.61,
+				        "start": 65.44,
+				        "word": " and",
+				      },
+				      {
+				        "end": 65.68,
+				        "start": 65.61,
+				        "word": " a",
+				      },
+				      {
+				        "end": 65.98,
+				        "start": 65.68,
+				        "word": " bunch",
+				      },
+				      {
+				        "end": 66.12,
+				        "start": 65.98,
+				        "word": " of",
+				      },
+				      {
+				        "end": 66.4,
+				        "start": 66.12,
+				        "word": " other",
+				      },
+				      {
+				        "end": 66.52,
+				        "start": 66.4,
+				        "word": " an",
+				      },
+				      {
+				        "end": 66.75,
+				        "start": 66.52,
+				        "word": "cill",
+				      },
+				      {
+				        "end": 66.94,
+				        "start": 66.75,
+				        "word": "ary",
+				      },
+				      {
+				        "end": 67.18,
+				        "start": 66.94,
+				        "word": " apps",
+				      },
+				      {
+				        "end": 67.44,
+				        "start": 67.18,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 71.02,
+				    "start": 67.44,
+				    "text": "I find this very interesting because ByteDance was one of the early adopters of Flutter",
+				    "words": [
+				      {
+				        "end": 67.64,
+				        "start": 67.44,
+				        "word": " I",
+				      },
+				      {
+				        "end": 67.7,
+				        "start": 67.64,
+				        "word": " find",
+				      },
+				      {
+				        "end": 67.91,
+				        "start": 67.7,
+				        "word": " this",
+				      },
+				      {
+				        "end": 68.12,
+				        "start": 67.91,
+				        "word": " very",
+				      },
+				      {
+				        "end": 68.71,
+				        "start": 68.12,
+				        "word": " interesting",
+				      },
+				      {
+				        "end": 69.09,
+				        "start": 68.71,
+				        "word": " because",
+				      },
+				      {
+				        "end": 69.19,
+				        "start": 69.09,
+				        "word": " By",
+				      },
+				      {
+				        "end": 69.29,
+				        "start": 69.19,
+				        "word": "te",
+				      },
+				      {
+				        "end": 69.34,
+				        "start": 69.29,
+				        "word": "D",
+				      },
+				      {
+				        "end": 69.55,
+				        "start": 69.34,
+				        "word": "ance",
+				      },
+				      {
+				        "end": 69.71,
+				        "start": 69.55,
+				        "word": " was",
+				      },
+				      {
+				        "end": 69.87,
+				        "start": 69.71,
+				        "word": " one",
+				      },
+				      {
+				        "end": 69.97,
+				        "start": 69.87,
+				        "word": " of",
+				      },
+				      {
+				        "end": 70.13,
+				        "start": 69.97,
+				        "word": " the",
+				      },
+				      {
+				        "end": 70.4,
+				        "start": 70.13,
+				        "word": " early",
+				      },
+				      {
+				        "end": 70.61,
+				        "start": 70.4,
+				        "word": " adop",
+				      },
+				      {
+				        "end": 70.88,
+				        "start": 70.61,
+				        "word": "ters",
+				      },
+				      {
+				        "end": 70.92,
+				        "start": 70.88,
+				        "word": " of",
+				      },
+				      {
+				        "end": 71.02,
+				        "start": 70.92,
+				        "word": " Fl",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 73.34,
+				    "start": 71.42,
+				    "text": "and is still on the Flutter showcase today.",
+				    "words": [
+				      {
+				        "end": 71.57,
+				        "start": 71.42,
+				        "word": " and",
+				      },
+				      {
+				        "end": 71.67,
+				        "start": 71.57,
+				        "word": " is",
+				      },
+				      {
+				        "end": 71.92,
+				        "start": 71.67,
+				        "word": " still",
+				      },
+				      {
+				        "end": 72.02,
+				        "start": 71.92,
+				        "word": " on",
+				      },
+				      {
+				        "end": 72.17,
+				        "start": 72.02,
+				        "word": " the",
+				      },
+				      {
+				        "end": 72.27,
+				        "start": 72.17,
+				        "word": " Fl",
+				      },
+				      {
+				        "end": 72.52,
+				        "start": 72.27,
+				        "word": "utter",
+				      },
+				      {
+				        "end": 72.92,
+				        "start": 72.52,
+				        "word": " showcase",
+				      },
+				      {
+				        "end": 73.17,
+				        "start": 72.92,
+				        "word": " today",
+				      },
+				      {
+				        "end": 73.34,
+				        "start": 73.17,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 76.42,
+				    "start": 73.52,
+				    "text": "In addition, if they wanted to use web technologies to build mobile apps,",
+				    "words": [
+				      {
+				        "end": 73.61,
+				        "start": 73.52,
+				        "word": " In",
+				      },
+				      {
+				        "end": 74,
+				        "start": 73.61,
+				        "word": " addition",
+				      },
+				      {
+				        "end": 74.09,
+				        "start": 74,
+				        "word": ",",
+				      },
+				      {
+				        "end": 74.18,
+				        "start": 74.09,
+				        "word": " if",
+				      },
+				      {
+				        "end": 74.37,
+				        "start": 74.18,
+				        "word": " they",
+				      },
+				      {
+				        "end": 74.69,
+				        "start": 74.37,
+				        "word": " wanted",
+				      },
+				      {
+				        "end": 74.75,
+				        "start": 74.69,
+				        "word": " to",
+				      },
+				      {
+				        "end": 74.89,
+				        "start": 74.75,
+				        "word": " use",
+				      },
+				      {
+				        "end": 75.03,
+				        "start": 74.89,
+				        "word": " web",
+				      },
+				      {
+				        "end": 75.61,
+				        "start": 75.03,
+				        "word": " technologies",
+				      },
+				      {
+				        "end": 75.7,
+				        "start": 75.61,
+				        "word": " to",
+				      },
+				      {
+				        "end": 75.94,
+				        "start": 75.7,
+				        "word": " build",
+				      },
+				      {
+				        "end": 76.23,
+				        "start": 75.94,
+				        "word": " mobile",
+				      },
+				      {
+				        "end": 76.42,
+				        "start": 76.23,
+				        "word": " apps",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 81.34,
+				    "start": 76.62,
+				    "text": "why not just use something like React Native, Ionic, or NativeScript instead of reinventing the wheel?",
+				    "words": [
+				      {
+				        "end": 76.81,
+				        "start": 76.62,
+				        "word": " why",
+				      },
+				      {
+				        "end": 76.92,
+				        "start": 76.81,
+				        "word": " not",
+				      },
+				      {
+				        "end": 77.16,
+				        "start": 76.92,
+				        "word": " just",
+				      },
+				      {
+				        "end": 77.27,
+				        "start": 77.16,
+				        "word": " use",
+				      },
+				      {
+				        "end": 77.73,
+				        "start": 77.27,
+				        "word": " something",
+				      },
+				      {
+				        "end": 77.93,
+				        "start": 77.73,
+				        "word": " like",
+				      },
+				      {
+				        "end": 78.18,
+				        "start": 77.93,
+				        "word": " React",
+				      },
+				      {
+				        "end": 78.49,
+				        "start": 78.18,
+				        "word": " Native",
+				      },
+				      {
+				        "end": 78.59,
+				        "start": 78.49,
+				        "word": ",",
+				      },
+				      {
+				        "end": 78.64,
+				        "start": 78.59,
+				        "word": " I",
+				      },
+				      {
+				        "end": 78.84,
+				        "start": 78.64,
+				        "word": "onic",
+				      },
+				      {
+				        "end": 78.94,
+				        "start": 78.84,
+				        "word": ",",
+				      },
+				      {
+				        "end": 79.04,
+				        "start": 78.94,
+				        "word": " or",
+				      },
+				      {
+				        "end": 79.35,
+				        "start": 79.04,
+				        "word": " Native",
+				      },
+				      {
+				        "end": 79.66,
+				        "start": 79.35,
+				        "word": "Script",
+				      },
+				      {
+				        "end": 80.02,
+				        "start": 79.66,
+				        "word": " instead",
+				      },
+				      {
+				        "end": 80.12,
+				        "start": 80.02,
+				        "word": " of",
+				      },
+				      {
+				        "end": 80.53,
+				        "start": 80.12,
+				        "word": " reinvent",
+				      },
+				      {
+				        "end": 80.68,
+				        "start": 80.53,
+				        "word": "ing",
+				      },
+				      {
+				        "end": 80.84,
+				        "start": 80.68,
+				        "word": " the",
+				      },
+				      {
+				        "end": 81.08,
+				        "start": 80.84,
+				        "word": " wheel",
+				      },
+				      {
+				        "end": 81.34,
+				        "start": 81.08,
+				        "word": "?",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 85.44,
+				    "start": 81.34,
+				    "text": "Well, the unspoken reason is that creating new frameworks gives us developers job security,",
+				    "words": [
+				      {
+				        "end": 81.57,
+				        "start": 81.34,
+				        "word": " Well",
+				      },
+				      {
+				        "end": 81.65,
+				        "start": 81.57,
+				        "word": ",",
+				      },
+				      {
+				        "end": 81.81,
+				        "start": 81.65,
+				        "word": " the",
+				      },
+				      {
+				        "end": 81.96,
+				        "start": 81.81,
+				        "word": " uns",
+				      },
+				      {
+				        "end": 82.02,
+				        "start": 81.96,
+				        "word": "p",
+				      },
+				      {
+				        "end": 82.23,
+				        "start": 82.02,
+				        "word": "oken",
+				      },
+				      {
+				        "end": 82.55,
+				        "start": 82.23,
+				        "word": " reason",
+				      },
+				      {
+				        "end": 82.65,
+				        "start": 82.55,
+				        "word": " is",
+				      },
+				      {
+				        "end": 82.86,
+				        "start": 82.65,
+				        "word": " that",
+				      },
+				      {
+				        "end": 83.28,
+				        "start": 82.86,
+				        "word": " creating",
+				      },
+				      {
+				        "end": 83.44,
+				        "start": 83.28,
+				        "word": " new",
+				      },
+				      {
+				        "end": 83.97,
+				        "start": 83.44,
+				        "word": " frameworks",
+				      },
+				      {
+				        "end": 84.23,
+				        "start": 83.97,
+				        "word": " gives",
+				      },
+				      {
+				        "end": 84.33,
+				        "start": 84.23,
+				        "word": " us",
+				      },
+				      {
+				        "end": 84.86,
+				        "start": 84.33,
+				        "word": " developers",
+				      },
+				      {
+				        "end": 85.02,
+				        "start": 84.86,
+				        "word": " job",
+				      },
+				      {
+				        "end": 85.44,
+				        "start": 85.02,
+				        "word": " security",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 89.06,
+				    "start": 85.64,
+				    "text": "but the official reason in their blog post is mostly about performance.",
+				    "words": [
+				      {
+				        "end": 85.8,
+				        "start": 85.64,
+				        "word": " but",
+				      },
+				      {
+				        "end": 85.96,
+				        "start": 85.8,
+				        "word": " the",
+				      },
+				      {
+				        "end": 86.4,
+				        "start": 85.96,
+				        "word": " official",
+				      },
+				      {
+				        "end": 86.73,
+				        "start": 86.4,
+				        "word": " reason",
+				      },
+				      {
+				        "end": 86.84,
+				        "start": 86.73,
+				        "word": " in",
+				      },
+				      {
+				        "end": 87.11,
+				        "start": 86.84,
+				        "word": " their",
+				      },
+				      {
+				        "end": 87.33,
+				        "start": 87.11,
+				        "word": " blog",
+				      },
+				      {
+				        "end": 87.59,
+				        "start": 87.33,
+				        "word": " post",
+				      },
+				      {
+				        "end": 87.66,
+				        "start": 87.59,
+				        "word": " is",
+				      },
+				      {
+				        "end": 87.99,
+				        "start": 87.66,
+				        "word": " mostly",
+				      },
+				      {
+				        "end": 88.25,
+				        "start": 87.99,
+				        "word": " about",
+				      },
+				      {
+				        "end": 88.86,
+				        "start": 88.25,
+				        "word": " performance",
+				      },
+				      {
+				        "end": 89.06,
+				        "start": 88.86,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 89.68,
+				    "start": 89.06,
+				    "text": "Performance.",
+				    "words": [
+				      {
+				        "end": 89.54,
+				        "start": 89.06,
+				        "word": " Performance",
+				      },
+				      {
+				        "end": 89.68,
+				        "start": 89.54,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 93.62,
+				    "start": 89.68,
+				    "text": "Throughout history, many people have criticized React Native for not feeling truly native,",
+				    "words": [
+				      {
+				        "end": 90.2,
+				        "start": 89.68,
+				        "word": " Throughout",
+				      },
+				      {
+				        "end": 90.55,
+				        "start": 90.2,
+				        "word": " history",
+				      },
+				      {
+				        "end": 90.7,
+				        "start": 90.55,
+				        "word": ",",
+				      },
+				      {
+				        "end": 90.85,
+				        "start": 90.7,
+				        "word": " many",
+				      },
+				      {
+				        "end": 91.15,
+				        "start": 90.85,
+				        "word": " people",
+				      },
+				      {
+				        "end": 91.42,
+				        "start": 91.15,
+				        "word": " have",
+				      },
+				      {
+				        "end": 91.85,
+				        "start": 91.42,
+				        "word": " criticized",
+				      },
+				      {
+				        "end": 92.14,
+				        "start": 91.85,
+				        "word": " React",
+				      },
+				      {
+				        "end": 92.41,
+				        "start": 92.14,
+				        "word": " Native",
+				      },
+				      {
+				        "end": 92.56,
+				        "start": 92.41,
+				        "word": " for",
+				      },
+				      {
+				        "end": 92.71,
+				        "start": 92.56,
+				        "word": " not",
+				      },
+				      {
+				        "end": 93.07,
+				        "start": 92.71,
+				        "word": " feeling",
+				      },
+				      {
+				        "end": 93.32,
+				        "start": 93.07,
+				        "word": " truly",
+				      },
+				      {
+				        "end": 93.62,
+				        "start": 93.32,
+				        "word": " native",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 97,
+				    "start": 93.8,
+				    "text": "and that's because it relies on a single-threaded JavaScript bridge",
+				    "words": [
+				      {
+				        "end": 93.96,
+				        "start": 93.8,
+				        "word": " and",
+				      },
+				      {
+				        "end": 94.18,
+				        "start": 93.96,
+				        "word": " that",
+				      },
+				      {
+				        "end": 94.29,
+				        "start": 94.18,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 94.67,
+				        "start": 94.29,
+				        "word": " because",
+				      },
+				      {
+				        "end": 94.78,
+				        "start": 94.67,
+				        "word": " it",
+				      },
+				      {
+				        "end": 95.11,
+				        "start": 94.78,
+				        "word": " relies",
+				      },
+				      {
+				        "end": 95.22,
+				        "start": 95.11,
+				        "word": " on",
+				      },
+				      {
+				        "end": 95.27,
+				        "start": 95.22,
+				        "word": " a",
+				      },
+				      {
+				        "end": 95.6,
+				        "start": 95.27,
+				        "word": " single",
+				      },
+				      {
+				        "end": 95.69,
+				        "start": 95.6,
+				        "word": "-",
+				      },
+				      {
+				        "end": 95.76,
+				        "start": 95.69,
+				        "word": "th",
+				      },
+				      {
+				        "end": 96,
+				        "start": 95.76,
+				        "word": "read",
+				      },
+				      {
+				        "end": 96.09,
+				        "start": 96,
+				        "word": "ed",
+				      },
+				      {
+				        "end": 96.64,
+				        "start": 96.09,
+				        "word": " JavaScript",
+				      },
+				      {
+				        "end": 97,
+				        "start": 96.64,
+				        "word": " bridge",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 102.34,
+				    "start": 97,
+				    "text": "that allows JavaScript code to communicate with native code, like Swift on iOS or Kotlin on Android,",
+				    "words": [
+				      {
+				        "end": 97.22,
+				        "start": 97,
+				        "word": " that",
+				      },
+				      {
+				        "end": 97.57,
+				        "start": 97.22,
+				        "word": " allows",
+				      },
+				      {
+				        "end": 98.08,
+				        "start": 97.57,
+				        "word": " JavaScript",
+				      },
+				      {
+				        "end": 98.32,
+				        "start": 98.08,
+				        "word": " code",
+				      },
+				      {
+				        "end": 98.41,
+				        "start": 98.32,
+				        "word": " to",
+				      },
+				      {
+				        "end": 98.94,
+				        "start": 98.41,
+				        "word": " communicate",
+				      },
+				      {
+				        "end": 99.26,
+				        "start": 98.94,
+				        "word": " with",
+				      },
+				      {
+				        "end": 99.64,
+				        "start": 99.26,
+				        "word": " native",
+				      },
+				      {
+				        "end": 99.92,
+				        "start": 99.64,
+				        "word": " code",
+				      },
+				      {
+				        "end": 99.92,
+				        "start": 99.92,
+				        "word": ",",
+				      },
+				      {
+				        "end": 100.08,
+				        "start": 100.04,
+				        "word": "",
+				      },
+				      {
+				        "end": 100.34,
+				        "start": 100.08,
+				        "word": " like",
+				      },
+				      {
+				        "end": 100.71,
+				        "start": 100.34,
+				        "word": " Swift",
+				      },
+				      {
+				        "end": 100.86,
+				        "start": 100.71,
+				        "word": " on",
+				      },
+				      {
+				        "end": 101.08,
+				        "start": 100.86,
+				        "word": " iOS",
+				      },
+				      {
+				        "end": 101.23,
+				        "start": 101.08,
+				        "word": " or",
+				      },
+				      {
+				        "end": 101.45,
+				        "start": 101.23,
+				        "word": " Kot",
+				      },
+				      {
+				        "end": 101.67,
+				        "start": 101.45,
+				        "word": "lin",
+				      },
+				      {
+				        "end": 101.82,
+				        "start": 101.67,
+				        "word": " on",
+				      },
+				      {
+				        "end": 102.34,
+				        "start": 101.82,
+				        "word": " Android",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 106.16,
+				    "start": 102.52,
+				    "text": "but that single-threaded bridge is a big bottleneck that can create performance issues.",
+				    "words": [
+				      {
+				        "end": 102.66,
+				        "start": 102.52,
+				        "word": " but",
+				      },
+				      {
+				        "end": 102.84,
+				        "start": 102.66,
+				        "word": " that",
+				      },
+				      {
+				        "end": 103.12,
+				        "start": 102.84,
+				        "word": " single",
+				      },
+				      {
+				        "end": 103.16,
+				        "start": 103.12,
+				        "word": "-",
+				      },
+				      {
+				        "end": 103.26,
+				        "start": 103.16,
+				        "word": "th",
+				      },
+				      {
+				        "end": 103.43,
+				        "start": 103.26,
+				        "word": "read",
+				      },
+				      {
+				        "end": 103.53,
+				        "start": 103.43,
+				        "word": "ed",
+				      },
+				      {
+				        "end": 103.79,
+				        "start": 103.53,
+				        "word": " bridge",
+				      },
+				      {
+				        "end": 103.89,
+				        "start": 103.79,
+				        "word": " is",
+				      },
+				      {
+				        "end": 103.93,
+				        "start": 103.89,
+				        "word": " a",
+				      },
+				      {
+				        "end": 104.07,
+				        "start": 103.93,
+				        "word": " big",
+				      },
+				      {
+				        "end": 104.44,
+				        "start": 104.07,
+				        "word": " bottlene",
+				      },
+				      {
+				        "end": 104.53,
+				        "start": 104.44,
+				        "word": "ck",
+				      },
+				      {
+				        "end": 104.71,
+				        "start": 104.53,
+				        "word": " that",
+				      },
+				      {
+				        "end": 104.85,
+				        "start": 104.71,
+				        "word": " can",
+				      },
+				      {
+				        "end": 105.13,
+				        "start": 104.85,
+				        "word": " create",
+				      },
+				      {
+				        "end": 105.67,
+				        "start": 105.13,
+				        "word": " performance",
+				      },
+				      {
+				        "end": 105.92,
+				        "start": 105.67,
+				        "word": " issues",
+				      },
+				      {
+				        "end": 106.16,
+				        "start": 105.92,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 107.86,
+				    "start": 106.16,
+				    "text": "Are you saying there's something wrong with my gear?",
+				    "words": [
+				      {
+				        "end": 106.27,
+				        "start": 106.16,
+				        "word": " Are",
+				      },
+				      {
+				        "end": 106.38,
+				        "start": 106.27,
+				        "word": " you",
+				      },
+				      {
+				        "end": 106.6,
+				        "start": 106.38,
+				        "word": " saying",
+				      },
+				      {
+				        "end": 106.84,
+				        "start": 106.6,
+				        "word": " there",
+				      },
+				      {
+				        "end": 106.85,
+				        "start": 106.84,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 107.18,
+				        "start": 106.85,
+				        "word": " something",
+				      },
+				      {
+				        "end": 107.35,
+				        "start": 107.18,
+				        "word": " wrong",
+				      },
+				      {
+				        "end": 107.5,
+				        "start": 107.35,
+				        "word": " with",
+				      },
+				      {
+				        "end": 107.64,
+				        "start": 107.5,
+				        "word": " my",
+				      },
+				      {
+				        "end": 107.71,
+				        "start": 107.64,
+				        "word": " gear",
+				      },
+				      {
+				        "end": 107.86,
+				        "start": 107.71,
+				        "word": "?",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 109.58,
+				    "start": 107.86,
+				    "text": "Is that what you're saying to me?",
+				    "words": [
+				      {
+				        "end": 107.97,
+				        "start": 107.86,
+				        "word": " Is",
+				      },
+				      {
+				        "end": 108.2,
+				        "start": 107.97,
+				        "word": " that",
+				      },
+				      {
+				        "end": 108.43,
+				        "start": 108.2,
+				        "word": " what",
+				      },
+				      {
+				        "end": 108.71,
+				        "start": 108.43,
+				        "word": " you",
+				      },
+				      {
+				        "end": 108.77,
+				        "start": 108.71,
+				        "word": "'re",
+				      },
+				      {
+				        "end": 109.12,
+				        "start": 108.77,
+				        "word": " saying",
+				      },
+				      {
+				        "end": 109.23,
+				        "start": 109.12,
+				        "word": " to",
+				      },
+				      {
+				        "end": 109.33,
+				        "start": 109.23,
+				        "word": " me",
+				      },
+				      {
+				        "end": 109.58,
+				        "start": 109.33,
+				        "word": "?",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 113.01,
+				    "start": 109.58,
+				    "text": "The React Native team has addressed this by building a custom engine called Hermes",
+				    "words": [
+				      {
+				        "end": 109.76,
+				        "start": 109.58,
+				        "word": " The",
+				      },
+				      {
+				        "end": 109.99,
+				        "start": 109.76,
+				        "word": " React",
+				      },
+				      {
+				        "end": 110.3,
+				        "start": 109.99,
+				        "word": " Native",
+				      },
+				      {
+				        "end": 110.5,
+				        "start": 110.3,
+				        "word": " team",
+				      },
+				      {
+				        "end": 110.65,
+				        "start": 110.5,
+				        "word": " has",
+				      },
+				      {
+				        "end": 111.12,
+				        "start": 110.65,
+				        "word": " addressed",
+				      },
+				      {
+				        "end": 111.36,
+				        "start": 111.12,
+				        "word": " this",
+				      },
+				      {
+				        "end": 111.42,
+				        "start": 111.36,
+				        "word": " by",
+				      },
+				      {
+				        "end": 111.83,
+				        "start": 111.42,
+				        "word": " building",
+				      },
+				      {
+				        "end": 111.91,
+				        "start": 111.83,
+				        "word": " a",
+				      },
+				      {
+				        "end": 112.19,
+				        "start": 111.91,
+				        "word": " custom",
+				      },
+				      {
+				        "end": 112.5,
+				        "start": 112.19,
+				        "word": " engine",
+				      },
+				      {
+				        "end": 112.81,
+				        "start": 112.5,
+				        "word": " called",
+				      },
+				      {
+				        "end": 113.01,
+				        "start": 112.81,
+				        "word": " Herm",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 115.24,
+				    "start": 113.2,
+				    "text": "and released the fabric renderer a few years ago,",
+				    "words": [
+				      {
+				        "end": 113.35,
+				        "start": 113.2,
+				        "word": " and",
+				      },
+				      {
+				        "end": 113.76,
+				        "start": 113.35,
+				        "word": " released",
+				      },
+				      {
+				        "end": 113.94,
+				        "start": 113.76,
+				        "word": " the",
+				      },
+				      {
+				        "end": 114.27,
+				        "start": 113.94,
+				        "word": " fabric",
+				      },
+				      {
+				        "end": 114.53,
+				        "start": 114.27,
+				        "word": " render",
+				      },
+				      {
+				        "end": 114.63,
+				        "start": 114.53,
+				        "word": "er",
+				      },
+				      {
+				        "end": 114.75,
+				        "start": 114.63,
+				        "word": " a",
+				      },
+				      {
+				        "end": 114.83,
+				        "start": 114.75,
+				        "word": " few",
+				      },
+				      {
+				        "end": 115.09,
+				        "start": 114.83,
+				        "word": " years",
+				      },
+				      {
+				        "end": 115.24,
+				        "start": 115.09,
+				        "word": " ago",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 118.76,
+				    "start": 115.4,
+				    "text": "which some have called the new and improved bridge or a bridgeless architecture.",
+				    "words": [
+				      {
+				        "end": 115.64,
+				        "start": 115.4,
+				        "word": " which",
+				      },
+				      {
+				        "end": 115.84,
+				        "start": 115.64,
+				        "word": " some",
+				      },
+				      {
+				        "end": 116.09,
+				        "start": 115.84,
+				        "word": " have",
+				      },
+				      {
+				        "end": 116.3,
+				        "start": 116.09,
+				        "word": " called",
+				      },
+				      {
+				        "end": 116.44,
+				        "start": 116.3,
+				        "word": " the",
+				      },
+				      {
+				        "end": 116.58,
+				        "start": 116.44,
+				        "word": " new",
+				      },
+				      {
+				        "end": 116.72,
+				        "start": 116.58,
+				        "word": " and",
+				      },
+				      {
+				        "end": 117.1,
+				        "start": 116.72,
+				        "word": " improved",
+				      },
+				      {
+				        "end": 117.38,
+				        "start": 117.1,
+				        "word": " bridge",
+				      },
+				      {
+				        "end": 117.48,
+				        "start": 117.38,
+				        "word": " or",
+				      },
+				      {
+				        "end": 117.51,
+				        "start": 117.48,
+				        "word": " a",
+				      },
+				      {
+				        "end": 117.7,
+				        "start": 117.51,
+				        "word": " brid",
+				      },
+				      {
+				        "end": 117.74,
+				        "start": 117.7,
+				        "word": "g",
+				      },
+				      {
+				        "end": 117.97,
+				        "start": 117.74,
+				        "word": "eless",
+				      },
+				      {
+				        "end": 118.54,
+				        "start": 117.97,
+				        "word": " architecture",
+				      },
+				      {
+				        "end": 118.76,
+				        "start": 118.54,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 122.79,
+				    "start": 118.76,
+				    "text": "But ByteDance has taken a different approach with Lynx using a dual-threaded architecture,",
+				    "words": [
+				      {
+				        "end": 118.92,
+				        "start": 118.76,
+				        "word": " But",
+				      },
+				      {
+				        "end": 119.04,
+				        "start": 118.92,
+				        "word": " By",
+				      },
+				      {
+				        "end": 119.12,
+				        "start": 119.04,
+				        "word": "te",
+				      },
+				      {
+				        "end": 119.22,
+				        "start": 119.12,
+				        "word": "D",
+				      },
+				      {
+				        "end": 119.44,
+				        "start": 119.22,
+				        "word": "ance",
+				      },
+				      {
+				        "end": 119.54,
+				        "start": 119.44,
+				        "word": " has",
+				      },
+				      {
+				        "end": 119.81,
+				        "start": 119.54,
+				        "word": " taken",
+				      },
+				      {
+				        "end": 119.85,
+				        "start": 119.81,
+				        "word": " a",
+				      },
+				      {
+				        "end": 120.33,
+				        "start": 119.85,
+				        "word": " different",
+				      },
+				      {
+				        "end": 120.75,
+				        "start": 120.33,
+				        "word": " approach",
+				      },
+				      {
+				        "end": 120.99,
+				        "start": 120.75,
+				        "word": " with",
+				      },
+				      {
+				        "end": 121.12,
+				        "start": 120.99,
+				        "word": " Lyn",
+				      },
+				      {
+				        "end": 121.17,
+				        "start": 121.12,
+				        "word": "x",
+				      },
+				      {
+				        "end": 121.43,
+				        "start": 121.17,
+				        "word": " using",
+				      },
+				      {
+				        "end": 121.48,
+				        "start": 121.43,
+				        "word": " a",
+				      },
+				      {
+				        "end": 121.69,
+				        "start": 121.48,
+				        "word": " dual",
+				      },
+				      {
+				        "end": 121.74,
+				        "start": 121.69,
+				        "word": "-",
+				      },
+				      {
+				        "end": 121.84,
+				        "start": 121.74,
+				        "word": "th",
+				      },
+				      {
+				        "end": 122.05,
+				        "start": 121.84,
+				        "word": "read",
+				      },
+				      {
+				        "end": 122.2,
+				        "start": 122.05,
+				        "word": "ed",
+				      },
+				      {
+				        "end": 122.79,
+				        "start": 122.2,
+				        "word": " architecture",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 127.22,
+				    "start": 122.98,
+				    "text": "where user code and framework code are split into two distinct runtimes.",
+				    "words": [
+				      {
+				        "end": 123.36,
+				        "start": 122.98,
+				        "word": " where",
+				      },
+				      {
+				        "end": 123.57,
+				        "start": 123.36,
+				        "word": " user",
+				      },
+				      {
+				        "end": 123.83,
+				        "start": 123.57,
+				        "word": " code",
+				      },
+				      {
+				        "end": 124.03,
+				        "start": 123.83,
+				        "word": " and",
+				      },
+				      {
+				        "end": 124.63,
+				        "start": 124.03,
+				        "word": " framework",
+				      },
+				      {
+				        "end": 124.92,
+				        "start": 124.63,
+				        "word": " code",
+				      },
+				      {
+				        "end": 125.09,
+				        "start": 124.92,
+				        "word": " are",
+				      },
+				      {
+				        "end": 125.42,
+				        "start": 125.09,
+				        "word": " split",
+				      },
+				      {
+				        "end": 125.68,
+				        "start": 125.42,
+				        "word": " into",
+				      },
+				      {
+				        "end": 125.88,
+				        "start": 125.68,
+				        "word": " two",
+				      },
+				      {
+				        "end": 126.41,
+				        "start": 125.88,
+				        "word": " distinct",
+				      },
+				      {
+				        "end": 126.67,
+				        "start": 126.41,
+				        "word": " runt",
+				      },
+				      {
+				        "end": 126.93,
+				        "start": 126.67,
+				        "word": "imes",
+				      },
+				      {
+				        "end": 127.22,
+				        "start": 126.93,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 130.48,
+				    "start": 127.48,
+				    "text": "The main thread is powered by Prim.js, which itself is built on Quick.js,",
+				    "words": [
+				      {
+				        "end": 127.63,
+				        "start": 127.48,
+				        "word": " The",
+				      },
+				      {
+				        "end": 127.85,
+				        "start": 127.63,
+				        "word": " main",
+				      },
+				      {
+				        "end": 128.13,
+				        "start": 127.85,
+				        "word": " thread",
+				      },
+				      {
+				        "end": 128.23,
+				        "start": 128.13,
+				        "word": " is",
+				      },
+				      {
+				        "end": 128.59,
+				        "start": 128.23,
+				        "word": " powered",
+				      },
+				      {
+				        "end": 128.68,
+				        "start": 128.59,
+				        "word": " by",
+				      },
+				      {
+				        "end": 128.88,
+				        "start": 128.68,
+				        "word": " Prim",
+				      },
+				      {
+				        "end": 129.03,
+				        "start": 128.88,
+				        "word": ".",
+				      },
+				      {
+				        "end": 129.13,
+				        "start": 129.03,
+				        "word": "js",
+				      },
+				      {
+				        "end": 129.27,
+				        "start": 129.13,
+				        "word": ",",
+				      },
+				      {
+				        "end": 129.48,
+				        "start": 129.27,
+				        "word": " which",
+				      },
+				      {
+				        "end": 129.81,
+				        "start": 129.48,
+				        "word": " itself",
+				      },
+				      {
+				        "end": 129.88,
+				        "start": 129.81,
+				        "word": " is",
+				      },
+				      {
+				        "end": 130.15,
+				        "start": 129.88,
+				        "word": " built",
+				      },
+				      {
+				        "end": 130.23,
+				        "start": 130.15,
+				        "word": " on",
+				      },
+				      {
+				        "end": 130.48,
+				        "start": 130.23,
+				        "word": " Quick",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 134.12,
+				    "start": 130.86,
+				    "text": "which is a tiny 210-kilobyte JavaScript engine.",
+				    "words": [
+				      {
+				        "end": 131.19,
+				        "start": 130.86,
+				        "word": " which",
+				      },
+				      {
+				        "end": 131.32,
+				        "start": 131.19,
+				        "word": " is",
+				      },
+				      {
+				        "end": 131.38,
+				        "start": 131.32,
+				        "word": " a",
+				      },
+				      {
+				        "end": 131.66,
+				        "start": 131.38,
+				        "word": " tiny",
+				      },
+				      {
+				        "end": 132.23,
+				        "start": 131.66,
+				        "word": " 210",
+				      },
+				      {
+				        "end": 132.29,
+				        "start": 132.23,
+				        "word": "-",
+				      },
+				      {
+				        "end": 132.47,
+				        "start": 132.29,
+				        "word": "kil",
+				      },
+				      {
+				        "end": 132.67,
+				        "start": 132.47,
+				        "word": "oby",
+				      },
+				      {
+				        "end": 132.85,
+				        "start": 132.67,
+				        "word": "te",
+				      },
+				      {
+				        "end": 133.46,
+				        "start": 132.85,
+				        "word": " JavaScript",
+				      },
+				      {
+				        "end": 133.85,
+				        "start": 133.46,
+				        "word": " engine",
+				      },
+				      {
+				        "end": 134.12,
+				        "start": 133.85,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 137.18,
+				    "start": 134.12,
+				    "text": "Its job is to handle synchronous UI tasks like event handling,",
+				    "words": [
+				      {
+				        "end": 134.3,
+				        "start": 134.12,
+				        "word": " Its",
+				      },
+				      {
+				        "end": 134.5,
+				        "start": 134.3,
+				        "word": " job",
+				      },
+				      {
+				        "end": 134.6,
+				        "start": 134.5,
+				        "word": " is",
+				      },
+				      {
+				        "end": 134.72,
+				        "start": 134.6,
+				        "word": " to",
+				      },
+				      {
+				        "end": 135.08,
+				        "start": 134.72,
+				        "word": " handle",
+				      },
+				      {
+				        "end": 135.76,
+				        "start": 135.08,
+				        "word": " synchronous",
+				      },
+				      {
+				        "end": 135.86,
+				        "start": 135.76,
+				        "word": " UI",
+				      },
+				      {
+				        "end": 136.16,
+				        "start": 135.86,
+				        "word": " tasks",
+				      },
+				      {
+				        "end": 136.42,
+				        "start": 136.16,
+				        "word": " like",
+				      },
+				      {
+				        "end": 136.71,
+				        "start": 136.42,
+				        "word": " event",
+				      },
+				      {
+				        "end": 137.18,
+				        "start": 136.71,
+				        "word": " handling",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 139.33,
+				    "start": 137.32,
+				    "text": "while user code runs on a separate thread,",
+				    "words": [
+				      {
+				        "end": 137.64,
+				        "start": 137.32,
+				        "word": " while",
+				      },
+				      {
+				        "end": 137.85,
+				        "start": 137.64,
+				        "word": " user",
+				      },
+				      {
+				        "end": 138.09,
+				        "start": 137.85,
+				        "word": " code",
+				      },
+				      {
+				        "end": 138.33,
+				        "start": 138.09,
+				        "word": " runs",
+				      },
+				      {
+				        "end": 138.45,
+				        "start": 138.33,
+				        "word": " on",
+				      },
+				      {
+				        "end": 138.51,
+				        "start": 138.45,
+				        "word": " a",
+				      },
+				      {
+				        "end": 138.98,
+				        "start": 138.51,
+				        "word": " separate",
+				      },
+				      {
+				        "end": 139.33,
+				        "start": 138.98,
+				        "word": " thread",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 143.82,
+				    "start": 139.48,
+				    "text": "which means the crappy, inefficient code you write won't block the main thread and degrade performance.",
+				    "words": [
+				      {
+				        "end": 139.72,
+				        "start": 139.48,
+				        "word": " which",
+				      },
+				      {
+				        "end": 139.94,
+				        "start": 139.72,
+				        "word": " means",
+				      },
+				      {
+				        "end": 140.08,
+				        "start": 139.94,
+				        "word": " the",
+				      },
+				      {
+				        "end": 140.41,
+				        "start": 140.08,
+				        "word": " crappy",
+				      },
+				      {
+				        "end": 140.45,
+				        "start": 140.41,
+				        "word": ",",
+				      },
+				      {
+				        "end": 140.98,
+				        "start": 140.45,
+				        "word": " inefficient",
+				      },
+				      {
+				        "end": 141.16,
+				        "start": 140.98,
+				        "word": " code",
+				      },
+				      {
+				        "end": 141.3,
+				        "start": 141.16,
+				        "word": " you",
+				      },
+				      {
+				        "end": 141.53,
+				        "start": 141.3,
+				        "word": " write",
+				      },
+				      {
+				        "end": 141.7,
+				        "start": 141.53,
+				        "word": " won",
+				      },
+				      {
+				        "end": 141.76,
+				        "start": 141.7,
+				        "word": "'t",
+				      },
+				      {
+				        "end": 141.99,
+				        "start": 141.76,
+				        "word": " block",
+				      },
+				      {
+				        "end": 142.2,
+				        "start": 141.99,
+				        "word": " the",
+				      },
+				      {
+				        "end": 142.32,
+				        "start": 142.2,
+				        "word": " main",
+				      },
+				      {
+				        "end": 142.6,
+				        "start": 142.32,
+				        "word": " thread",
+				      },
+				      {
+				        "end": 142.74,
+				        "start": 142.6,
+				        "word": " and",
+				      },
+				      {
+				        "end": 142.83,
+				        "start": 142.74,
+				        "word": " de",
+				      },
+				      {
+				        "end": 143.08,
+				        "start": 142.83,
+				        "word": "grade",
+				      },
+				      {
+				        "end": 143.59,
+				        "start": 143.08,
+				        "word": " performance",
+				      },
+				      {
+				        "end": 143.82,
+				        "start": 143.59,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 147.5,
+				    "start": 143.82,
+				    "text": "And the end result is instant first frame rendering for the end user.",
+				    "words": [
+				      {
+				        "end": 144,
+				        "start": 143.82,
+				        "word": " And",
+				      },
+				      {
+				        "end": 144.24,
+				        "start": 144,
+				        "word": " the",
+				      },
+				      {
+				        "end": 144.36,
+				        "start": 144.24,
+				        "word": " end",
+				      },
+				      {
+				        "end": 144.73,
+				        "start": 144.36,
+				        "word": " result",
+				      },
+				      {
+				        "end": 144.85,
+				        "start": 144.73,
+				        "word": " is",
+				      },
+				      {
+				        "end": 145.28,
+				        "start": 144.85,
+				        "word": " instant",
+				      },
+				      {
+				        "end": 145.59,
+				        "start": 145.28,
+				        "word": " first",
+				      },
+				      {
+				        "end": 145.9,
+				        "start": 145.59,
+				        "word": " frame",
+				      },
+				      {
+				        "end": 146.46,
+				        "start": 145.9,
+				        "word": " rendering",
+				      },
+				      {
+				        "end": 146.64,
+				        "start": 146.46,
+				        "word": " for",
+				      },
+				      {
+				        "end": 146.82,
+				        "start": 146.64,
+				        "word": " the",
+				      },
+				      {
+				        "end": 147,
+				        "start": 146.82,
+				        "word": " end",
+				      },
+				      {
+				        "end": 147.24,
+				        "start": 147,
+				        "word": " user",
+				      },
+				      {
+				        "end": 147.5,
+				        "start": 147.24,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 149.52,
+				    "start": 147.5,
+				    "text": "Or in other words, no blank screens.",
+				    "words": [
+				      {
+				        "end": 147.74,
+				        "start": 147.5,
+				        "word": " Or",
+				      },
+				      {
+				        "end": 147.75,
+				        "start": 147.74,
+				        "word": " in",
+				      },
+				      {
+				        "end": 148.04,
+				        "start": 147.75,
+				        "word": " other",
+				      },
+				      {
+				        "end": 148.34,
+				        "start": 148.04,
+				        "word": " words",
+				      },
+				      {
+				        "end": 148.46,
+				        "start": 148.34,
+				        "word": ",",
+				      },
+				      {
+				        "end": 148.58,
+				        "start": 148.46,
+				        "word": " no",
+				      },
+				      {
+				        "end": 148.88,
+				        "start": 148.58,
+				        "word": " blank",
+				      },
+				      {
+				        "end": 149.3,
+				        "start": 148.88,
+				        "word": " screens",
+				      },
+				      {
+				        "end": 149.52,
+				        "start": 149.3,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 154.06,
+				    "start": 149.52,
+				    "text": "That's pretty cool, but what's even more awesome is that this engine is framework-agnostic.",
+				    "words": [
+				      {
+				        "end": 149.79,
+				        "start": 149.52,
+				        "word": " That",
+				      },
+				      {
+				        "end": 149.85,
+				        "start": 149.79,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 150.18,
+				        "start": 149.85,
+				        "word": " pretty",
+				      },
+				      {
+				        "end": 150.4,
+				        "start": 150.18,
+				        "word": " cool",
+				      },
+				      {
+				        "end": 150.51,
+				        "start": 150.4,
+				        "word": ",",
+				      },
+				      {
+				        "end": 150.72,
+				        "start": 150.51,
+				        "word": " but",
+				      },
+				      {
+				        "end": 150.89,
+				        "start": 150.72,
+				        "word": " what",
+				      },
+				      {
+				        "end": 151,
+				        "start": 150.89,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 151.22,
+				        "start": 151,
+				        "word": " even",
+				      },
+				      {
+				        "end": 151.44,
+				        "start": 151.22,
+				        "word": " more",
+				      },
+				      {
+				        "end": 151.83,
+				        "start": 151.44,
+				        "word": " awesome",
+				      },
+				      {
+				        "end": 151.94,
+				        "start": 151.83,
+				        "word": " is",
+				      },
+				      {
+				        "end": 152.16,
+				        "start": 151.94,
+				        "word": " that",
+				      },
+				      {
+				        "end": 152.42,
+				        "start": 152.16,
+				        "word": " this",
+				      },
+				      {
+				        "end": 152.71,
+				        "start": 152.42,
+				        "word": " engine",
+				      },
+				      {
+				        "end": 152.82,
+				        "start": 152.71,
+				        "word": " is",
+				      },
+				      {
+				        "end": 153.32,
+				        "start": 152.82,
+				        "word": " framework",
+				      },
+				      {
+				        "end": 153.37,
+				        "start": 153.32,
+				        "word": "-",
+				      },
+				      {
+				        "end": 153.53,
+				        "start": 153.37,
+				        "word": "agn",
+				      },
+				      {
+				        "end": 153.8,
+				        "start": 153.53,
+				        "word": "ostic",
+				      },
+				      {
+				        "end": 154.06,
+				        "start": 153.8,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 158.46,
+				    "start": 154.33,
+				    "text": "You don't have to use React, and could build your app and Svelte, Vue, or whatever framework you want.",
+				    "words": [
+				      {
+				        "end": 154.45,
+				        "start": 154.33,
+				        "word": " You",
+				      },
+				      {
+				        "end": 154.63,
+				        "start": 154.45,
+				        "word": " don",
+				      },
+				      {
+				        "end": 154.7,
+				        "start": 154.63,
+				        "word": "'t",
+				      },
+				      {
+				        "end": 154.89,
+				        "start": 154.7,
+				        "word": " have",
+				      },
+				      {
+				        "end": 155,
+				        "start": 154.89,
+				        "word": " to",
+				      },
+				      {
+				        "end": 155.15,
+				        "start": 155,
+				        "word": " use",
+				      },
+				      {
+				        "end": 155.41,
+				        "start": 155.15,
+				        "word": " React",
+				      },
+				      {
+				        "end": 155.51,
+				        "start": 155.41,
+				        "word": ",",
+				      },
+				      {
+				        "end": 155.66,
+				        "start": 155.51,
+				        "word": " and",
+				      },
+				      {
+				        "end": 155.94,
+				        "start": 155.66,
+				        "word": " could",
+				      },
+				      {
+				        "end": 156.18,
+				        "start": 155.94,
+				        "word": " build",
+				      },
+				      {
+				        "end": 156.38,
+				        "start": 156.18,
+				        "word": " your",
+				      },
+				      {
+				        "end": 156.53,
+				        "start": 156.38,
+				        "word": " app",
+				      },
+				      {
+				        "end": 156.68,
+				        "start": 156.53,
+				        "word": " and",
+				      },
+				      {
+				        "end": 156.73,
+				        "start": 156.68,
+				        "word": " S",
+				      },
+				      {
+				        "end": 156.94,
+				        "start": 156.73,
+				        "word": "vel",
+				      },
+				      {
+				        "end": 156.98,
+				        "start": 156.94,
+				        "word": "te",
+				      },
+				      {
+				        "end": 157.08,
+				        "start": 156.98,
+				        "word": ",",
+				      },
+				      {
+				        "end": 157.13,
+				        "start": 157.08,
+				        "word": " V",
+				      },
+				      {
+				        "end": 157.24,
+				        "start": 157.13,
+				        "word": "ue",
+				      },
+				      {
+				        "end": 157.33,
+				        "start": 157.24,
+				        "word": ",",
+				      },
+				      {
+				        "end": 157.43,
+				        "start": 157.33,
+				        "word": " or",
+				      },
+				      {
+				        "end": 157.84,
+				        "start": 157.43,
+				        "word": " whatever",
+				      },
+				      {
+				        "end": 158.31,
+				        "start": 157.84,
+				        "word": " framework",
+				      },
+				      {
+				        "end": 158.46,
+				        "start": 158.31,
+				        "word": " you",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 162.29,
+				    "start": 158.96,
+				    "text": "In addition, it supports actual native CSS features for styling,",
+				    "words": [
+				      {
+				        "end": 159.08,
+				        "start": 158.96,
+				        "word": " In",
+				      },
+				      {
+				        "end": 159.57,
+				        "start": 159.08,
+				        "word": " addition",
+				      },
+				      {
+				        "end": 159.69,
+				        "start": 159.57,
+				        "word": ",",
+				      },
+				      {
+				        "end": 159.81,
+				        "start": 159.69,
+				        "word": " it",
+				      },
+				      {
+				        "end": 160.3,
+				        "start": 159.81,
+				        "word": " supports",
+				      },
+				      {
+				        "end": 160.66,
+				        "start": 160.3,
+				        "word": " actual",
+				      },
+				      {
+				        "end": 161.03,
+				        "start": 160.66,
+				        "word": " native",
+				      },
+				      {
+				        "end": 161.2,
+				        "start": 161.03,
+				        "word": " CSS",
+				      },
+				      {
+				        "end": 161.69,
+				        "start": 161.2,
+				        "word": " features",
+				      },
+				      {
+				        "end": 161.87,
+				        "start": 161.69,
+				        "word": " for",
+				      },
+				      {
+				        "end": 162.29,
+				        "start": 161.87,
+				        "word": " styling",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 165.7,
+				    "start": 162.46,
+				    "text": "like transition animations, variables, gradients, and so on.",
+				    "words": [
+				      {
+				        "end": 162.72,
+				        "start": 162.46,
+				        "word": " like",
+				      },
+				      {
+				        "end": 163.21,
+				        "start": 162.72,
+				        "word": " transition",
+				      },
+				      {
+				        "end": 163.75,
+				        "start": 163.21,
+				        "word": " animations",
+				      },
+				      {
+				        "end": 163.88,
+				        "start": 163.75,
+				        "word": ",",
+				      },
+				      {
+				        "end": 164.5,
+				        "start": 163.88,
+				        "word": " variables",
+				      },
+				      {
+				        "end": 164.63,
+				        "start": 164.5,
+				        "word": ",",
+				      },
+				      {
+				        "end": 164.89,
+				        "start": 164.63,
+				        "word": " grad",
+				      },
+				      {
+				        "end": 165.24,
+				        "start": 164.89,
+				        "word": "ients",
+				      },
+				      {
+				        "end": 165.37,
+				        "start": 165.24,
+				        "word": ",",
+				      },
+				      {
+				        "end": 165.57,
+				        "start": 165.37,
+				        "word": " and",
+				      },
+				      {
+				        "end": 165.7,
+				        "start": 165.57,
+				        "word": " so",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 167.9,
+				    "start": 166.1,
+				    "text": "And that's a lot more intuitive for web developers.",
+				    "words": [
+				      {
+				        "end": 166.22,
+				        "start": 166.1,
+				        "word": " And",
+				      },
+				      {
+				        "end": 166.39,
+				        "start": 166.22,
+				        "word": " that",
+				      },
+				      {
+				        "end": 166.45,
+				        "start": 166.39,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 166.49,
+				        "start": 166.45,
+				        "word": " a",
+				      },
+				      {
+				        "end": 166.61,
+				        "start": 166.49,
+				        "word": " lot",
+				      },
+				      {
+				        "end": 166.77,
+				        "start": 166.61,
+				        "word": " more",
+				      },
+				      {
+				        "end": 167.12,
+				        "start": 166.77,
+				        "word": " intuitive",
+				      },
+				      {
+				        "end": 167.24,
+				        "start": 167.12,
+				        "word": " for",
+				      },
+				      {
+				        "end": 167.36,
+				        "start": 167.24,
+				        "word": " web",
+				      },
+				      {
+				        "end": 167.75,
+				        "start": 167.36,
+				        "word": " developers",
+				      },
+				      {
+				        "end": 167.9,
+				        "start": 167.75,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 171.76,
+				    "start": 167.9,
+				    "text": "The major problem, though, is that there's virtually no ecosystem around this framework.",
+				    "words": [
+				      {
+				        "end": 168.04,
+				        "start": 167.9,
+				        "word": " The",
+				      },
+				      {
+				        "end": 168.28,
+				        "start": 168.04,
+				        "word": " major",
+				      },
+				      {
+				        "end": 168.61,
+				        "start": 168.28,
+				        "word": " problem",
+				      },
+				      {
+				        "end": 168.7,
+				        "start": 168.61,
+				        "word": ",",
+				      },
+				      {
+				        "end": 168.98,
+				        "start": 168.7,
+				        "word": " though",
+				      },
+				      {
+				        "end": 169.07,
+				        "start": 168.98,
+				        "word": ",",
+				      },
+				      {
+				        "end": 169.17,
+				        "start": 169.07,
+				        "word": " is",
+				      },
+				      {
+				        "end": 169.35,
+				        "start": 169.17,
+				        "word": " that",
+				      },
+				      {
+				        "end": 169.59,
+				        "start": 169.35,
+				        "word": " there",
+				      },
+				      {
+				        "end": 169.68,
+				        "start": 169.59,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 170.11,
+				        "start": 169.68,
+				        "word": " virtually",
+				      },
+				      {
+				        "end": 170.2,
+				        "start": 170.11,
+				        "word": " no",
+				      },
+				      {
+				        "end": 170.63,
+				        "start": 170.2,
+				        "word": " ecosystem",
+				      },
+				      {
+				        "end": 170.91,
+				        "start": 170.63,
+				        "word": " around",
+				      },
+				      {
+				        "end": 171.1,
+				        "start": 170.91,
+				        "word": " this",
+				      },
+				      {
+				        "end": 171.53,
+				        "start": 171.1,
+				        "word": " framework",
+				      },
+				      {
+				        "end": 171.76,
+				        "start": 171.53,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 174.04,
+				    "start": 171.76,
+				    "text": "There's no expo tooling to solve all your problems,",
+				    "words": [
+				      {
+				        "end": 172.03,
+				        "start": 171.76,
+				        "word": " There",
+				      },
+				      {
+				        "end": 172.14,
+				        "start": 172.03,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 172.25,
+				        "start": 172.14,
+				        "word": " no",
+				      },
+				      {
+				        "end": 172.41,
+				        "start": 172.25,
+				        "word": " exp",
+				      },
+				      {
+				        "end": 172.48,
+				        "start": 172.41,
+				        "word": "o",
+				      },
+				      {
+				        "end": 172.84,
+				        "start": 172.48,
+				        "word": " tooling",
+				      },
+				      {
+				        "end": 172.95,
+				        "start": 172.84,
+				        "word": " to",
+				      },
+				      {
+				        "end": 173.23,
+				        "start": 172.95,
+				        "word": " solve",
+				      },
+				      {
+				        "end": 173.38,
+				        "start": 173.23,
+				        "word": " all",
+				      },
+				      {
+				        "end": 173.6,
+				        "start": 173.38,
+				        "word": " your",
+				      },
+				      {
+				        "end": 174.04,
+				        "start": 173.6,
+				        "word": " problems",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 176.78,
+				    "start": 174.2,
+				    "text": "and there's no massive widget library like you have in Flutter.",
+				    "words": [
+				      {
+				        "end": 174.39,
+				        "start": 174.2,
+				        "word": " and",
+				      },
+				      {
+				        "end": 174.57,
+				        "start": 174.39,
+				        "word": " there",
+				      },
+				      {
+				        "end": 174.68,
+				        "start": 174.57,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 174.75,
+				        "start": 174.68,
+				        "word": " no",
+				      },
+				      {
+				        "end": 175.07,
+				        "start": 174.75,
+				        "word": " massive",
+				      },
+				      {
+				        "end": 175.35,
+				        "start": 175.07,
+				        "word": " widget",
+				      },
+				      {
+				        "end": 175.67,
+				        "start": 175.35,
+				        "word": " library",
+				      },
+				      {
+				        "end": 175.85,
+				        "start": 175.67,
+				        "word": " like",
+				      },
+				      {
+				        "end": 175.99,
+				        "start": 175.85,
+				        "word": " you",
+				      },
+				      {
+				        "end": 176.17,
+				        "start": 175.99,
+				        "word": " have",
+				      },
+				      {
+				        "end": 176.26,
+				        "start": 176.17,
+				        "word": " in",
+				      },
+				      {
+				        "end": 176.35,
+				        "start": 176.26,
+				        "word": " Fl",
+				      },
+				      {
+				        "end": 176.58,
+				        "start": 176.35,
+				        "word": "utter",
+				      },
+				      {
+				        "end": 176.78,
+				        "start": 176.58,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 180.34,
+				    "start": 176.78,
+				    "text": "That being said, let's go ahead and try it out to find out if it has any potential.",
+				    "words": [
+				      {
+				        "end": 176.98,
+				        "start": 176.78,
+				        "word": " That",
+				      },
+				      {
+				        "end": 177.23,
+				        "start": 176.98,
+				        "word": " being",
+				      },
+				      {
+				        "end": 177.43,
+				        "start": 177.23,
+				        "word": " said",
+				      },
+				      {
+				        "end": 177.53,
+				        "start": 177.43,
+				        "word": ",",
+				      },
+				      {
+				        "end": 177.68,
+				        "start": 177.53,
+				        "word": " let",
+				      },
+				      {
+				        "end": 177.77,
+				        "start": 177.68,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 177.88,
+				        "start": 177.77,
+				        "word": " go",
+				      },
+				      {
+				        "end": 178.13,
+				        "start": 177.88,
+				        "word": " ahead",
+				      },
+				      {
+				        "end": 178.28,
+				        "start": 178.13,
+				        "word": " and",
+				      },
+				      {
+				        "end": 178.42,
+				        "start": 178.28,
+				        "word": " try",
+				      },
+				      {
+				        "end": 178.53,
+				        "start": 178.42,
+				        "word": " it",
+				      },
+				      {
+				        "end": 178.68,
+				        "start": 178.53,
+				        "word": " out",
+				      },
+				      {
+				        "end": 178.78,
+				        "start": 178.68,
+				        "word": " to",
+				      },
+				      {
+				        "end": 178.97,
+				        "start": 178.78,
+				        "word": " find",
+				      },
+				      {
+				        "end": 179.13,
+				        "start": 178.97,
+				        "word": " out",
+				      },
+				      {
+				        "end": 179.23,
+				        "start": 179.13,
+				        "word": " if",
+				      },
+				      {
+				        "end": 179.33,
+				        "start": 179.23,
+				        "word": " it",
+				      },
+				      {
+				        "end": 179.48,
+				        "start": 179.33,
+				        "word": " has",
+				      },
+				      {
+				        "end": 179.63,
+				        "start": 179.48,
+				        "word": " any",
+				      },
+				      {
+				        "end": 180.09,
+				        "start": 179.63,
+				        "word": " potential",
+				      },
+				      {
+				        "end": 180.34,
+				        "start": 180.09,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 183.91,
+				    "start": 180.34,
+				    "text": "When you generate a project, the first thing you'll notice is that it uses RSPack,",
+				    "words": [
+				      {
+				        "end": 180.61,
+				        "start": 180.34,
+				        "word": " When",
+				      },
+				      {
+				        "end": 180.73,
+				        "start": 180.61,
+				        "word": " you",
+				      },
+				      {
+				        "end": 181.18,
+				        "start": 180.73,
+				        "word": " generate",
+				      },
+				      {
+				        "end": 181.25,
+				        "start": 181.18,
+				        "word": " a",
+				      },
+				      {
+				        "end": 181.62,
+				        "start": 181.25,
+				        "word": " project",
+				      },
+				      {
+				        "end": 181.75,
+				        "start": 181.62,
+				        "word": ",",
+				      },
+				      {
+				        "end": 181.9,
+				        "start": 181.75,
+				        "word": " the",
+				      },
+				      {
+				        "end": 182.2,
+				        "start": 181.9,
+				        "word": " first",
+				      },
+				      {
+				        "end": 182.46,
+				        "start": 182.2,
+				        "word": " thing",
+				      },
+				      {
+				        "end": 182.63,
+				        "start": 182.46,
+				        "word": " you",
+				      },
+				      {
+				        "end": 182.8,
+				        "start": 182.63,
+				        "word": "'ll",
+				      },
+				      {
+				        "end": 183.14,
+				        "start": 182.8,
+				        "word": " notice",
+				      },
+				      {
+				        "end": 183.24,
+				        "start": 183.14,
+				        "word": " is",
+				      },
+				      {
+				        "end": 183.47,
+				        "start": 183.24,
+				        "word": " that",
+				      },
+				      {
+				        "end": 183.59,
+				        "start": 183.47,
+				        "word": " it",
+				      },
+				      {
+				        "end": 183.8,
+				        "start": 183.59,
+				        "word": " uses",
+				      },
+				      {
+				        "end": 183.91,
+				        "start": 183.8,
+				        "word": " RS",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 187.79,
+				    "start": 184.34,
+				    "text": "which is a Rust-based module bundler that's supposedly even faster than Vite.",
+				    "words": [
+				      {
+				        "end": 184.63,
+				        "start": 184.34,
+				        "word": " which",
+				      },
+				      {
+				        "end": 184.73,
+				        "start": 184.63,
+				        "word": " is",
+				      },
+				      {
+				        "end": 184.78,
+				        "start": 184.73,
+				        "word": " a",
+				      },
+				      {
+				        "end": 185,
+				        "start": 184.78,
+				        "word": " Rust",
+				      },
+				      {
+				        "end": 185.05,
+				        "start": 185,
+				        "word": "-",
+				      },
+				      {
+				        "end": 185.33,
+				        "start": 185.05,
+				        "word": "based",
+				      },
+				      {
+				        "end": 185.68,
+				        "start": 185.33,
+				        "word": " module",
+				      },
+				      {
+				        "end": 185.89,
+				        "start": 185.68,
+				        "word": " bund",
+				      },
+				      {
+				        "end": 186.06,
+				        "start": 185.89,
+				        "word": "ler",
+				      },
+				      {
+				        "end": 186.28,
+				        "start": 186.06,
+				        "word": " that",
+				      },
+				      {
+				        "end": 186.39,
+				        "start": 186.28,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 186.96,
+				        "start": 186.39,
+				        "word": " supposedly",
+				      },
+				      {
+				        "end": 187.18,
+				        "start": 186.96,
+				        "word": " even",
+				      },
+				      {
+				        "end": 187.52,
+				        "start": 187.18,
+				        "word": " faster",
+				      },
+				      {
+				        "end": 187.74,
+				        "start": 187.52,
+				        "word": " than",
+				      },
+				      {
+				        "end": 187.79,
+				        "start": 187.74,
+				        "word": " V",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 190.37,
+				    "start": 188.22,
+				    "text": "That'll generate a starter template in TypeScript,",
+				    "words": [
+				      {
+				        "end": 188.42,
+				        "start": 188.22,
+				        "word": " That",
+				      },
+				      {
+				        "end": 188.57,
+				        "start": 188.42,
+				        "word": "'ll",
+				      },
+				      {
+				        "end": 188.97,
+				        "start": 188.57,
+				        "word": " generate",
+				      },
+				      {
+				        "end": 189.02,
+				        "start": 188.97,
+				        "word": " a",
+				      },
+				      {
+				        "end": 189.37,
+				        "start": 189.02,
+				        "word": " starter",
+				      },
+				      {
+				        "end": 189.77,
+				        "start": 189.37,
+				        "word": " template",
+				      },
+				      {
+				        "end": 189.87,
+				        "start": 189.77,
+				        "word": " in",
+				      },
+				      {
+				        "end": 190.08,
+				        "start": 189.87,
+				        "word": " Type",
+				      },
+				      {
+				        "end": 190.37,
+				        "start": 190.08,
+				        "word": "Script",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 193.98,
+				    "start": 190.5,
+				    "text": "and if we look at the code, it looks like a basic React.js project,",
+				    "words": [
+				      {
+				        "end": 190.71,
+				        "start": 190.5,
+				        "word": " and",
+				      },
+				      {
+				        "end": 190.77,
+				        "start": 190.71,
+				        "word": " if",
+				      },
+				      {
+				        "end": 190.88,
+				        "start": 190.77,
+				        "word": " we",
+				      },
+				      {
+				        "end": 191.1,
+				        "start": 190.88,
+				        "word": " look",
+				      },
+				      {
+				        "end": 191.21,
+				        "start": 191.1,
+				        "word": " at",
+				      },
+				      {
+				        "end": 191.42,
+				        "start": 191.21,
+				        "word": " the",
+				      },
+				      {
+				        "end": 191.59,
+				        "start": 191.42,
+				        "word": " code",
+				      },
+				      {
+				        "end": 191.72,
+				        "start": 191.59,
+				        "word": ",",
+				      },
+				      {
+				        "end": 191.85,
+				        "start": 191.72,
+				        "word": " it",
+				      },
+				      {
+				        "end": 192.19,
+				        "start": 191.85,
+				        "word": " looks",
+				      },
+				      {
+				        "end": 192.44,
+				        "start": 192.19,
+				        "word": " like",
+				      },
+				      {
+				        "end": 192.5,
+				        "start": 192.44,
+				        "word": " a",
+				      },
+				      {
+				        "end": 192.83,
+				        "start": 192.5,
+				        "word": " basic",
+				      },
+				      {
+				        "end": 193.16,
+				        "start": 192.83,
+				        "word": " React",
+				      },
+				      {
+				        "end": 193.35,
+				        "start": 193.16,
+				        "word": ".",
+				      },
+				      {
+				        "end": 193.48,
+				        "start": 193.35,
+				        "word": "js",
+				      },
+				      {
+				        "end": 193.98,
+				        "start": 193.48,
+				        "word": " project",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 196.66,
+				    "start": 193.98,
+				    "text": "where the UI is represented with HTML and CSS.",
+				    "words": [
+				      {
+				        "end": 194.31,
+				        "start": 193.98,
+				        "word": " where",
+				      },
+				      {
+				        "end": 194.51,
+				        "start": 194.31,
+				        "word": " the",
+				      },
+				      {
+				        "end": 194.64,
+				        "start": 194.51,
+				        "word": " UI",
+				      },
+				      {
+				        "end": 194.77,
+				        "start": 194.64,
+				        "word": " is",
+				      },
+				      {
+				        "end": 195.5,
+				        "start": 194.77,
+				        "word": " represented",
+				      },
+				      {
+				        "end": 195.76,
+				        "start": 195.5,
+				        "word": " with",
+				      },
+				      {
+				        "end": 196.02,
+				        "start": 195.76,
+				        "word": " HTML",
+				      },
+				      {
+				        "end": 196.22,
+				        "start": 196.02,
+				        "word": " and",
+				      },
+				      {
+				        "end": 196.42,
+				        "start": 196.22,
+				        "word": " CSS",
+				      },
+				      {
+				        "end": 196.66,
+				        "start": 196.42,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 202.34,
+				    "start": 197.02,
+				    "text": "But if we take a closer look at the markup, you'll notice we're using non-standard elements like Vue, Text, and Image.",
+				    "words": [
+				      {
+				        "end": 197.15,
+				        "start": 197.02,
+				        "word": " But",
+				      },
+				      {
+				        "end": 197.26,
+				        "start": 197.15,
+				        "word": " if",
+				      },
+				      {
+				        "end": 197.33,
+				        "start": 197.26,
+				        "word": " we",
+				      },
+				      {
+				        "end": 197.51,
+				        "start": 197.33,
+				        "word": " take",
+				      },
+				      {
+				        "end": 197.55,
+				        "start": 197.51,
+				        "word": " a",
+				      },
+				      {
+				        "end": 197.81,
+				        "start": 197.55,
+				        "word": " closer",
+				      },
+				      {
+				        "end": 198.02,
+				        "start": 197.81,
+				        "word": " look",
+				      },
+				      {
+				        "end": 198.14,
+				        "start": 198.02,
+				        "word": " at",
+				      },
+				      {
+				        "end": 198.22,
+				        "start": 198.14,
+				        "word": " the",
+				      },
+				      {
+				        "end": 198.44,
+				        "start": 198.22,
+				        "word": " mark",
+				      },
+				      {
+				        "end": 198.49,
+				        "start": 198.44,
+				        "word": "up",
+				      },
+				      {
+				        "end": 198.64,
+				        "start": 198.49,
+				        "word": ",",
+				      },
+				      {
+				        "end": 198.81,
+				        "start": 198.64,
+				        "word": " you",
+				      },
+				      {
+				        "end": 198.96,
+				        "start": 198.81,
+				        "word": "'ll",
+				      },
+				      {
+				        "end": 199.28,
+				        "start": 198.96,
+				        "word": " notice",
+				      },
+				      {
+				        "end": 199.38,
+				        "start": 199.28,
+				        "word": " we",
+				      },
+				      {
+				        "end": 199.54,
+				        "start": 199.38,
+				        "word": "'re",
+				      },
+				      {
+				        "end": 199.81,
+				        "start": 199.54,
+				        "word": " using",
+				      },
+				      {
+				        "end": 199.96,
+				        "start": 199.81,
+				        "word": " non",
+				      },
+				      {
+				        "end": 200.02,
+				        "start": 199.96,
+				        "word": "-",
+				      },
+				      {
+				        "end": 200.3,
+				        "start": 200.02,
+				        "word": "stand",
+				      },
+				      {
+				        "end": 200.45,
+				        "start": 200.3,
+				        "word": "ard",
+				      },
+				      {
+				        "end": 200.88,
+				        "start": 200.45,
+				        "word": " elements",
+				      },
+				      {
+				        "end": 201.09,
+				        "start": 200.88,
+				        "word": " like",
+				      },
+				      {
+				        "end": 201.14,
+				        "start": 201.09,
+				        "word": " V",
+				      },
+				      {
+				        "end": 201.24,
+				        "start": 201.14,
+				        "word": "ue",
+				      },
+				      {
+				        "end": 201.34,
+				        "start": 201.24,
+				        "word": ",",
+				      },
+				      {
+				        "end": 201.57,
+				        "start": 201.34,
+				        "word": " Text",
+				      },
+				      {
+				        "end": 201.65,
+				        "start": 201.57,
+				        "word": ",",
+				      },
+				      {
+				        "end": 201.84,
+				        "start": 201.65,
+				        "word": " and",
+				      },
+				      {
+				        "end": 202.08,
+				        "start": 201.84,
+				        "word": " Image",
+				      },
+				      {
+				        "end": 202.34,
+				        "start": 202.08,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 207.55,
+				    "start": 202.34,
+				    "text": "These look like HTML tags, but they actually correspond to native elements on different platforms,",
+				    "words": [
+				      {
+				        "end": 202.65,
+				        "start": 202.34,
+				        "word": " These",
+				      },
+				      {
+				        "end": 202.9,
+				        "start": 202.65,
+				        "word": " look",
+				      },
+				      {
+				        "end": 203.15,
+				        "start": 202.9,
+				        "word": " like",
+				      },
+				      {
+				        "end": 203.4,
+				        "start": 203.15,
+				        "word": " HTML",
+				      },
+				      {
+				        "end": 203.68,
+				        "start": 203.4,
+				        "word": " tags",
+				      },
+				      {
+				        "end": 203.77,
+				        "start": 203.68,
+				        "word": ",",
+				      },
+				      {
+				        "end": 203.95,
+				        "start": 203.77,
+				        "word": " but",
+				      },
+				      {
+				        "end": 204.2,
+				        "start": 203.95,
+				        "word": " they",
+				      },
+				      {
+				        "end": 204.73,
+				        "start": 204.2,
+				        "word": " actually",
+				      },
+				      {
+				        "end": 205.37,
+				        "start": 204.73,
+				        "word": " correspond",
+				      },
+				      {
+				        "end": 205.44,
+				        "start": 205.37,
+				        "word": " to",
+				      },
+				      {
+				        "end": 205.81,
+				        "start": 205.44,
+				        "word": " native",
+				      },
+				      {
+				        "end": 206.31,
+				        "start": 205.81,
+				        "word": " elements",
+				      },
+				      {
+				        "end": 206.43,
+				        "start": 206.31,
+				        "word": " on",
+				      },
+				      {
+				        "end": 206.99,
+				        "start": 206.43,
+				        "word": " different",
+				      },
+				      {
+				        "end": 207.55,
+				        "start": 206.99,
+				        "word": " platforms",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 210.81,
+				    "start": 207.74,
+				    "text": "like Vue is UIView in iOS, or VueGroup in Android,",
+				    "words": [
+				      {
+				        "end": 208.09,
+				        "start": 207.74,
+				        "word": " like",
+				      },
+				      {
+				        "end": 208.11,
+				        "start": 208.09,
+				        "word": " V",
+				      },
+				      {
+				        "end": 208.26,
+				        "start": 208.11,
+				        "word": "ue",
+				      },
+				      {
+				        "end": 208.42,
+				        "start": 208.26,
+				        "word": " is",
+				      },
+				      {
+				        "end": 208.48,
+				        "start": 208.42,
+				        "word": " U",
+				      },
+				      {
+				        "end": 208.63,
+				        "start": 208.48,
+				        "word": "IV",
+				      },
+				      {
+				        "end": 208.84,
+				        "start": 208.63,
+				        "word": "iew",
+				      },
+				      {
+				        "end": 209,
+				        "start": 208.84,
+				        "word": " in",
+				      },
+				      {
+				        "end": 209.22,
+				        "start": 209,
+				        "word": " iOS",
+				      },
+				      {
+				        "end": 209.37,
+				        "start": 209.22,
+				        "word": ",",
+				      },
+				      {
+				        "end": 209.52,
+				        "start": 209.37,
+				        "word": " or",
+				      },
+				      {
+				        "end": 209.59,
+				        "start": 209.52,
+				        "word": " V",
+				      },
+				      {
+				        "end": 209.74,
+				        "start": 209.59,
+				        "word": "ue",
+				      },
+				      {
+				        "end": 210.12,
+				        "start": 209.74,
+				        "word": "Group",
+				      },
+				      {
+				        "end": 210.31,
+				        "start": 210.12,
+				        "word": " in",
+				      },
+				      {
+				        "end": 210.81,
+				        "start": 210.31,
+				        "word": " Android",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 213.62,
+				    "start": 210.95,
+				    "text": "but would translate to a div on the web.",
+				    "words": [
+				      {
+				        "end": 211.16,
+				        "start": 210.95,
+				        "word": " but",
+				      },
+				      {
+				        "end": 211.55,
+				        "start": 211.16,
+				        "word": " would",
+				      },
+				      {
+				        "end": 212.23,
+				        "start": 211.55,
+				        "word": " translate",
+				      },
+				      {
+				        "end": 212.37,
+				        "start": 212.23,
+				        "word": " to",
+				      },
+				      {
+				        "end": 212.45,
+				        "start": 212.37,
+				        "word": " a",
+				      },
+				      {
+				        "end": 212.67,
+				        "start": 212.45,
+				        "word": " div",
+				      },
+				      {
+				        "end": 212.82,
+				        "start": 212.67,
+				        "word": " on",
+				      },
+				      {
+				        "end": 213.04,
+				        "start": 212.82,
+				        "word": " the",
+				      },
+				      {
+				        "end": 213.26,
+				        "start": 213.04,
+				        "word": " web",
+				      },
+				      {
+				        "end": 213.62,
+				        "start": 213.26,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 218.9,
+				    "start": 213.62,
+				    "text": "And what's especially awesome here is that we can use regular CSS or even Tailwind to style these elements,",
+				    "words": [
+				      {
+				        "end": 213.8,
+				        "start": 213.62,
+				        "word": " And",
+				      },
+				      {
+				        "end": 214.06,
+				        "start": 213.8,
+				        "word": " what",
+				      },
+				      {
+				        "end": 214.16,
+				        "start": 214.06,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 214.76,
+				        "start": 214.16,
+				        "word": " especially",
+				      },
+				      {
+				        "end": 215.18,
+				        "start": 214.76,
+				        "word": " awesome",
+				      },
+				      {
+				        "end": 215.42,
+				        "start": 215.18,
+				        "word": " here",
+				      },
+				      {
+				        "end": 215.54,
+				        "start": 215.42,
+				        "word": " is",
+				      },
+				      {
+				        "end": 215.78,
+				        "start": 215.54,
+				        "word": " that",
+				      },
+				      {
+				        "end": 215.91,
+				        "start": 215.78,
+				        "word": " we",
+				      },
+				      {
+				        "end": 216.08,
+				        "start": 215.91,
+				        "word": " can",
+				      },
+				      {
+				        "end": 216.26,
+				        "start": 216.08,
+				        "word": " use",
+				      },
+				      {
+				        "end": 216.68,
+				        "start": 216.26,
+				        "word": " regular",
+				      },
+				      {
+				        "end": 216.86,
+				        "start": 216.68,
+				        "word": " CSS",
+				      },
+				      {
+				        "end": 217,
+				        "start": 216.86,
+				        "word": " or",
+				      },
+				      {
+				        "end": 217.22,
+				        "start": 217,
+				        "word": " even",
+				      },
+				      {
+				        "end": 217.49,
+				        "start": 217.22,
+				        "word": " Tail",
+				      },
+				      {
+				        "end": 217.7,
+				        "start": 217.49,
+				        "word": "wind",
+				      },
+				      {
+				        "end": 217.82,
+				        "start": 217.7,
+				        "word": " to",
+				      },
+				      {
+				        "end": 218.12,
+				        "start": 217.82,
+				        "word": " style",
+				      },
+				      {
+				        "end": 218.42,
+				        "start": 218.12,
+				        "word": " these",
+				      },
+				      {
+				        "end": 218.9,
+				        "start": 218.42,
+				        "word": " elements",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 221.18,
+				    "start": 219.04,
+				    "text": "which is something you can't really do in React Native,",
+				    "words": [
+				      {
+				        "end": 219.28,
+				        "start": 219.04,
+				        "word": " which",
+				      },
+				      {
+				        "end": 219.37,
+				        "start": 219.28,
+				        "word": " is",
+				      },
+				      {
+				        "end": 219.81,
+				        "start": 219.37,
+				        "word": " something",
+				      },
+				      {
+				        "end": 219.95,
+				        "start": 219.81,
+				        "word": " you",
+				      },
+				      {
+				        "end": 220.17,
+				        "start": 219.95,
+				        "word": " can",
+				      },
+				      {
+				        "end": 220.18,
+				        "start": 220.17,
+				        "word": "'t",
+				      },
+				      {
+				        "end": 220.47,
+				        "start": 220.18,
+				        "word": " really",
+				      },
+				      {
+				        "end": 220.56,
+				        "start": 220.47,
+				        "word": " do",
+				      },
+				      {
+				        "end": 220.65,
+				        "start": 220.56,
+				        "word": " in",
+				      },
+				      {
+				        "end": 220.89,
+				        "start": 220.65,
+				        "word": " React",
+				      },
+				      {
+				        "end": 221.18,
+				        "start": 220.89,
+				        "word": " Native",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 223.42,
+				    "start": 221.27,
+				    "text": "although you could use tools like NativeWind.",
+				    "words": [
+				      {
+				        "end": 221.66,
+				        "start": 221.27,
+				        "word": " although",
+				      },
+				      {
+				        "end": 221.8,
+				        "start": 221.66,
+				        "word": " you",
+				      },
+				      {
+				        "end": 222.04,
+				        "start": 221.8,
+				        "word": " could",
+				      },
+				      {
+				        "end": 222.17,
+				        "start": 222.04,
+				        "word": " use",
+				      },
+				      {
+				        "end": 222.42,
+				        "start": 222.17,
+				        "word": " tools",
+				      },
+				      {
+				        "end": 222.61,
+				        "start": 222.42,
+				        "word": " like",
+				      },
+				      {
+				        "end": 222.9,
+				        "start": 222.61,
+				        "word": " Native",
+				      },
+				      {
+				        "end": 223.09,
+				        "start": 222.9,
+				        "word": "Wind",
+				      },
+				      {
+				        "end": 223.42,
+				        "start": 223.09,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 224.8,
+				    "start": 223.42,
+				    "text": "But now let's go ahead and run it.",
+				    "words": [
+				      {
+				        "end": 223.56,
+				        "start": 223.42,
+				        "word": " But",
+				      },
+				      {
+				        "end": 223.7,
+				        "start": 223.56,
+				        "word": " now",
+				      },
+				      {
+				        "end": 223.84,
+				        "start": 223.7,
+				        "word": " let",
+				      },
+				      {
+				        "end": 223.93,
+				        "start": 223.84,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 224.02,
+				        "start": 223.93,
+				        "word": " go",
+				      },
+				      {
+				        "end": 224.25,
+				        "start": 224.02,
+				        "word": " ahead",
+				      },
+				      {
+				        "end": 224.39,
+				        "start": 224.25,
+				        "word": " and",
+				      },
+				      {
+				        "end": 224.53,
+				        "start": 224.39,
+				        "word": " run",
+				      },
+				      {
+				        "end": 224.62,
+				        "start": 224.53,
+				        "word": " it",
+				      },
+				      {
+				        "end": 224.8,
+				        "start": 224.62,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 227.95,
+				    "start": 224.99,
+				    "text": "The easiest way to run it on mobile is to use the Lynx Explorer app,",
+				    "words": [
+				      {
+				        "end": 225.13,
+				        "start": 224.99,
+				        "word": " The",
+				      },
+				      {
+				        "end": 225.53,
+				        "start": 225.13,
+				        "word": " easiest",
+				      },
+				      {
+				        "end": 225.7,
+				        "start": 225.53,
+				        "word": " way",
+				      },
+				      {
+				        "end": 225.81,
+				        "start": 225.7,
+				        "word": " to",
+				      },
+				      {
+				        "end": 225.98,
+				        "start": 225.81,
+				        "word": " run",
+				      },
+				      {
+				        "end": 226.09,
+				        "start": 225.98,
+				        "word": " it",
+				      },
+				      {
+				        "end": 226.2,
+				        "start": 226.09,
+				        "word": " on",
+				      },
+				      {
+				        "end": 226.54,
+				        "start": 226.2,
+				        "word": " mobile",
+				      },
+				      {
+				        "end": 226.65,
+				        "start": 226.54,
+				        "word": " is",
+				      },
+				      {
+				        "end": 226.76,
+				        "start": 226.65,
+				        "word": " to",
+				      },
+				      {
+				        "end": 226.95,
+				        "start": 226.76,
+				        "word": " use",
+				      },
+				      {
+				        "end": 227.1,
+				        "start": 226.95,
+				        "word": " the",
+				      },
+				      {
+				        "end": 227.29,
+				        "start": 227.1,
+				        "word": " Lyn",
+				      },
+				      {
+				        "end": 227.32,
+				        "start": 227.29,
+				        "word": "x",
+				      },
+				      {
+				        "end": 227.78,
+				        "start": 227.32,
+				        "word": " Explorer",
+				      },
+				      {
+				        "end": 227.95,
+				        "start": 227.78,
+				        "word": " app",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 230.28,
+				    "start": 228.16,
+				    "text": "which allows you to live preview it on your phone.",
+				    "words": [
+				      {
+				        "end": 228.42,
+				        "start": 228.16,
+				        "word": " which",
+				      },
+				      {
+				        "end": 228.69,
+				        "start": 228.42,
+				        "word": " allows",
+				      },
+				      {
+				        "end": 228.83,
+				        "start": 228.69,
+				        "word": " you",
+				      },
+				      {
+				        "end": 228.92,
+				        "start": 228.83,
+				        "word": " to",
+				      },
+				      {
+				        "end": 229.11,
+				        "start": 228.92,
+				        "word": " live",
+				      },
+				      {
+				        "end": 229.45,
+				        "start": 229.11,
+				        "word": " preview",
+				      },
+				      {
+				        "end": 229.54,
+				        "start": 229.45,
+				        "word": " it",
+				      },
+				      {
+				        "end": 229.64,
+				        "start": 229.54,
+				        "word": " on",
+				      },
+				      {
+				        "end": 229.82,
+				        "start": 229.64,
+				        "word": " your",
+				      },
+				      {
+				        "end": 230.06,
+				        "start": 229.82,
+				        "word": " phone",
+				      },
+				      {
+				        "end": 230.28,
+				        "start": 230.06,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 233.4,
+				    "start": 230.28,
+				    "text": "But when I tried to compile it on Windows, I immediately got an error.",
+				    "words": [
+				      {
+				        "end": 230.43,
+				        "start": 230.28,
+				        "word": " But",
+				      },
+				      {
+				        "end": 230.63,
+				        "start": 230.43,
+				        "word": " when",
+				      },
+				      {
+				        "end": 230.68,
+				        "start": 230.63,
+				        "word": " I",
+				      },
+				      {
+				        "end": 230.93,
+				        "start": 230.68,
+				        "word": " tried",
+				      },
+				      {
+				        "end": 231.03,
+				        "start": 230.93,
+				        "word": " to",
+				      },
+				      {
+				        "end": 231.39,
+				        "start": 231.03,
+				        "word": " compile",
+				      },
+				      {
+				        "end": 231.49,
+				        "start": 231.39,
+				        "word": " it",
+				      },
+				      {
+				        "end": 231.59,
+				        "start": 231.49,
+				        "word": " on",
+				      },
+				      {
+				        "end": 231.95,
+				        "start": 231.59,
+				        "word": " Windows",
+				      },
+				      {
+				        "end": 232.05,
+				        "start": 231.95,
+				        "word": ",",
+				      },
+				      {
+				        "end": 232.09,
+				        "start": 232.05,
+				        "word": " I",
+				      },
+				      {
+				        "end": 232.67,
+				        "start": 232.09,
+				        "word": " immediately",
+				      },
+				      {
+				        "end": 232.82,
+				        "start": 232.67,
+				        "word": " got",
+				      },
+				      {
+				        "end": 232.92,
+				        "start": 232.82,
+				        "word": " an",
+				      },
+				      {
+				        "end": 233.17,
+				        "start": 232.92,
+				        "word": " error",
+				      },
+				      {
+				        "end": 233.4,
+				        "start": 233.17,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 235.79,
+				    "start": 233.4,
+				    "text": "So I tried to switch to the Windows subsystem for Linux,",
+				    "words": [
+				      {
+				        "end": 233.5,
+				        "start": 233.4,
+				        "word": " So",
+				      },
+				      {
+				        "end": 233.61,
+				        "start": 233.5,
+				        "word": " I",
+				      },
+				      {
+				        "end": 233.82,
+				        "start": 233.61,
+				        "word": " tried",
+				      },
+				      {
+				        "end": 233.92,
+				        "start": 233.82,
+				        "word": " to",
+				      },
+				      {
+				        "end": 234.24,
+				        "start": 233.92,
+				        "word": " switch",
+				      },
+				      {
+				        "end": 234.32,
+				        "start": 234.24,
+				        "word": " to",
+				      },
+				      {
+				        "end": 234.5,
+				        "start": 234.32,
+				        "word": " the",
+				      },
+				      {
+				        "end": 234.88,
+				        "start": 234.5,
+				        "word": " Windows",
+				      },
+				      {
+				        "end": 235.09,
+				        "start": 234.88,
+				        "word": " subs",
+				      },
+				      {
+				        "end": 235.36,
+				        "start": 235.09,
+				        "word": "ystem",
+				      },
+				      {
+				        "end": 235.52,
+				        "start": 235.36,
+				        "word": " for",
+				      },
+				      {
+				        "end": 235.79,
+				        "start": 235.52,
+				        "word": " Linux",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 239.34,
+				    "start": 235.96,
+				    "text": "and while it compiled, I could never actually get it to run on the Explorer app.",
+				    "words": [
+				      {
+				        "end": 236.12,
+				        "start": 235.96,
+				        "word": " and",
+				      },
+				      {
+				        "end": 236.4,
+				        "start": 236.12,
+				        "word": " while",
+				      },
+				      {
+				        "end": 236.51,
+				        "start": 236.4,
+				        "word": " it",
+				      },
+				      {
+				        "end": 236.95,
+				        "start": 236.51,
+				        "word": " compiled",
+				      },
+				      {
+				        "end": 237.08,
+				        "start": 236.95,
+				        "word": ",",
+				      },
+				      {
+				        "end": 237.13,
+				        "start": 237.08,
+				        "word": " I",
+				      },
+				      {
+				        "end": 237.45,
+				        "start": 237.13,
+				        "word": " could",
+				      },
+				      {
+				        "end": 237.67,
+				        "start": 237.45,
+				        "word": " never",
+				      },
+				      {
+				        "end": 238.1,
+				        "start": 237.67,
+				        "word": " actually",
+				      },
+				      {
+				        "end": 238.26,
+				        "start": 238.1,
+				        "word": " get",
+				      },
+				      {
+				        "end": 238.38,
+				        "start": 238.26,
+				        "word": " it",
+				      },
+				      {
+				        "end": 238.48,
+				        "start": 238.38,
+				        "word": " to",
+				      },
+				      {
+				        "end": 238.64,
+				        "start": 238.48,
+				        "word": " run",
+				      },
+				      {
+				        "end": 238.75,
+				        "start": 238.64,
+				        "word": " on",
+				      },
+				      {
+				        "end": 238.91,
+				        "start": 238.75,
+				        "word": " the",
+				      },
+				      {
+				        "end": 239.34,
+				        "start": 238.91,
+				        "word": " Explorer",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 241.74,
+				    "start": 239.72,
+				    "text": "So finally, I had to dust off my old MacBook,",
+				    "words": [
+				      {
+				        "end": 239.83,
+				        "start": 239.72,
+				        "word": " So",
+				      },
+				      {
+				        "end": 240.23,
+				        "start": 239.83,
+				        "word": " finally",
+				      },
+				      {
+				        "end": 240.34,
+				        "start": 240.23,
+				        "word": ",",
+				      },
+				      {
+				        "end": 240.39,
+				        "start": 240.34,
+				        "word": " I",
+				      },
+				      {
+				        "end": 240.56,
+				        "start": 240.39,
+				        "word": " had",
+				      },
+				      {
+				        "end": 240.67,
+				        "start": 240.56,
+				        "word": " to",
+				      },
+				      {
+				        "end": 240.89,
+				        "start": 240.67,
+				        "word": " dust",
+				      },
+				      {
+				        "end": 241.07,
+				        "start": 240.89,
+				        "word": " off",
+				      },
+				      {
+				        "end": 241.17,
+				        "start": 241.07,
+				        "word": " my",
+				      },
+				      {
+				        "end": 241.34,
+				        "start": 241.17,
+				        "word": " old",
+				      },
+				      {
+				        "end": 241.74,
+				        "start": 241.34,
+				        "word": " MacBook",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 244,
+				    "start": 241.9,
+				    "text": "and everything seemed to work a lot smoother on macOS.",
+				    "words": [
+				      {
+				        "end": 242.15,
+				        "start": 241.9,
+				        "word": " and",
+				      },
+				      {
+				        "end": 242.55,
+				        "start": 242.15,
+				        "word": " everything",
+				      },
+				      {
+				        "end": 242.85,
+				        "start": 242.55,
+				        "word": " seemed",
+				      },
+				      {
+				        "end": 242.95,
+				        "start": 242.85,
+				        "word": " to",
+				      },
+				      {
+				        "end": 243.15,
+				        "start": 242.95,
+				        "word": " work",
+				      },
+				      {
+				        "end": 243.2,
+				        "start": 243.15,
+				        "word": " a",
+				      },
+				      {
+				        "end": 243.35,
+				        "start": 243.2,
+				        "word": " lot",
+				      },
+				      {
+				        "end": 243.75,
+				        "start": 243.35,
+				        "word": " smoother",
+				      },
+				      {
+				        "end": 243.85,
+				        "start": 243.75,
+				        "word": " on",
+				      },
+				      {
+				        "end": 244,
+				        "start": 243.85,
+				        "word": " mac",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 247.08,
+				    "start": 244.28,
+				    "text": "And as you can see here, when I make changes to my code locally,",
+				    "words": [
+				      {
+				        "end": 244.44,
+				        "start": 244.28,
+				        "word": " And",
+				      },
+				      {
+				        "end": 244.57,
+				        "start": 244.44,
+				        "word": " as",
+				      },
+				      {
+				        "end": 244.72,
+				        "start": 244.57,
+				        "word": " you",
+				      },
+				      {
+				        "end": 244.87,
+				        "start": 244.72,
+				        "word": " can",
+				      },
+				      {
+				        "end": 245.02,
+				        "start": 244.87,
+				        "word": " see",
+				      },
+				      {
+				        "end": 245.25,
+				        "start": 245.02,
+				        "word": " here",
+				      },
+				      {
+				        "end": 245.36,
+				        "start": 245.25,
+				        "word": ",",
+				      },
+				      {
+				        "end": 245.58,
+				        "start": 245.36,
+				        "word": " when",
+				      },
+				      {
+				        "end": 245.63,
+				        "start": 245.58,
+				        "word": " I",
+				      },
+				      {
+				        "end": 245.85,
+				        "start": 245.63,
+				        "word": " make",
+				      },
+				      {
+				        "end": 246.23,
+				        "start": 245.85,
+				        "word": " changes",
+				      },
+				      {
+				        "end": 246.34,
+				        "start": 246.23,
+				        "word": " to",
+				      },
+				      {
+				        "end": 246.45,
+				        "start": 246.34,
+				        "word": " my",
+				      },
+				      {
+				        "end": 246.67,
+				        "start": 246.45,
+				        "word": " code",
+				      },
+				      {
+				        "end": 247.08,
+				        "start": 246.67,
+				        "word": " locally",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 249.74,
+				    "start": 247.22,
+				    "text": "it'll automatically re-render the demo on my phone.",
+				    "words": [
+				      {
+				        "end": 247.32,
+				        "start": 247.22,
+				        "word": " it",
+				      },
+				      {
+				        "end": 247.48,
+				        "start": 247.32,
+				        "word": "'ll",
+				      },
+				      {
+				        "end": 248.19,
+				        "start": 247.48,
+				        "word": " automatically",
+				      },
+				      {
+				        "end": 248.29,
+				        "start": 248.19,
+				        "word": " re",
+				      },
+				      {
+				        "end": 248.34,
+				        "start": 248.29,
+				        "word": "-",
+				      },
+				      {
+				        "end": 248.66,
+				        "start": 248.34,
+				        "word": "render",
+				      },
+				      {
+				        "end": 248.85,
+				        "start": 248.66,
+				        "word": " the",
+				      },
+				      {
+				        "end": 249.03,
+				        "start": 248.85,
+				        "word": " demo",
+				      },
+				      {
+				        "end": 249.13,
+				        "start": 249.03,
+				        "word": " on",
+				      },
+				      {
+				        "end": 249.23,
+				        "start": 249.13,
+				        "word": " my",
+				      },
+				      {
+				        "end": 249.52,
+				        "start": 249.23,
+				        "word": " phone",
+				      },
+				      {
+				        "end": 249.74,
+				        "start": 249.52,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 252.66,
+				    "start": 249.74,
+				    "text": "Impressive, very nice, I think Lynx has a lot of potential.",
+				    "words": [
+				      {
+				        "end": 249.91,
+				        "start": 249.74,
+				        "word": " Imp",
+				      },
+				      {
+				        "end": 250.28,
+				        "start": 249.91,
+				        "word": "ressive",
+				      },
+				      {
+				        "end": 250.38,
+				        "start": 250.28,
+				        "word": ",",
+				      },
+				      {
+				        "end": 250.6,
+				        "start": 250.38,
+				        "word": " very",
+				      },
+				      {
+				        "end": 250.82,
+				        "start": 250.6,
+				        "word": " nice",
+				      },
+				      {
+				        "end": 250.92,
+				        "start": 250.82,
+				        "word": ",",
+				      },
+				      {
+				        "end": 250.97,
+				        "start": 250.92,
+				        "word": " I",
+				      },
+				      {
+				        "end": 251.27,
+				        "start": 250.97,
+				        "word": " think",
+				      },
+				      {
+				        "end": 251.4,
+				        "start": 251.27,
+				        "word": " Lyn",
+				      },
+				      {
+				        "end": 251.45,
+				        "start": 251.4,
+				        "word": "x",
+				      },
+				      {
+				        "end": 251.61,
+				        "start": 251.45,
+				        "word": " has",
+				      },
+				      {
+				        "end": 251.66,
+				        "start": 251.61,
+				        "word": " a",
+				      },
+				      {
+				        "end": 251.84,
+				        "start": 251.66,
+				        "word": " lot",
+				      },
+				      {
+				        "end": 251.93,
+				        "start": 251.84,
+				        "word": " of",
+				      },
+				      {
+				        "end": 252.42,
+				        "start": 251.93,
+				        "word": " potential",
+				      },
+				      {
+				        "end": 252.66,
+				        "start": 252.42,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 256.9,
+				    "start": 252.66,
+				    "text": "And that's bad news because it means I need to rewrite all my code with this shiny new object.",
+				    "words": [
+				      {
+				        "end": 252.94,
+				        "start": 252.66,
+				        "word": " And",
+				      },
+				      {
+				        "end": 253.03,
+				        "start": 252.94,
+				        "word": " that",
+				      },
+				      {
+				        "end": 253.13,
+				        "start": 253.03,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 253.29,
+				        "start": 253.13,
+				        "word": " bad",
+				      },
+				      {
+				        "end": 253.5,
+				        "start": 253.29,
+				        "word": " news",
+				      },
+				      {
+				        "end": 253.88,
+				        "start": 253.5,
+				        "word": " because",
+				      },
+				      {
+				        "end": 253.98,
+				        "start": 253.88,
+				        "word": " it",
+				      },
+				      {
+				        "end": 254.25,
+				        "start": 253.98,
+				        "word": " means",
+				      },
+				      {
+				        "end": 254.3,
+				        "start": 254.25,
+				        "word": " I",
+				      },
+				      {
+				        "end": 254.51,
+				        "start": 254.3,
+				        "word": " need",
+				      },
+				      {
+				        "end": 254.62,
+				        "start": 254.51,
+				        "word": " to",
+				      },
+				      {
+				        "end": 254.99,
+				        "start": 254.62,
+				        "word": " rewrite",
+				      },
+				      {
+				        "end": 255.15,
+				        "start": 254.99,
+				        "word": " all",
+				      },
+				      {
+				        "end": 255.25,
+				        "start": 255.15,
+				        "word": " my",
+				      },
+				      {
+				        "end": 255.46,
+				        "start": 255.25,
+				        "word": " code",
+				      },
+				      {
+				        "end": 255.67,
+				        "start": 255.46,
+				        "word": " with",
+				      },
+				      {
+				        "end": 255.88,
+				        "start": 255.67,
+				        "word": " this",
+				      },
+				      {
+				        "end": 256.15,
+				        "start": 255.88,
+				        "word": " shiny",
+				      },
+				      {
+				        "end": 256.31,
+				        "start": 256.15,
+				        "word": " new",
+				      },
+				      {
+				        "end": 256.63,
+				        "start": 256.31,
+				        "word": " object",
+				      },
+				      {
+				        "end": 256.9,
+				        "start": 256.63,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 259.71,
+				    "start": 256.9,
+				    "text": "At least I can review all that code automatically thanks to CodeRabbit,",
+				    "words": [
+				      {
+				        "end": 257,
+				        "start": 256.9,
+				        "word": " At",
+				      },
+				      {
+				        "end": 257.26,
+				        "start": 257,
+				        "word": " least",
+				      },
+				      {
+				        "end": 257.31,
+				        "start": 257.26,
+				        "word": " I",
+				      },
+				      {
+				        "end": 257.47,
+				        "start": 257.31,
+				        "word": " can",
+				      },
+				      {
+				        "end": 257.75,
+				        "start": 257.47,
+				        "word": " review",
+				      },
+				      {
+				        "end": 257.9,
+				        "start": 257.75,
+				        "word": " all",
+				      },
+				      {
+				        "end": 258.15,
+				        "start": 257.9,
+				        "word": " that",
+				      },
+				      {
+				        "end": 258.3,
+				        "start": 258.15,
+				        "word": " code",
+				      },
+				      {
+				        "end": 258.96,
+				        "start": 258.3,
+				        "word": " automatically",
+				      },
+				      {
+				        "end": 259.25,
+				        "start": 258.96,
+				        "word": " thanks",
+				      },
+				      {
+				        "end": 259.36,
+				        "start": 259.25,
+				        "word": " to",
+				      },
+				      {
+				        "end": 259.56,
+				        "start": 259.36,
+				        "word": " Code",
+				      },
+				      {
+				        "end": 259.61,
+				        "start": 259.56,
+				        "word": "R",
+				      },
+				      {
+				        "end": 259.71,
+				        "start": 259.61,
+				        "word": "ab",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 261.58,
+				    "start": 260.04,
+				    "text": "the sponsor of today's video.",
+				    "words": [
+				      {
+				        "end": 260.21,
+				        "start": 260.04,
+				        "word": " the",
+				      },
+				      {
+				        "end": 260.6,
+				        "start": 260.21,
+				        "word": " sponsor",
+				      },
+				      {
+				        "end": 260.71,
+				        "start": 260.6,
+				        "word": " of",
+				      },
+				      {
+				        "end": 260.99,
+				        "start": 260.71,
+				        "word": " today",
+				      },
+				      {
+				        "end": 261.1,
+				        "start": 260.99,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 261.38,
+				        "start": 261.1,
+				        "word": " video",
+				      },
+				      {
+				        "end": 261.58,
+				        "start": 261.38,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 266.28,
+				    "start": 261.58,
+				    "text": "An AI co-pilot for code reviews that gives you instant feedback on every pull request.",
+				    "words": [
+				      {
+				        "end": 261.7,
+				        "start": 261.58,
+				        "word": " An",
+				      },
+				      {
+				        "end": 261.82,
+				        "start": 261.7,
+				        "word": " AI",
+				      },
+				      {
+				        "end": 261.94,
+				        "start": 261.82,
+				        "word": " co",
+				      },
+				      {
+				        "end": 262,
+				        "start": 261.94,
+				        "word": "-",
+				      },
+				      {
+				        "end": 262.06,
+				        "start": 262,
+				        "word": "p",
+				      },
+				      {
+				        "end": 262.31,
+				        "start": 262.06,
+				        "word": "ilot",
+				      },
+				      {
+				        "end": 262.5,
+				        "start": 262.31,
+				        "word": " for",
+				      },
+				      {
+				        "end": 262.85,
+				        "start": 262.5,
+				        "word": " code",
+				      },
+				      {
+				        "end": 263.19,
+				        "start": 262.85,
+				        "word": " reviews",
+				      },
+				      {
+				        "end": 263.44,
+				        "start": 263.19,
+				        "word": " that",
+				      },
+				      {
+				        "end": 263.75,
+				        "start": 263.44,
+				        "word": " gives",
+				      },
+				      {
+				        "end": 263.94,
+				        "start": 263.75,
+				        "word": " you",
+				      },
+				      {
+				        "end": 264.38,
+				        "start": 263.94,
+				        "word": " instant",
+				      },
+				      {
+				        "end": 264.88,
+				        "start": 264.38,
+				        "word": " feedback",
+				      },
+				      {
+				        "end": 265,
+				        "start": 264.88,
+				        "word": " on",
+				      },
+				      {
+				        "end": 265.34,
+				        "start": 265,
+				        "word": " every",
+				      },
+				      {
+				        "end": 265.56,
+				        "start": 265.34,
+				        "word": " pull",
+				      },
+				      {
+				        "end": 266,
+				        "start": 265.56,
+				        "word": " request",
+				      },
+				      {
+				        "end": 266.28,
+				        "start": 266,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 269.12,
+				    "start": 266.28,
+				    "text": "Unlike basic linters, it understands your entire code base,",
+				    "words": [
+				      {
+				        "end": 266.62,
+				        "start": 266.28,
+				        "word": " Unlike",
+				      },
+				      {
+				        "end": 266.9,
+				        "start": 266.62,
+				        "word": " basic",
+				      },
+				      {
+				        "end": 267.07,
+				        "start": 266.9,
+				        "word": " lin",
+				      },
+				      {
+				        "end": 267.29,
+				        "start": 267.07,
+				        "word": "ters",
+				      },
+				      {
+				        "end": 267.4,
+				        "start": 267.29,
+				        "word": ",",
+				      },
+				      {
+				        "end": 267.51,
+				        "start": 267.4,
+				        "word": " it",
+				      },
+				      {
+				        "end": 268.13,
+				        "start": 267.51,
+				        "word": " understands",
+				      },
+				      {
+				        "end": 268.35,
+				        "start": 268.13,
+				        "word": " your",
+				      },
+				      {
+				        "end": 268.69,
+				        "start": 268.35,
+				        "word": " entire",
+				      },
+				      {
+				        "end": 268.91,
+				        "start": 268.69,
+				        "word": " code",
+				      },
+				      {
+				        "end": 269.12,
+				        "start": 268.91,
+				        "word": " base",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 273.58,
+				    "start": 269.3,
+				    "text": "so it can catch more subtle issues like bad code style or missing test coverage.",
+				    "words": [
+				      {
+				        "end": 269.49,
+				        "start": 269.3,
+				        "word": " so",
+				      },
+				      {
+				        "end": 269.54,
+				        "start": 269.49,
+				        "word": " it",
+				      },
+				      {
+				        "end": 269.72,
+				        "start": 269.54,
+				        "word": " can",
+				      },
+				      {
+				        "end": 270.03,
+				        "start": 269.72,
+				        "word": " catch",
+				      },
+				      {
+				        "end": 270.28,
+				        "start": 270.03,
+				        "word": " more",
+				      },
+				      {
+				        "end": 270.65,
+				        "start": 270.28,
+				        "word": " subtle",
+				      },
+				      {
+				        "end": 271.02,
+				        "start": 270.65,
+				        "word": " issues",
+				      },
+				      {
+				        "end": 271.27,
+				        "start": 271.02,
+				        "word": " like",
+				      },
+				      {
+				        "end": 271.48,
+				        "start": 271.27,
+				        "word": " bad",
+				      },
+				      {
+				        "end": 271.74,
+				        "start": 271.48,
+				        "word": " code",
+				      },
+				      {
+				        "end": 272.04,
+				        "start": 271.74,
+				        "word": " style",
+				      },
+				      {
+				        "end": 272.13,
+				        "start": 272.04,
+				        "word": " or",
+				      },
+				      {
+				        "end": 272.57,
+				        "start": 272.13,
+				        "word": " missing",
+				      },
+				      {
+				        "end": 272.82,
+				        "start": 272.57,
+				        "word": " test",
+				      },
+				      {
+				        "end": 273.32,
+				        "start": 272.82,
+				        "word": " coverage",
+				      },
+				      {
+				        "end": 273.58,
+				        "start": 273.32,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 277.6,
+				    "start": 273.58,
+				    "text": "Then it will suggest simple one-click fixes to help you get things cleaned up quickly.",
+				    "words": [
+				      {
+				        "end": 273.79,
+				        "start": 273.58,
+				        "word": " Then",
+				      },
+				      {
+				        "end": 273.89,
+				        "start": 273.79,
+				        "word": " it",
+				      },
+				      {
+				        "end": 274.09,
+				        "start": 273.89,
+				        "word": " will",
+				      },
+				      {
+				        "end": 274.48,
+				        "start": 274.09,
+				        "word": " suggest",
+				      },
+				      {
+				        "end": 274.8,
+				        "start": 274.48,
+				        "word": " simple",
+				      },
+				      {
+				        "end": 274.96,
+				        "start": 274.8,
+				        "word": " one",
+				      },
+				      {
+				        "end": 275.01,
+				        "start": 274.96,
+				        "word": "-",
+				      },
+				      {
+				        "end": 275.3,
+				        "start": 275.01,
+				        "word": "click",
+				      },
+				      {
+				        "end": 275.57,
+				        "start": 275.3,
+				        "word": " fixes",
+				      },
+				      {
+				        "end": 275.71,
+				        "start": 275.57,
+				        "word": " to",
+				      },
+				      {
+				        "end": 275.86,
+				        "start": 275.71,
+				        "word": " help",
+				      },
+				      {
+				        "end": 276.02,
+				        "start": 275.86,
+				        "word": " you",
+				      },
+				      {
+				        "end": 276.18,
+				        "start": 276.02,
+				        "word": " get",
+				      },
+				      {
+				        "end": 276.5,
+				        "start": 276.18,
+				        "word": " things",
+				      },
+				      {
+				        "end": 276.88,
+				        "start": 276.5,
+				        "word": " cleaned",
+				      },
+				      {
+				        "end": 276.98,
+				        "start": 276.88,
+				        "word": " up",
+				      },
+				      {
+				        "end": 277.36,
+				        "start": 276.98,
+				        "word": " quickly",
+				      },
+				      {
+				        "end": 277.6,
+				        "start": 277.36,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 279.96,
+				    "start": 277.87,
+				    "text": "CodeRabbit keeps learning from your PRs over time,",
+				    "words": [
+				      {
+				        "end": 278.04,
+				        "start": 277.87,
+				        "word": " Code",
+				      },
+				      {
+				        "end": 278.09,
+				        "start": 278.04,
+				        "word": "R",
+				      },
+				      {
+				        "end": 278.19,
+				        "start": 278.09,
+				        "word": "ab",
+				      },
+				      {
+				        "end": 278.34,
+				        "start": 278.19,
+				        "word": "bit",
+				      },
+				      {
+				        "end": 278.6,
+				        "start": 278.34,
+				        "word": " keeps",
+				      },
+				      {
+				        "end": 279.01,
+				        "start": 278.6,
+				        "word": " learning",
+				      },
+				      {
+				        "end": 279.23,
+				        "start": 279.01,
+				        "word": " from",
+				      },
+				      {
+				        "end": 279.41,
+				        "start": 279.23,
+				        "word": " your",
+				      },
+				      {
+				        "end": 279.52,
+				        "start": 279.41,
+				        "word": " PR",
+				      },
+				      {
+				        "end": 279.56,
+				        "start": 279.52,
+				        "word": "s",
+				      },
+				      {
+				        "end": 279.77,
+				        "start": 279.56,
+				        "word": " over",
+				      },
+				      {
+				        "end": 279.96,
+				        "start": 279.77,
+				        "word": " time",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 282.42,
+				    "start": 280.14,
+				    "text": "so the more you use it, the smarter it gets.",
+				    "words": [
+				      {
+				        "end": 280.26,
+				        "start": 280.14,
+				        "word": " so",
+				      },
+				      {
+				        "end": 280.44,
+				        "start": 280.26,
+				        "word": " the",
+				      },
+				      {
+				        "end": 280.69,
+				        "start": 280.44,
+				        "word": " more",
+				      },
+				      {
+				        "end": 280.87,
+				        "start": 280.69,
+				        "word": " you",
+				      },
+				      {
+				        "end": 281.05,
+				        "start": 280.87,
+				        "word": " use",
+				      },
+				      {
+				        "end": 281.17,
+				        "start": 281.05,
+				        "word": " it",
+				      },
+				      {
+				        "end": 281.4,
+				        "start": 281.17,
+				        "word": ",",
+				      },
+				      {
+				        "end": 281.51,
+				        "start": 281.4,
+				        "word": " the",
+				      },
+				      {
+				        "end": 281.9,
+				        "start": 281.51,
+				        "word": " smarter",
+				      },
+				      {
+				        "end": 282.01,
+				        "start": 281.9,
+				        "word": " it",
+				      },
+				      {
+				        "end": 282.23,
+				        "start": 282.01,
+				        "word": " gets",
+				      },
+				      {
+				        "end": 282.42,
+				        "start": 282.23,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 284.87,
+				    "start": 282.42,
+				    "text": "It's 100% free for open source projects,",
+				    "words": [
+				      {
+				        "end": 282.59,
+				        "start": 282.42,
+				        "word": " It",
+				      },
+				      {
+				        "end": 282.66,
+				        "start": 282.59,
+				        "word": "'s",
+				      },
+				      {
+				        "end": 283.23,
+				        "start": 282.66,
+				        "word": " 100",
+				      },
+				      {
+				        "end": 283.29,
+				        "start": 283.23,
+				        "word": "%",
+				      },
+				      {
+				        "end": 283.57,
+				        "start": 283.29,
+				        "word": " free",
+				      },
+				      {
+				        "end": 283.73,
+				        "start": 283.57,
+				        "word": " for",
+				      },
+				      {
+				        "end": 283.98,
+				        "start": 283.73,
+				        "word": " open",
+				      },
+				      {
+				        "end": 284.36,
+				        "start": 283.98,
+				        "word": " source",
+				      },
+				      {
+				        "end": 284.87,
+				        "start": 284.36,
+				        "word": " projects",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 289.2,
+				    "start": 285.06,
+				    "text": "but you can get one month free for your team using the code Fireship with the link below.",
+				    "words": [
+				      {
+				        "end": 285.22,
+				        "start": 285.06,
+				        "word": " but",
+				      },
+				      {
+				        "end": 285.4,
+				        "start": 285.22,
+				        "word": " you",
+				      },
+				      {
+				        "end": 285.58,
+				        "start": 285.4,
+				        "word": " can",
+				      },
+				      {
+				        "end": 285.76,
+				        "start": 285.58,
+				        "word": " get",
+				      },
+				      {
+				        "end": 285.94,
+				        "start": 285.76,
+				        "word": " one",
+				      },
+				      {
+				        "end": 286.25,
+				        "start": 285.94,
+				        "word": " month",
+				      },
+				      {
+				        "end": 286.48,
+				        "start": 286.25,
+				        "word": " free",
+				      },
+				      {
+				        "end": 286.66,
+				        "start": 286.48,
+				        "word": " for",
+				      },
+				      {
+				        "end": 286.94,
+				        "start": 286.66,
+				        "word": " your",
+				      },
+				      {
+				        "end": 287.18,
+				        "start": 286.94,
+				        "word": " team",
+				      },
+				      {
+				        "end": 287.43,
+				        "start": 287.18,
+				        "word": " using",
+				      },
+				      {
+				        "end": 287.58,
+				        "start": 287.43,
+				        "word": " the",
+				      },
+				      {
+				        "end": 287.78,
+				        "start": 287.58,
+				        "word": " code",
+				      },
+				      {
+				        "end": 287.92,
+				        "start": 287.78,
+				        "word": " F",
+				      },
+				      {
+				        "end": 288.03,
+				        "start": 287.92,
+				        "word": "ires",
+				      },
+				      {
+				        "end": 288.2,
+				        "start": 288.03,
+				        "word": "hip",
+				      },
+				      {
+				        "end": 288.44,
+				        "start": 288.2,
+				        "word": " with",
+				      },
+				      {
+				        "end": 288.59,
+				        "start": 288.44,
+				        "word": " the",
+				      },
+				      {
+				        "end": 288.73,
+				        "start": 288.59,
+				        "word": " link",
+				      },
+				      {
+				        "end": 288.98,
+				        "start": 288.73,
+				        "word": " below",
+				      },
+				      {
+				        "end": 289.2,
+				        "start": 288.98,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 291.25,
+				    "start": 289.2,
+				    "text": "This has been The Code Report, thanks for watching,",
+				    "words": [
+				      {
+				        "end": 289.4,
+				        "start": 289.2,
+				        "word": " This",
+				      },
+				      {
+				        "end": 289.53,
+				        "start": 289.4,
+				        "word": " has",
+				      },
+				      {
+				        "end": 289.72,
+				        "start": 289.53,
+				        "word": " been",
+				      },
+				      {
+				        "end": 289.86,
+				        "start": 289.72,
+				        "word": " The",
+				      },
+				      {
+				        "end": 290.05,
+				        "start": 289.86,
+				        "word": " Code",
+				      },
+				      {
+				        "end": 290.34,
+				        "start": 290.05,
+				        "word": " Report",
+				      },
+				      {
+				        "end": 290.43,
+				        "start": 290.34,
+				        "word": ",",
+				      },
+				      {
+				        "end": 290.72,
+				        "start": 290.43,
+				        "word": " thanks",
+				      },
+				      {
+				        "end": 290.86,
+				        "start": 290.72,
+				        "word": " for",
+				      },
+				      {
+				        "end": 291.25,
+				        "start": 290.86,
+				        "word": " watching",
+				      },
+				    ],
+				  },
+				  {
+				    "end": 292.8,
+				    "start": 291.33,
+				    "text": "and I will see you in the next one.",
+				    "words": [
+				      {
+				        "end": 291.47,
+				        "start": 291.33,
+				        "word": " and",
+				      },
+				      {
+				        "end": 291.51,
+				        "start": 291.47,
+				        "word": " I",
+				      },
+				      {
+				        "end": 291.7,
+				        "start": 291.51,
+				        "word": " will",
+				      },
+				      {
+				        "end": 291.84,
+				        "start": 291.7,
+				        "word": " see",
+				      },
+				      {
+				        "end": 291.98,
+				        "start": 291.84,
+				        "word": " you",
+				      },
+				      {
+				        "end": 292.07,
+				        "start": 291.98,
+				        "word": " in",
+				      },
+				      {
+				        "end": 292.21,
+				        "start": 292.07,
+				        "word": " the",
+				      },
+				      {
+				        "end": 292.4,
+				        "start": 292.21,
+				        "word": " next",
+				      },
+				      {
+				        "end": 292.54,
+				        "start": 292.4,
+				        "word": " one",
+				      },
+				      {
+				        "end": 292.8,
+				        "start": 292.54,
+				        "word": ".",
+				      },
+				    ],
+				  },
+				]
+			`)
+		})
+	},
+	{ timeout: 50000 },
+)

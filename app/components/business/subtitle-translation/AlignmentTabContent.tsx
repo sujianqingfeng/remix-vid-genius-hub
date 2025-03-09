@@ -53,7 +53,7 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 						<CardTitle className="text-base">Aligned Subtitles</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="max-h-60 overflow-y-auto rounded-md bg-muted/20 p-3">
+						<div className="rounded-md bg-muted/20 p-3">
 							{subtitleTranslation.sentences.map((subtitle, index) => (
 								<div key={`subtitle-${subtitle.start}-${index}`} className="mb-3 bg-card p-3 rounded-md shadow-sm">
 									<p className="text-sm">{subtitle.text}</p>
