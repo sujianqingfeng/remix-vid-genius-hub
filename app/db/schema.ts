@@ -1,17 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import type {
-	AsrWord,
-	Comment,
-	Dialogue,
-	FillInBlankSentence,
-	GeneralCommentTypeTextInfo,
-	LittleDifficultWord,
-	SentenceTranscript,
-	Transcript,
-	WordTranscript,
-	WordWithTime,
-} from '~/types'
+import type { Comment, Dialogue, FillInBlankSentence, GeneralCommentTypeTextInfo, LittleDifficultWord, SentenceTranscript, Transcript, WordTranscript, WordWithTime } from '~/types'
 
 export const downloads = sqliteTable(
 	'downloads',

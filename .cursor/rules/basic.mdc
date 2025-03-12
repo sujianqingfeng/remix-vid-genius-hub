@@ -6,6 +6,6 @@ alwaysApply: true
 - 包管理使用 pnpm
 - 时间格式化使用 date-fns，如果需要展示时间，格式使用 yyyy-MM-dd HH:mm
 - 工具类放置到 app/utils
-- 样式方案使用tailwindcss
+- 样式方案使用 tailwind v3
 - 变量名使用小驼峰
 - 文字使用英文
