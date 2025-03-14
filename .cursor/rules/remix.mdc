@@ -1,6 +1,6 @@
 ---
 description: remix
-globs: *.{tsx,ts}
+globs: *.tsx,*.ts
 alwaysApply: false
 ---
 - 项目使用 remix 开发，使用最新的Api

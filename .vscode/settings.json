@@ -1,5 +1,5 @@
 {
-	"cSpell.words": ["deepseek", "doubao", "Innertube", "isbot", "libsql", "lucide", "paralleldrive", "tailwindcss", "tiktok", "typecheck", "undici", "youtubei"],
+	"cSpell.words": ["deepseek", "doubao", "Innertube", "isbot", "libsql", "lucide", "paralleldrive", "tailwindcss", "tiktok", "tobyg", "typecheck", "undici", "youtubei"],
 	"editor.formatOnSave": true,
 	"editor.defaultFormatter": "biomejs.biome",
 	"editor.codeActionsOnSave": {
