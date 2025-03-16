@@ -201,10 +201,10 @@ export default function TranslateVideoPage() {
 									)}
 
 									{translateVideo.outputFilePath && (
-										<Link to="cat" target="_blank" rel="noopener noreferrer">
+										<Link to="cut" target="_blank" rel="noopener noreferrer">
 											<Button variant="outline" className="gap-2 transition-colors hover:bg-primary/10 hover:text-primary hover:border-primary">
 												<Download size={16} />
-												Cat
+												Cut
 											</Button>
 										</Link>
 									)}

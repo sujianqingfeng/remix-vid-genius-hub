@@ -113,15 +113,25 @@ export async function copyFileToPublic({
 }) {
 	const destPath = path.join(PUBLIC_DIR, destFileName || path.basename(filePath))
 
+	// Ensure public directory exists
+	await mkdir(PUBLIC_DIR, { recursive: true })
+
 	await fsp.copyFile(filePath, destPath)
 }
 
 export async function safeCopyFileToPublic(filePath: string | null) {
 	if (filePath && (await fileExist(filePath))) {
-		await copyFileToPublic({
-			filePath,
-		})
+		try {
+			await copyFileToPublic({
+				filePath,
+			})
+			return true
+		} catch (error) {
+			console.error('Error copying file to public:', error)
+			return false
+		}
 	}
+	return false
 }
 
 export async function safeDeletePublicFile(filePath: string | null) {
