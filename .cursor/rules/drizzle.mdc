@@ -1,8 +1,8 @@
 ---
 description: drizzle
-globs: *.{tsx,ts}
+globs: *.tsx,*.ts
 alwaysApply: false
 ---
 - 数据库操作使用drizzle-orm
-- schema文件在 app/db/schema.ts
-- db实例和schema导出在 app/lib/drizzle.ts
+- schema文件在 [schema.ts](mdc:app/db/schema.ts)
+- db实例和schema导出在 [drizzle.ts](mdc:app/lib/drizzle.ts)
