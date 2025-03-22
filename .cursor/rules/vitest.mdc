@@ -3,4 +3,4 @@ description: vitest
 globs: *.test.ts
 alwaysApply: false
 ---
-- 单测框架使用 vitest 
+- 单测框架使用 vitest, 执行测试用例命令使用 npx vitest run xxx 

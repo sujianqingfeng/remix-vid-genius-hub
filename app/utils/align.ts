@@ -98,7 +98,6 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 
 	// 为每个句子找到在完整转录文本中的位置
 	let startSearchIndex = 0
-	const processedWordIndex = 0 // 跟踪已处理的单词索引
 
 	for (const sentence of sentences) {
 		if (!sentence.trim()) {
@@ -129,12 +128,15 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 		// 找到句子结束的位置
 		let sentenceEndIndex = sentenceStartIndex
 		let wordCount = 0
-		let sentenceLength = 0
 
 		// 找到包含句子的单词范围
 		let startWordIndex = -1
 		let endWordIndex = -1
 		let currentPosition = 0
+
+		// 获取句子中的所有单词
+		const sentenceTokens = normalizedSentence.trim().split(/\s+/)
+		const lastToken = sentenceTokens[sentenceTokens.length - 1].replace(/[.!?,;:]$/, '')
 
 		// 重置当前位置计数器，从所有单词的开始计算
 		for (let i = 0; i < words.length; i++) {
@@ -147,63 +149,124 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 				startWordIndex = i
 			}
 
-			// 累计句子长度
+			// 如果我们已经找到了起始单词
 			if (startWordIndex !== -1) {
 				wordCount++
-				sentenceLength += word.word.length
 
-				// 检查是否已经覆盖了足够的文本
+				// 检查当前文本的匹配情况
 				const currentText = normalizeText(fullTranscript.substring(sentenceStartIndex, currentPosition))
 
-				// 改进匹配逻辑，使用更精确的匹配方式
-				// 确保我们匹配到句子的末尾，特别是句号等标点符号
-				const sentenceEndsWithPunctuation = /[.!?]$/.test(sentence)
-				const foundEndOfSentence = sentenceEndsWithPunctuation
-					? currentText.includes(normalizedSentence) ||
-						(i + 1 < words.length && normalizeText(fullTranscript.substring(sentenceStartIndex, currentPosition + words[i + 1].word.length)).includes(normalizedSentence))
-					: currentText.includes(normalizedSentence)
+				// 计算当前文本与句子的相似度
+				const similarity = calculateSimilarity(currentText, normalizedSentence)
 
-				if (foundEndOfSentence || (sentenceLength >= normalizedSentence.length * 0.95 && calculateSimilarity(currentText, normalizedSentence) > 0.85)) {
-					// 如果句子以标点结束，确保我们包含了这个标点
-					if (sentenceEndsWithPunctuation && i + 1 < words.length && words[i + 1].word.trim().match(/^[.!?]$/)) {
-						endWordIndex = i + 1
-					} else {
+				// 检查是否包含最后一个单词
+				const wordsTextSoFar = words
+					.slice(startWordIndex, i + 1)
+					.map((w) => w.word)
+					.join('')
+					.toLowerCase()
+
+				const hasLastToken = wordsTextSoFar.includes(lastToken)
+
+				// 检查是否已经找到了足够相似的文本且包含最后一个单词
+				if (similarity > 0.8 && hasLastToken) {
+					// 看看当前单词是否是最后一个单词
+					if (word.word.toLowerCase().includes(lastToken) || (i > 0 && words[i - 1].word.toLowerCase().includes(lastToken))) {
 						endWordIndex = i
+						sentenceEndIndex = currentPosition
+						break
 					}
+
+					// 如果当前单词不是最后一个单词，但我们看到接下来的单词可能是
+					// 查看下一个单词
+					if (i + 1 < words.length) {
+						const nextWord = words[i + 1].word.toLowerCase()
+						// 如果下一个单词包含最后的token，包含它
+						if (nextWord.includes(lastToken)) {
+							endWordIndex = i + 1
+							sentenceEndIndex = currentPosition + nextWord.length
+							break
+						}
+					}
+
+					// 如果到这里还没找到，使用当前索引，但继续下一次迭代，尝试找更好的匹配
+					endWordIndex = i
+					sentenceEndIndex = currentPosition
+				}
+
+				// 即使没有足够的相似度，也要尝试查找最后的token
+				else if (i > 0 && wordCount > sentenceTokens.length - 2) {
+					// 检查是否我们已经处理了句子中绝大部分单词
+					// 向前看最多3个单词，尝试找到最后的token
+					const maxLookAhead = Math.min(3, words.length - i - 1)
+
+					for (let j = 0; j <= maxLookAhead; j++) {
+						const lookAheadIndex = i + j
+						if (lookAheadIndex < words.length) {
+							const lookAheadWord = words[lookAheadIndex].word.toLowerCase()
+
+							if (lookAheadWord.includes(lastToken)) {
+								// 找到了最后的token
+								endWordIndex = lookAheadIndex
+								let endPos = currentPosition
+								// 计算新的结束位置
+								for (let k = i; k <= lookAheadIndex; k++) {
+									endPos += words[k].word.length
+								}
+								sentenceEndIndex = endPos
+								break
+							}
+						}
+					}
+
+					// 如果找到了最后的token，跳出循环
+					if (endWordIndex !== -1) {
+						break
+					}
+				}
+
+				// 如果已经处理了太多单词但还没找到匹配，设置一个上限
+				if (wordCount > Math.max(50, sentenceTokens.length * 2)) {
+					endWordIndex = i
 					sentenceEndIndex = currentPosition
 					break
 				}
-			}
-
-			// 如果已经处理了太多单词但还没找到匹配，设置一个上限
-			if (startWordIndex !== -1 && wordCount > 40) {
-				endWordIndex = i
-				sentenceEndIndex = currentPosition
-				break
 			}
 		}
 
 		// 如果找到了单词范围
 		if (startWordIndex !== -1 && endWordIndex !== -1) {
-			const sentenceWords = words.slice(startWordIndex, endWordIndex + 1)
-
-			// 验证单词组合是否与句子文本匹配
+			let sentenceWords = words.slice(startWordIndex, endWordIndex + 1)
 			const wordsText = sentenceWords.map((w) => w.word).join('')
-			const similarity = calculateSimilarity(normalizeText(wordsText), normalizedSentence)
 
-			// 只有当相似度足够高时才添加句子
-			if (similarity > 0.7) {
-				// 创建句子对象
-				result.push({
-					words: sentenceWords,
-					text: sentence,
-					start: sentenceWords[0].start,
-					end: sentenceWords[sentenceWords.length - 1].end,
-				})
+			// 最后一次检查：确保包含最后一个单词
+			const lastTokenLower = lastToken.toLowerCase()
+			const wordsTextLower = wordsText.toLowerCase()
 
-				// 更新下一次搜索的起始位置
-				startSearchIndex = sentenceEndIndex
+			// 如果未包含最后的token，但下一个单词可能是
+			if (!wordsTextLower.includes(lastTokenLower) && endWordIndex + 1 < words.length) {
+				// 尝试查找接下来的最多4个单词
+				for (let k = 1; k <= 4 && endWordIndex + k < words.length; k++) {
+					const nextWord = words[endWordIndex + k]
+					if (nextWord.word.toLowerCase().includes(lastTokenLower)) {
+						// 扩展单词范围以包含这个单词
+						sentenceWords = words.slice(startWordIndex, endWordIndex + k + 1)
+						break
+					}
+				}
 			}
+
+			// 创建句子对象
+			result.push({
+				words: sentenceWords,
+				text: sentence,
+				start: sentenceWords[0].start,
+				end: sentenceWords[sentenceWords.length - 1].end,
+			})
+
+			// 更新下一次搜索的起始位置
+			const lastWord = sentenceWords[sentenceWords.length - 1]
+			startSearchIndex = sentenceStartIndex + wordsText.length
 		}
 	}
 
