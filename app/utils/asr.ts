@@ -4,7 +4,7 @@ import { FormData, fetch } from 'undici'
 interface TranscriptionOptions {
 	model?: string
 	prompt?: string
-	response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'
+	responseFormat?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'
 	temperature?: number
 	language?: string
 }
@@ -46,7 +46,7 @@ export async function transcribeAudio(apiKey: string, audioFilePath: string, opt
 
 	// Add optional parameters if specified
 	if (options.prompt) formData.append('prompt', options.prompt)
-	if (options.response_format) formData.append('response_format', options.response_format)
+	if (options.responseFormat) formData.append('response_format', options.responseFormat)
 	if (options.temperature !== undefined) formData.append('temperature', options.temperature.toString())
 	if (options.language) formData.append('language', options.language)
 
