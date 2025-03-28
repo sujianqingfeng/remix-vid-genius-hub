@@ -1,5 +1,19 @@
 import { NavLink, Outlet } from '@remix-run/react'
-import { BookOpen, ChevronLeft, ChevronRight, Download, FileCheck, FileText, Languages, type LucideIcon, MessageCircle, MessageSquare, Type } from 'lucide-react'
+import {
+	BookOpen,
+	ChevronLeft,
+	ChevronRight,
+	Download,
+	FileCheck,
+	FileText,
+	Languages,
+	type LucideIcon,
+	MessageCircle,
+	MessageSquare,
+	SquareChartGantt,
+	Type,
+	X,
+} from 'lucide-react'
 import { useState } from 'react'
 
 interface MenuItem {
@@ -24,9 +38,9 @@ const menuItems: MenuItem[] = [
 	},
 	{
 		to: '/app/general-comment',
-		title: 'General Comment',
-		icon: MessageSquare,
-		text: 'General Comment',
+		title: 'Twitter Comment',
+		icon: X,
+		text: 'Twitter Comment',
 	},
 	{
 		to: '/app/translate-video',
@@ -34,7 +48,6 @@ const menuItems: MenuItem[] = [
 		icon: Languages,
 		text: 'Video Translation',
 	},
-
 	{
 		to: '/app/subtitle-translations',
 		title: 'Subtitle Translations',
@@ -48,6 +61,12 @@ const menuItems: MenuItem[] = [
 		text: 'Fill in Blanks',
 	},
 	{
+		to: '/app/cover-generator',
+		title: 'Cover Generator',
+		icon: SquareChartGantt,
+		text: 'Cover Generator',
+	},
+	{
 		to: '/app/dialogue',
 		title: 'Dialogue',
 		icon: MessageCircle,
@@ -55,9 +74,9 @@ const menuItems: MenuItem[] = [
 	},
 	{
 		to: '/app/tasks',
-		title: 'Task List',
+		title: 'Tasks',
 		icon: FileCheck,
-		text: 'Task List',
+		text: 'Tasks',
 	},
 ]
 

@@ -15,3 +15,19 @@ export function formatSubTitleTime(seconds: number): string {
 
 	return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`
 }
+
+export function formatAmountText(amount?: number) {
+	if (!amount) {
+		return ''
+	}
+	if (amount >= 1000000000) {
+		return `${(amount / 1000000000).toFixed(1)}B`
+	}
+	if (amount >= 1000000) {
+		return `${(amount / 1000000).toFixed(1)}M`
+	}
+	if (amount >= 1000) {
+		return `${(amount / 1000).toFixed(1)}K`
+	}
+	return amount.toString()
+}

@@ -4,7 +4,6 @@ import VerticalTranslateComment from './translate-comments/VerticalTranslateComm
 
 import Dialogue from './dialogue/Dialogue'
 import FillInBlank from './fill-in-blank/FillInBlank'
-import Phrases from './phrases/Phrases'
 
 export { LandscapeTranslateComment, PortraitTranslateComment, VerticalTranslateComment }
-export { FillInBlank, Dialogue, Phrases }
+export { FillInBlank, Dialogue }
