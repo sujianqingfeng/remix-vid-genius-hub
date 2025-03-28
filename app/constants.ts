@@ -8,8 +8,6 @@ export const PUBLIC_DIR = path.join(cwd, 'public')
 export const BUNDLE_DIR = 'bundle'
 export const RENDER_INFO_FILE = 'render-info.json'
 
-export const SHORT_TEXT_PUBLIC_BG_FILE = 'short-text-bg.png'
-
 export const TRANSLATE_VIDEO_COMBINED_SRT_FILE = 'combined.srt'
 export const TRANSLATE_VIDEO_RENDER_INFO_FILE = 'render-info.json'
 

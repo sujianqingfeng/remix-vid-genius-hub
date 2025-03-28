@@ -58,5 +58,4 @@ function createVolcanoEngineAI(model: string) {
 	}
 }
 
-export const createDoubao = createVolcanoEngineAI('ep-20241218181113-m6g9m')
-export const createVolcanoEngineDeepseekV3 = createVolcanoEngineAI('deepseek-v3-241226')
+export const createVolcanoEngineDeepseekV3 = createVolcanoEngineAI('deepseek-v3-250324')

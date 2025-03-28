@@ -35,18 +35,11 @@ const menuItems: MenuItem[] = [
 		text: 'Video Translation',
 	},
 
-  {
-    to: '/app/subtitle-translations',
-    title: 'Subtitle Translations',
-    icon: FileText,
-    text: 'Subtitle Translations',
-  },
-
 	{
-		to: '/app/short-text',
-		title: 'Short Text',
-		icon: Type,
-		text: 'Short Text',
+		to: '/app/subtitle-translations',
+		title: 'Subtitle Translations',
+		icon: FileText,
+		text: 'Subtitle Translations',
 	},
 	{
 		to: '/app/fill-in-blank',
