@@ -49,18 +49,13 @@ export default function Cover({ coverDurationInSeconds, title, author, isSplit =
 			},
 		})
 
-		// Additional animations for enhanced visual appeal
-		const backgroundShift = interpolate(
-			frame,
-			[0, 120],
-			[0, 10],
-			{ extrapolateRight: 'clamp' }
-		)
+		// Enhanced animations for a more modern look
+		const backgroundShift = interpolate(frame, [0, 150], [0, 15], { extrapolateRight: 'clamp' })
 
 		const accentOpacity = spring({
 			frame: frame - 10,
 			from: 0,
-			to: 0.85,
+			to: 0.9,
 			fps,
 			config: {
 				damping: 100,
@@ -69,46 +64,56 @@ export default function Cover({ coverDurationInSeconds, title, author, isSplit =
 			},
 		})
 
+		// New subtle rotation animation for decorative elements
+		const decorationRotate = interpolate(frame, [0, 180], [0, 8], { extrapolateRight: 'clamp' })
+
 		return (
-			<AbsoluteFill className="bg-gradient-to-br from-[#f8f9fa] via-[#f1f3f5] to-[#e9ecef] overflow-hidden">
-				{/* Modern background with subtle animation */}
-				<div 
-					className="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.6)_20%,rgba(255,255,255,0)_80%)]"
+			<AbsoluteFill className="bg-gradient-to-br from-[#f1f3f8] via-[#e9ecf5] to-[#e2e6f0] overflow-hidden">
+				{/* Modern layered background with subtle animations */}
+				<div
+					className="absolute inset-0 bg-[radial-gradient(circle_at_15%_25%,rgba(255,255,255,0.95)_0%,rgba(255,255,255,0.7)_20%,rgba(255,255,255,0)_70%)]"
 					style={{
 						transform: `translateX(${backgroundShift}px)`,
 					}}
 				/>
-				
-				{/* Decorative elements */}
+
+				{/* Enhanced decorative elements with subtle rotation */}
 				<div
-					className="absolute top-10 right-10 w-40 h-40 rounded-full bg-gradient-to-br from-[#ff8a8a] to-[#ff5757] blur-xl opacity-20"
+					className="absolute top-8 right-12 w-48 h-48 rounded-full bg-gradient-to-br from-[#ff7676] to-[#ff3a3a] blur-xl opacity-15"
 					style={{
-						transform: `scale(${decorationScale})`,
+						transform: `scale(${decorationScale}) rotate(${decorationRotate}deg)`,
 					}}
 				/>
 				<div
-					className="absolute -bottom-10 -left-10 w-64 h-64 rounded-full bg-gradient-to-br from-[#6e6e6e] to-[#3d3d3d] blur-xl opacity-10"
+					className="absolute -bottom-16 -left-16 w-72 h-72 rounded-full bg-gradient-to-br from-[#6e6e6e] to-[#3d3d3d] blur-xl opacity-10"
 					style={{
-						transform: `scale(${decorationScale})`,
+						transform: `scale(${decorationScale}) rotate(-${decorationRotate}deg)`,
 					}}
 				/>
 				<div
-					className="absolute top-1/2 -right-20 w-80 h-80 rounded-full bg-gradient-to-br from-[#ffcece] to-[#ff9e9e] blur-xl opacity-20"
+					className="absolute top-1/2 -right-24 w-96 h-96 rounded-full bg-gradient-to-br from-[#ffcece] to-[#ff7676] blur-xl opacity-15"
 					style={{
-						transform: `scale(${decorationScale * 0.8}) translateY(-30%)`,
+						transform: `scale(${decorationScale * 0.8}) translateY(-30%) rotate(${decorationRotate / 2}deg)`,
 					}}
 				/>
 
-				{/* Subtle grid pattern for depth */}
-				<div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(rgba(130,130,130,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(130,130,130,0.1)_1px,transparent_1px)] bg-[size:40px_40px]" />
+				{/* Modern dot grid pattern */}
+				<div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(circle,rgba(130,130,130,0.2)_1px,transparent_1px)] bg-[size:24px_24px]" />
 
 				<div className="w-full h-full flex justify-center items-center p-20">
 					<div className="relative w-[85%] max-w-6xl">
-						{/* Accent line */}
-						<div 
-							className="absolute -left-6 top-0 w-1 h-32 bg-gradient-to-b from-[#ff5757] to-transparent rounded-full"
+						{/* Enhanced accent elements */}
+						<div
+							className="absolute -left-6 top-0 w-1.5 h-40 bg-gradient-to-b from-[#ff4040] via-[#ff5757] to-transparent rounded-full"
 							style={{
 								opacity: accentOpacity,
+							}}
+						/>
+
+						<div
+							className="absolute -right-10 bottom-10 w-1 h-32 bg-gradient-to-t from-[#ff4040] to-transparent rounded-full"
+							style={{
+								opacity: accentOpacity * 0.7,
 							}}
 						/>
 
@@ -120,10 +125,8 @@ export default function Cover({ coverDurationInSeconds, title, author, isSplit =
 								}}
 								className="text-7xl font-bold tracking-tight"
 							>
-								<span className="bg-gradient-to-r from-[#1a1a1a] to-[#4a4a4a] bg-clip-text text-transparent drop-shadow-sm">外网真实评论</span>
-								<div className="absolute -left-3 -bottom-2 w-16 h-1 bg-gradient-to-r from-[#ff5757] to-transparent rounded-full" 
-									style={{ opacity: accentOpacity }}
-								/>
+								<span className="bg-gradient-to-r from-[#101010] to-[#3a3a3a] bg-clip-text text-transparent drop-shadow-sm">外网真实评论</span>
+								<div className="absolute -left-3 -bottom-2 w-20 h-1.5 bg-gradient-to-r from-[#ff4040] to-transparent rounded-full" style={{ opacity: accentOpacity }} />
 							</div>
 						</div>
 
@@ -134,8 +137,8 @@ export default function Cover({ coverDurationInSeconds, title, author, isSplit =
 							}}
 							className="text-4xl mt-8 font-medium text-gray-500 flex items-center"
 						>
-							<span className="text-sm mr-3 text-gray-400">by</span>
-							<span className="bg-gradient-to-r from-gray-700 to-gray-500 bg-clip-text text-transparent">@{author}</span>
+							<span className="text-sm mr-3 text-gray-400 tracking-wider">by</span>
+							<span className="bg-gradient-to-r from-gray-700 to-gray-500 bg-clip-text text-transparent">{author ? `@${author}` : ''}</span>
 						</div>
 
 						<div
@@ -150,19 +153,29 @@ export default function Cover({ coverDurationInSeconds, title, author, isSplit =
 							}}
 						>
 							<div className="relative">
-								<div className="text-[6.5rem] font-bold leading-[1.1] bg-gradient-to-r from-[#ff3a3a] via-[#ff5757] to-[#ff7676] bg-clip-text text-transparent drop-shadow-lg">
+								<div className="text-[6.5rem] font-bold leading-[1.1] bg-gradient-to-r from-[#ff2a2a] via-[#ff5757] to-[#ff8080] bg-clip-text text-transparent drop-shadow-lg">
 									{processedTitle}
 								</div>
-								
-								{/* Decorative elements around the title */}
-								<div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-gradient-to-br from-[#ffcece] to-[#ff9e9e] opacity-30 -z-10 blur-sm" />
-								<div className="absolute -left-6 bottom-6 w-16 h-16 rounded-full bg-gradient-to-br from-[#ff8a8a] to-[#ff5757] opacity-20 -z-10 blur-sm" />
-								
-								{/* Subtle underline effect */}
-								<div 
-									className="absolute -bottom-4 left-0 h-1 bg-gradient-to-r from-[#ff5757] to-transparent rounded-full" 
-									style={{ 
-										width: '40%',
+
+								{/* Enhanced decorative elements around the title */}
+								<div
+									className="absolute -right-10 -top-12 w-32 h-32 rounded-full bg-gradient-to-br from-[#ffcece] to-[#ff9e9e] opacity-25 -z-10 blur-md"
+									style={{
+										transform: `rotate(${decorationRotate}deg)`,
+									}}
+								/>
+								<div
+									className="absolute -left-8 bottom-8 w-20 h-20 rounded-full bg-gradient-to-br from-[#ff7676] to-[#ff3a3a] opacity-20 -z-10 blur-md"
+									style={{
+										transform: `rotate(-${decorationRotate}deg)`,
+									}}
+								/>
+
+								{/* Enhanced underline effect */}
+								<div
+									className="absolute -bottom-6 left-0 h-2 bg-gradient-to-r from-[#ff4040] via-[#ff5757] to-transparent rounded-full"
+									style={{
+										width: '50%',
 										opacity: accentOpacity,
 									}}
 								/>
