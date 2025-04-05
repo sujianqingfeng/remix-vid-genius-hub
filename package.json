@@ -1,7 +1,9 @@
 {
 	"name": "remix-vid-genius-hub",
 	"private": true,
-	"sideEffects": ["*.css"],
+	"sideEffects": [
+		"*.css"
+	],
 	"type": "module",
 	"scripts": {
 		"build": "remix vite:build",
@@ -49,6 +51,7 @@
 		"drizzle-orm": "^0.38.0",
 		"drizzle-zod": "^0.6.0",
 		"get-video-id": "^4.1.7",
+		"html2canvas": "^1.4.1",
 		"https-proxy-agent": "^7.0.5",
 		"isbot": "^4.1.0",
 		"lucide-react": "^0.485.0",

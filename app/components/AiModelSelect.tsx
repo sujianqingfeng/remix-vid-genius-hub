@@ -1,9 +1,16 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
+import type { AiModel } from '~/utils/ai'
 
-export default function AiModelSelect({ name, defaultValue }: { name: string; defaultValue: string }) {
+interface AiModelSelectProps {
+	name: string
+	defaultValue: string
+	onValueChange?: (value: AiModel) => void
+}
+
+export default function AiModelSelect({ name, defaultValue, onValueChange }: AiModelSelectProps) {
 	return (
-		<Select name={name} defaultValue={defaultValue}>
-			<SelectTrigger className="w-[140px]">
+		<Select name={name} defaultValue={defaultValue} onValueChange={onValueChange}>
+			<SelectTrigger className="w-full">
 				<SelectValue placeholder="Select Model" />
 			</SelectTrigger>
 			<SelectContent>
