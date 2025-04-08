@@ -9,7 +9,3 @@ export const GenerateDialogueSchema = z.object({
 		}),
 	),
 })
-
-export const WordsToSentencesSchema = z.object({
-	sentences: z.array(z.string()),
-})

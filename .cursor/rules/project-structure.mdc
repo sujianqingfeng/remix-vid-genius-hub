@@ -1,0 +1,46 @@
+---
+description: Project structure and file organization guidelines
+globs: 
+alwaysApply: false
+---
+```markdown
+# Project Structure
+
+## Root Directory
+
+```
+.
+├── app/                 # Core application code (Remix)
+├── public/              # Static assets served by the web server
+├── drizzle/             # Drizzle ORM configuration and migrations
+├── vite.config.ts       # Vite configuration
+├── biome.json           # Biome formatter/linter configuration
+├── tailwind.config.ts   # Tailwind CSS configuration
+├── remotion.config.ts   # Remotion configuration
+├── .npmrc               # NPM configuration (likely for PNPM)
+├── postcss.config.js    # PostCSS configuration
+├── components.json      # UI component configuration (e.g., Shadcn UI)
+├── .node-version        # Specifies Node.js version
+```
+
+## `app/` Directory
+
+```
+app/
+├── types.ts             # TypeScript type definitions
+├── schema.ts            # Schema definitions (likely Zod or similar)
+├── routes/              # Remix routes
+├── remotion/            # Remotion video components/compositions
+├── utils/               # Utility functions
+├── constants.ts         # Application constants
+├── components/          # Reusable UI components (likely Shadcn UI)
+├── tailwind.css         # Main Tailwind CSS file
+├── lib/                 # Library code (e.g., third-party integrations, core logic)
+├── db/                  # Database related code (e.g., Drizzle schema, queries)
+├── hooks/               # Custom React hooks
+├── api/                 # API specific logic (potentially serverless functions or actions)
+├── entry.server.tsx     # Remix server entry point
+├── root.tsx             # Remix root layout/component
+├── config.ts            # Application configuration
+├── entry.client.tsx     # Remix client entry point
+```

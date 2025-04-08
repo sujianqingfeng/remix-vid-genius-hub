@@ -1,5 +1,5 @@
 import type { z } from 'zod'
-import type { GenerateDialogueSchema } from './z-schema'
+import type { GenerateDialogueSchema } from './schema'
 
 export type YoutubeComment = {
 	content: string

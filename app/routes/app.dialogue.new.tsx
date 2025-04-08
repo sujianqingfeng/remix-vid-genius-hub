@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Label } from '~/components/ui/label'
 import { Textarea } from '~/components/ui/textarea'
 import { db, schema } from '~/lib/drizzle'
+import { GenerateDialogueSchema } from '~/schema'
 import type { GenerateDialogue } from '~/types'
 import { chatGPT } from '~/utils/ai'
-import { GenerateDialogueSchema } from '~/z-schema'
 const defaultPrompt = `
  你是一个小学英语老师，现在需要根据给定的主题，生成一个两个人的对话脚本，大概10句对话。
  主题：钓鱼

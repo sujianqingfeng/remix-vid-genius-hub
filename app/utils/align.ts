@@ -1,5 +1,5 @@
+import { z } from 'zod'
 import type { Sentence, WordWithTime } from '~/types'
-import { WordsToSentencesSchema } from '~/z-schema'
 import { deepSeek } from './ai'
 
 type SplitTextToSentencesOptions = {
@@ -356,6 +356,10 @@ function levenshteinDistance(str1: string, str2: string): number {
 }
 
 export async function splitTextToSentencesWithAI(sentence: string) {
+	const WordsToSentencesSchema = z.object({
+		sentences: z.array(z.string()),
+	})
+
 	const result = await deepSeek.generateObject({
 		schema: WordsToSentencesSchema,
 		system: `请将输入的文本分割成更短的句子，遵循以下规则：
