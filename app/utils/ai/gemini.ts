@@ -5,9 +5,9 @@ import type { z } from 'zod'
 
 const API_BASE_URL = 'https://api.chatanywhere.tech'
 
-const model = 'gpt-4o-mini'
+const model = 'gemini-2.0-flash'
 
-function createChatGPT({ apiKey }: { apiKey: string }) {
+function createGemini({ apiKey }: { apiKey: string }) {
 	const openai = createOpenAI({
 		baseURL: API_BASE_URL,
 		apiKey,
@@ -61,4 +61,4 @@ function createChatGPT({ apiKey }: { apiKey: string }) {
 	}
 }
 
-export default createChatGPT
+export default createGemini

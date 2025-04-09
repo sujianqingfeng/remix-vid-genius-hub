@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { Sentence, WordWithTime } from '~/types'
-import { deepSeek } from './ai'
+import { chatGPT, deepSeek, gemini } from './ai'
 
 type SplitTextToSentencesOptions = {
 	text: string
@@ -360,7 +360,7 @@ export async function splitTextToSentencesWithAI(sentence: string) {
 		sentences: z.array(z.string()),
 	})
 
-	const result = await deepSeek.generateObject({
+	const result = await chatGPT.generateObject({
 		schema: WordsToSentencesSchema,
 		system: `请将输入的文本分割成更短的句子，遵循以下规则：
 1. 保持原文内容完整，不要增减、修改或翻译任何内容
@@ -375,6 +375,9 @@ export async function splitTextToSentencesWithAI(sentence: string) {
 7. 确保分割后的每个句子都是完整的语义单元，便于理解
 8. 返回的所有句子拼接起来必须与原文完全一致
 9. 检查最终结果，确保没有超过60个字符的句子
+10. 非常重要：确保原文中的每一个字符都包含在返回的句子中，不要丢失任何内容，包括标点符号、空格和特殊字符
+11. 在分割文本前，先记录原文的完整内容，分割后验证所有句子拼接起来是否与原文完全一致
+12. 如果发现有内容丢失，立即修正并确保完整性
 
 示例1：
 输入: "The quick brown fox jumps over the lazy dog. The dog was too tired to react, and the fox continued on its journey through the forest."
@@ -405,13 +408,18 @@ export async function splitTextToSentencesWithAI(sentence: string) {
   "before the next one would arrive."
 ]
 
+验证步骤：
+1. 记录原始输入文本
+2. 完成分割后，将所有句子拼接起来
+3. 确认拼接结果与原始输入完全相同
+4. 如果不同，识别缺失部分并修正
+
 请确保：
 1. 分割点选择在语义自然的位置
 2. 每个句子长度在40-60字符之间
 3. 所有句子拼接起来与原文完全一致
 4. 不要添加、删除或修改任何内容`,
 		prompt: sentence,
-		maxTokens: 8000,
 	})
 
 	return result.sentences
