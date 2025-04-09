@@ -38,8 +38,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const formData = await request.formData()
 	const model = formData.get('model') as AiModel
 
-	invariant(model === 'deepseek' || model === 'openai' || model === 'r1', 'Invalid model')
-
 	const where = eq(schema.subtitleTranslations.id, id)
 	const subtitleTranslation = await db.query.subtitleTranslations.findFirst({
 		where,

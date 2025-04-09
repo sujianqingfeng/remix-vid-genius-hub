@@ -17,6 +17,15 @@ interface ASRTabContentProps {
 export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 	const asrFetcher = useFetcher()
 
+	// Join the words and calculate actual word count
+	const joinedText =
+		subtitleTranslation.withTimeWords?.reduce((acc, word) => {
+			return acc + word.word
+		}, '') || ''
+
+	// Count actual words by splitting on whitespace and filtering empty strings
+	const wordCount = joinedText.trim().split(/\s+/).filter(Boolean).length
+
 	return (
 		<div className="focus:outline-none">
 			<div className="flex items-center gap-2 mb-4">
@@ -30,14 +39,15 @@ export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 					{/* Text Display */}
 					<Card className="bg-muted/30 border-0">
 						<CardHeader className="pb-2">
-							<CardTitle className="text-base">Text</CardTitle>
+							<CardTitle className="text-base flex items-center justify-between">
+								<span>Text</span>
+								<Badge variant="secondary" className="ml-2">
+									{wordCount} words
+								</Badge>
+							</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="rounded-md bg-muted/20 p-3 whitespace-pre-wrap">
-								{subtitleTranslation.withTimeWords.reduce((acc, word) => {
-									return acc + word.word
-								}, '')}
-							</div>
+							<div className="rounded-md bg-muted/20 p-3 whitespace-pre-wrap">{joinedText}</div>
 						</CardContent>
 					</Card>
 
