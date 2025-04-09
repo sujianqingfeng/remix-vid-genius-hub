@@ -27,6 +27,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const text = withTimeWords.reduce((acc: string, item: any) => {
 		return acc + item.word
 	}, '')
+	console.log('🚀 ~ text ~ text:', text)
 
 	if (alignmentMethod === 'ai') {
 		sentences = await splitTextToSentencesWithAI(text)
