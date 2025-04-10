@@ -36,7 +36,7 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 			<CardDescription className="mb-6">Align text into properly timed subtitle segments</CardDescription>
 
 			{subtitleTranslation.withTimeWords?.length ? (
-				<Card className="mb-6 bg-muted/30 border-0">
+				<Card className="mb-6 bg-muted/30 border-0 shadow-sm">
 					<CardContent className="p-4 flex items-center gap-3">
 						<div className="rounded-full bg-primary/10 p-2">
 							<ArrowRight className="h-4 w-4 text-primary" />
@@ -45,7 +45,7 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 					</CardContent>
 				</Card>
 			) : (
-				<Card className="mb-6 bg-muted/30 border-0">
+				<Card className="mb-6 bg-muted/30 border-0 shadow-sm">
 					<CardContent className="p-4 flex items-center gap-3">
 						<div className="rounded-full bg-muted/50 p-2">
 							<AlignLeft className="h-4 w-4 text-muted-foreground" />
@@ -56,26 +56,29 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 			)}
 
 			{subtitleTranslation.sentences?.length ? (
-				<Card className="mb-6 bg-muted/30 border-0">
+				<Card className="mb-6 bg-muted/30 border-0 shadow-sm">
 					<CardHeader className="pb-2">
-						<CardTitle className="text-base">Aligned Subtitles</CardTitle>
-						<div className="flex items-center gap-2 mt-1">
-							<Text className="h-4 w-4 text-muted-foreground" />
-							<span className="text-sm text-muted-foreground">Total Words: {totalWords}</span>
-						</div>
+						<CardTitle className="text-base flex items-center justify-between">
+							<span>Aligned Subtitles</span>
+							<Badge variant="secondary" className="ml-2">
+								{totalWords} words
+							</Badge>
+						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="rounded-md bg-muted/20 p-3">
-							{subtitleTranslation.sentences.map((subtitle, index) => (
-								<div key={`subtitle-${subtitle.start}-${index}`} className="mb-3 bg-card p-3 rounded-md shadow-sm">
-									<p className="text-sm">{subtitle.text}</p>
-									<div className="flex items-center mt-2">
-										<Badge variant="outline" className="text-xs font-normal">
-											{formatSubTitleTime(subtitle.start)} - {formatSubTitleTime(subtitle.end)}
-										</Badge>
+						<div className="rounded-md bg-muted/20 p-3 max-h-80 overflow-y-auto">
+							<div className="space-y-3">
+								{subtitleTranslation.sentences.map((subtitle, index) => (
+									<div key={`subtitle-${subtitle.start}-${index}`} className="bg-card p-3 rounded-md shadow-sm hover:shadow-md transition-shadow">
+										<p className="text-sm md:text-base">{subtitle.text}</p>
+										<div className="flex items-center mt-2">
+											<Badge variant="outline" className="text-xs font-normal">
+												{formatSubTitleTime(subtitle.start)} - {formatSubTitleTime(subtitle.end)}
+											</Badge>
+										</div>
 									</div>
-								</div>
-							))}
+								))}
+							</div>
 						</div>
 					</CardContent>
 				</Card>
@@ -83,12 +86,14 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 
 			<Separator className="my-6" />
 
-			<div className="bg-card rounded-lg p-6 shadow-sm">
+			<div className="bg-card rounded-lg p-4 md:p-6 shadow-sm">
 				<h3 className="text-lg font-medium mb-4">Align Text</h3>
 				<alignmentFetcher.Form method="post" action="alignment" className="flex flex-col gap-5">
-					<div>
-						<label htmlFor="alignmentMethod" className="block text-sm font-medium mb-2">
-							Select Alignment Method
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div>
+							<label htmlFor="alignmentMethod" className="block text-sm font-medium mb-2">
+								Select Alignment Method
+							</label>
 							<Select name="alignmentMethod" defaultValue="ai">
 								<SelectTrigger>
 									<SelectValue placeholder="Select Alignment Method" />
@@ -98,8 +103,13 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 									<SelectItem value="code">Code</SelectItem>
 								</SelectContent>
 							</Select>
-						</label>
-						<AiModelSelect name="alignmentMethod" defaultValue="openai" />
+						</div>
+						<div>
+							<label htmlFor="model" className="block text-sm font-medium mb-2">
+								Select AI Model
+							</label>
+							<AiModelSelect name="model" defaultValue="openai" />
+						</div>
 					</div>
 
 					<LoadingButtonWithState type="submit" className="mt-2 w-full sm:w-auto" state={alignmentFetcher.state} idleText="Align Text" loadingText="Aligning..." />

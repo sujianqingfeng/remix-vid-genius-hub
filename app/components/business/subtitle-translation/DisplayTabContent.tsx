@@ -25,29 +25,31 @@ export function DisplayTabContent({ subtitleTranslation }: DisplayTabContentProp
 			<CardDescription className="mb-6">Optimize how subtitles are displayed for better viewing experience</CardDescription>
 
 			{subtitleTranslation.optimizedSentences?.length && subtitleTranslation.optimizedSentences.some((s) => s?.textInterpretation) ? (
-				<Card className="mb-6 bg-muted/30 border-0">
+				<Card className="mb-6 bg-muted/30 border-0 shadow-sm">
 					<CardHeader className="pb-2">
 						<CardTitle className="text-base">Preview</CardTitle>
 						<CardDescription>Optimized subtitles for better viewing experience</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<div className="max-h-60 overflow-y-auto rounded-md bg-muted/20 p-3">
-							{subtitleTranslation.optimizedSentences.map((subtitle, index) => (
-								<div key={`subtitle-optimized-${subtitle.start}-${index}`} className="mb-3 bg-card p-3 rounded-md shadow-sm">
-									<p className="text-sm">{subtitle.text}</p>
-									{subtitle.textInterpretation && <p className="text-sm mt-2 text-primary">{subtitle.textInterpretation}</p>}
-									<div className="flex items-center mt-2">
-										<Badge variant="outline" className="text-xs font-normal">
-											{formatSubTitleTime(subtitle.start)} - {formatSubTitleTime(subtitle.end)}
-										</Badge>
+							<div className="space-y-3">
+								{subtitleTranslation.optimizedSentences.map((subtitle, index) => (
+									<div key={`subtitle-optimized-${subtitle.start}-${index}`} className="bg-card p-3 rounded-md shadow-sm hover:shadow-md transition-shadow">
+										<p className="text-sm md:text-base">{subtitle.text}</p>
+										{subtitle.textInterpretation && <p className="text-sm mt-2 text-primary">{subtitle.textInterpretation}</p>}
+										<div className="flex items-center mt-2">
+											<Badge variant="outline" className="text-xs font-normal">
+												{formatSubTitleTime(subtitle.start)} - {formatSubTitleTime(subtitle.end)}
+											</Badge>
+										</div>
 									</div>
-								</div>
-							))}
+								))}
+							</div>
 						</div>
 					</CardContent>
 				</Card>
 			) : (
-				<Card className="mb-6 bg-muted/30 border-0">
+				<Card className="mb-6 bg-muted/30 border-0 shadow-sm">
 					<CardContent className="p-4 flex items-center gap-3">
 						<div className="rounded-full bg-muted/50 p-2">
 							<MonitorPlay className="h-4 w-4 text-muted-foreground" />
@@ -58,7 +60,7 @@ export function DisplayTabContent({ subtitleTranslation }: DisplayTabContentProp
 			)}
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-				<div className="bg-card rounded-lg p-6 shadow-sm">
+				<div className="bg-card rounded-lg p-4 md:p-6 shadow-sm">
 					<h3 className="text-lg font-medium mb-4">Optimize Display</h3>
 					<p className="text-sm text-muted-foreground mb-4">Improve subtitle timing and formatting for better readability</p>
 					<optimizationFetcher.Form method="post" action="optimize" className="flex flex-col gap-5">
@@ -66,7 +68,7 @@ export function DisplayTabContent({ subtitleTranslation }: DisplayTabContentProp
 					</optimizationFetcher.Form>
 				</div>
 
-				<div className="bg-card rounded-lg p-6 shadow-sm">
+				<div className="bg-card rounded-lg p-4 md:p-6 shadow-sm">
 					<h3 className="text-lg font-medium mb-4">Sync to Video Script</h3>
 					<p className="text-sm text-muted-foreground mb-4">Export optimized subtitles to your video script</p>
 					<Form method="post" action="sync-script" className="flex flex-col gap-5">

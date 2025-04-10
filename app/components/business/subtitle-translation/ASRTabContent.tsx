@@ -17,14 +17,12 @@ interface ASRTabContentProps {
 export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 	const asrFetcher = useFetcher()
 
-	// Join the words and calculate actual word count
-	const joinedText =
-		subtitleTranslation.withTimeWords?.reduce((acc, word) => {
-			return acc + word.word
-		}, '') || ''
-
-	// Count actual words by splitting on whitespace and filtering empty strings
-	const wordCount = joinedText.trim().split(/\s+/).filter(Boolean).length
+	// Calculate joined text and word count if withTimeWords exists
+	const joinedText = subtitleTranslation.withTimeWords
+		?.map((word) => word.word)
+		.join(' ')
+		.trim()
+	const wordCount = subtitleTranslation.withTimeWords?.length || 0
 
 	return (
 		<div className="focus:outline-none">
@@ -32,12 +30,12 @@ export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 				<Mic className="h-5 w-5 text-primary" />
 				<h2 className="text-xl font-semibold">Automatic Speech Recognition</h2>
 			</div>
-			<CardDescription className="mb-6">Convert audio from your video into text with timestamps</CardDescription>
+			<CardDescription className="mb-6">Convert audio to text with precise timestamps</CardDescription>
 
 			{subtitleTranslation.withTimeWords?.length ? (
-				<div className="space-y-4 mb-6">
+				<div className="space-y-6 mb-6">
 					{/* Text Display */}
-					<Card className="bg-muted/30 border-0">
+					<Card className="bg-muted/30 border-0 shadow-sm">
 						<CardHeader className="pb-2">
 							<CardTitle className="text-base flex items-center justify-between">
 								<span>Text</span>
@@ -47,12 +45,12 @@ export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="rounded-md bg-muted/20 p-3 whitespace-pre-wrap">{joinedText}</div>
+							<div className="rounded-md bg-muted/20 p-3 whitespace-pre-wrap text-sm md:text-base">{joinedText}</div>
 						</CardContent>
 					</Card>
 
 					{/* Timestamps Display */}
-					<Card className="bg-muted/30 border-0">
+					<Card className="bg-muted/30 border-0 shadow-sm">
 						<CardHeader className="pb-2">
 							<CardTitle className="text-base flex items-center gap-2">
 								<Clock className="h-4 w-4" />
@@ -61,15 +59,16 @@ export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 						</CardHeader>
 						<CardContent>
 							<div className="rounded-md bg-muted/20 p-3">
-								<div className="flex flex-wrap gap-2">
+								<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
 									{subtitleTranslation.withTimeWords.map((word, index) => (
-										<div key={`word-${word.start}-${word.end}-${index}`} className="flex flex-col items-center mb-2 bg-card p-2 rounded-md shadow-sm">
-											<span className="text-lg font-medium mb-1">{word.word}</span>
-											<div className="flex items-center gap-1 text-xs text-muted-foreground">
-												<Badge variant="outline" className="text-xs px-1 py-0">
-													{formatSubTitleTime(word.start)} - {formatSubTitleTime(word.end)}
-												</Badge>
-											</div>
+										<div
+											key={`word-${word.start}-${word.end}-${index}`}
+											className="flex flex-col items-center mb-2 bg-card p-2 rounded-md shadow-sm hover:shadow-md transition-shadow"
+										>
+											<span className="text-base font-medium mb-1 text-center">{word.word}</span>
+											<Badge variant="outline" className="text-xs px-1 py-0">
+												{formatSubTitleTime(word.start)} - {formatSubTitleTime(word.end)}
+											</Badge>
 										</div>
 									))}
 								</div>
@@ -78,7 +77,7 @@ export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 					</Card>
 				</div>
 			) : (
-				<Card className="mb-6 bg-muted/30 border-0">
+				<Card className="mb-6 bg-muted/30 border-0 shadow-sm">
 					<CardContent className="p-4 flex items-center gap-3">
 						<div className="rounded-full bg-muted/50 p-2">
 							<Mic className="h-4 w-4 text-muted-foreground" />
@@ -90,7 +89,7 @@ export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 
 			<Separator className="my-6" />
 
-			<div className="bg-card rounded-lg p-6 shadow-sm">
+			<div className="bg-card rounded-lg p-4 md:p-6 shadow-sm">
 				<h3 className="text-lg font-medium mb-4">Convert Audio to Text</h3>
 				<asrFetcher.Form method="post" action="asr" className="flex flex-col gap-5">
 					<div>

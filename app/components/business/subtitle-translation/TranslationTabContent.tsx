@@ -27,7 +27,7 @@ export function TranslationTabContent({ subtitleTranslation }: TranslationTabCon
 
 			{subtitleTranslation.sentences?.length ? (
 				<div className="mb-6">
-					<Card className="mb-3 bg-muted/30 border-0">
+					<Card className="mb-3 bg-muted/30 border-0 shadow-sm">
 						<CardContent className="p-4 flex items-center gap-3">
 							<div className="rounded-full bg-primary/10 p-2">
 								<ArrowRight className="h-4 w-4 text-primary" />
@@ -36,21 +36,18 @@ export function TranslationTabContent({ subtitleTranslation }: TranslationTabCon
 						</CardContent>
 					</Card>
 
-					{subtitleTranslation.sentences.some((s) => s?.textInterpretation) ? (
-						<Card className="bg-muted/30 border-0">
-							<CardHeader className="pb-2">
-								<CardTitle className="text-base">Translated Subtitles</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className="max-h-60 overflow-y-auto rounded-md bg-muted/20 p-3">
+					{/* Display sentences to translate */}
+					<Card className="bg-muted/30 border-0 shadow-sm">
+						<CardHeader className="pb-2">
+							<CardTitle className="text-base">Source Sentences</CardTitle>
+							<CardDescription>Text to be translated</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<div className="rounded-md bg-muted/20 p-3 max-h-60 overflow-y-auto">
+								<div className="space-y-3">
 									{subtitleTranslation.sentences.map((subtitle, index) => (
-										<div key={`subtitle-translation-${subtitle.start}-${index}`} className="mb-3 bg-card p-3 rounded-md shadow-sm">
-											<p className="text-sm font-medium">{subtitle.text}</p>
-											{subtitle.textInterpretation ? (
-												<p className="text-sm mt-2 text-primary">{subtitle.textInterpretation}</p>
-											) : (
-												<p className="text-sm mt-2 text-muted-foreground italic">No translation yet</p>
-											)}
+										<div key={`subtitle-${subtitle.start}-${index}`} className="bg-card p-3 rounded-md shadow-sm hover:shadow-md transition-shadow">
+											<p className="text-sm md:text-base">{subtitle.text}</p>
 											<div className="flex items-center mt-2">
 												<Badge variant="outline" className="text-xs font-normal">
 													{formatSubTitleTime(subtitle.start)} - {formatSubTitleTime(subtitle.end)}
@@ -59,21 +56,12 @@ export function TranslationTabContent({ subtitleTranslation }: TranslationTabCon
 										</div>
 									))}
 								</div>
-							</CardContent>
-						</Card>
-					) : (
-						<Card className="bg-muted/30 border-0">
-							<CardContent className="p-4 flex items-center gap-3">
-								<div className="rounded-full bg-muted/50 p-2">
-									<Languages className="h-4 w-4 text-muted-foreground" />
-								</div>
-								<p className="text-sm text-muted-foreground">No translations available yet. Use the form below to translate the text.</p>
-							</CardContent>
-						</Card>
-					)}
+							</div>
+						</CardContent>
+					</Card>
 				</div>
 			) : (
-				<Card className="mb-6 bg-muted/30 border-0">
+				<Card className="mb-6 bg-muted/30 border-0 shadow-sm">
 					<CardContent className="p-4 flex items-center gap-3">
 						<div className="rounded-full bg-muted/50 p-2">
 							<Languages className="h-4 w-4 text-muted-foreground" />
@@ -85,15 +73,34 @@ export function TranslationTabContent({ subtitleTranslation }: TranslationTabCon
 
 			<Separator className="my-6" />
 
-			<div className="bg-card rounded-lg p-6 shadow-sm">
+			<div className="bg-card rounded-lg p-4 md:p-6 shadow-sm">
 				<h3 className="text-lg font-medium mb-4">Translate Text</h3>
 				<translationFetcher.Form method="post" action="translation" className="flex flex-col gap-5">
-					<div>
-						<label htmlFor="model" className="block text-sm font-medium mb-2">
-							Select Translation Model
-						</label>
-
-						<AiModelSelect name="model" defaultValue="deepseek" />
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div>
+							<label htmlFor="model" className="block text-sm font-medium mb-2">
+								Select Translation Model
+							</label>
+							<AiModelSelect name="model" defaultValue="deepseek" />
+						</div>
+						<div>
+							<label htmlFor="targetLanguage" className="block text-sm font-medium mb-2">
+								Target Language
+							</label>
+							<select
+								id="targetLanguage"
+								name="targetLanguage"
+								className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+								defaultValue="Chinese"
+							>
+								<option value="Chinese">Chinese</option>
+								<option value="English">English</option>
+								<option value="French">French</option>
+								<option value="German">German</option>
+								<option value="Japanese">Japanese</option>
+								<option value="Spanish">Spanish</option>
+							</select>
+						</div>
 					</div>
 
 					<LoadingButtonWithState type="submit" className="mt-2 w-full sm:w-auto" state={translationFetcher.state} idleText="Translate Text" loadingText="Translating..." />
