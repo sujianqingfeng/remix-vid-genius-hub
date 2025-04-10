@@ -48,6 +48,8 @@ export function TranslationTabContent({ subtitleTranslation }: TranslationTabCon
 									{subtitleTranslation.sentences.map((subtitle, index) => (
 										<div key={`subtitle-${subtitle.start}-${index}`} className="bg-card p-3 rounded-md shadow-sm hover:shadow-md transition-shadow">
 											<p className="text-sm md:text-base">{subtitle.text}</p>
+											<p className="text-sm md:text-base">{subtitle.textInterpretation}</p>
+
 											<div className="flex items-center mt-2">
 												<Badge variant="outline" className="text-xs font-normal">
 													{formatSubTitleTime(subtitle.start)} - {formatSubTitleTime(subtitle.end)}
@@ -76,31 +78,11 @@ export function TranslationTabContent({ subtitleTranslation }: TranslationTabCon
 			<div className="bg-card rounded-lg p-4 md:p-6 shadow-sm">
 				<h3 className="text-lg font-medium mb-4">Translate Text</h3>
 				<translationFetcher.Form method="post" action="translation" className="flex flex-col gap-5">
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div>
-							<label htmlFor="model" className="block text-sm font-medium mb-2">
-								Select Translation Model
-							</label>
-							<AiModelSelect name="model" defaultValue="deepseek" />
-						</div>
-						<div>
-							<label htmlFor="targetLanguage" className="block text-sm font-medium mb-2">
-								Target Language
-							</label>
-							<select
-								id="targetLanguage"
-								name="targetLanguage"
-								className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-								defaultValue="Chinese"
-							>
-								<option value="Chinese">Chinese</option>
-								<option value="English">English</option>
-								<option value="French">French</option>
-								<option value="German">German</option>
-								<option value="Japanese">Japanese</option>
-								<option value="Spanish">Spanish</option>
-							</select>
-						</div>
+					<div>
+						<label htmlFor="model" className="block text-sm font-medium mb-2">
+							Select Translation Model
+						</label>
+						<AiModelSelect name="model" defaultValue="deepseek" />
 					</div>
 
 					<LoadingButtonWithState type="submit" className="mt-2 w-full sm:w-auto" state={translationFetcher.state} idleText="Translate Text" loadingText="Translating..." />

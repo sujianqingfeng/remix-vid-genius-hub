@@ -50,7 +50,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	// Instead of batch translation, we'll use a more reliable approach
 	// Process in smaller batches to avoid losing segments
-	const BATCH_SIZE = 20
+	const BATCH_SIZE = 40
 	const translatedTexts: string[] = []
 
 	// Process in batches
@@ -61,6 +61,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 		// Translate the batch
 		const translatedBatchText = await translateSubtitle(combinedBatchText, model)
+		console.log('🚀 ~ action ~ translatedBatchText:', translatedBatchText)
 
 		// Extract translations with their indices
 		const translatedBatch = translatedBatchText.split('\n---\n').map((item) => item.trim())
