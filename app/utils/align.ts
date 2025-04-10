@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { Sentence, WordWithTime } from '~/types'
-import { chatGPT, deepSeek, gemini } from './ai'
+import { aiGenerateText, chatGPT, deepSeek, gemini, r1, volcanoEngineDeepseekV3 } from './ai'
+import type { AiModel } from './ai'
 
 type SplitTextToSentencesOptions = {
 	text: string
@@ -441,14 +442,15 @@ function levenshteinDistance(str1: string, str2: string): number {
 	return dp[m][n]
 }
 
-export async function splitTextToSentencesWithAI(sentence: string) {
+export async function splitTextToSentencesWithAI(sentence: string, model: AiModel = 'deepseek') {
 	const WordsToSentencesSchema = z.object({
 		sentences: z.array(z.string()),
 	})
 
-	const result = await deepSeek.generateObject({
-		schema: WordsToSentencesSchema,
-		system: `将输入文本分割成更短的句子，遵循以下规则：
+	let result: { sentences: string[] }
+
+	// Chinese system prompt for splitting text
+	const chineseSystemPrompt = `将输入文本分割成更短的句子，遵循以下规则：
 1. 保持原文内容完整，不增减、修改或翻译任何内容
 2. 严格控制每个分割后的句子长度在40-60个字符之间
 3. 分割优先级：
@@ -468,11 +470,75 @@ export async function splitTextToSentencesWithAI(sentence: string) {
 2. 分割后，检查每个句子的字符数，确保都在40-60范围内
 3. 将所有句子拼接并逐字符比对原文，确保100%匹配
 4. 对于任何超过60字符的句子，立即重新分割
-5. 确保最后一个句子不会过短（少于20字符）`,
-		prompt: sentence,
-	})
+5. 确保最后一个句子不会过短（少于20字符）`
 
-	console.log('🚀 ~ splitTextToSentencesWithAI ~ result:', result.sentences)
+	// English system prompt for splitting text
+	const englishSystemPrompt = `Split the input text into shorter sentences following these rules:
+1. Keep the original content intact without adding, removing, or translating any content
+2. Strictly control each sentence length to be between 40-60 characters
+3. Split priority:
+   - First at natural sentence endings (periods, question marks, exclamation points)
+   - Then after quotations, commas, semicolons, colons
+   - Then at conjunctions (like and, but, or, because, about, whether)
+   - Finally at prepositional phrases, noun phrases, or clause boundaries
+4. For long sentences with quotations, split at the end of quotations
+5. For long sentences without obvious split points, force split at word boundaries at 50-60 characters
+6. For sentences over 60 characters, must split again, no exceptions
+7. Ensure each sentence maintains semantic coherence
+8. All sentences concatenated must match the original text exactly
+9. Check remaining text length before each split to prevent generating very short sentences (less than 20 characters)
+
+Validation steps (must be executed):
+1. Record each character of the original input text
+2. After splitting, check character count of each sentence to ensure they're within 40-60 range
+3. Concatenate all sentences and compare character by character with original, ensure 100% match
+4. For any sentence over 60 characters, split immediately
+5. Ensure the last sentence isn't too short (less than 20 characters)`
+
+	// Select the appropriate system prompt based on content language detection
+	// For simplicity, we're using Chinese prompt for deepseek and English for others
+	// In a more advanced implementation, you could detect the language of the content
+	const systemPrompt = model === 'deepseek' ? chineseSystemPrompt : englishSystemPrompt
+
+	switch (model) {
+		case 'deepseek':
+			result = await deepSeek.generateObject({
+				schema: WordsToSentencesSchema,
+				system: systemPrompt,
+				prompt: sentence,
+			})
+			break
+		case 'openai':
+			result = await chatGPT.generateObject({
+				schema: WordsToSentencesSchema,
+				system: systemPrompt,
+				prompt: sentence,
+			})
+			break
+		case 'gemini':
+			result = await gemini.generateObject({
+				schema: WordsToSentencesSchema,
+				system: systemPrompt,
+				prompt: sentence,
+			})
+			break
+		case 'r1':
+			result = await r1.generateObject({
+				schema: WordsToSentencesSchema,
+				system: systemPrompt,
+				prompt: sentence,
+			})
+			break
+		case 'volcanoEngineDeepseekV3':
+			result = await volcanoEngineDeepseekV3.generateObject({
+				schema: WordsToSentencesSchema,
+				system: systemPrompt,
+				prompt: sentence,
+			})
+			break
+		default:
+			throw new Error(`Unsupported model: ${model}`)
+	}
 
 	return result.sentences
 }
