@@ -48,33 +48,6 @@ export function ASRTabContent({ subtitleTranslation }: ASRTabContentProps) {
 							<div className="rounded-md bg-muted/20 p-3 whitespace-pre-wrap text-sm md:text-base">{joinedText}</div>
 						</CardContent>
 					</Card>
-
-					{/* Timestamps Display */}
-					<Card className="bg-muted/30 border-0 shadow-sm">
-						<CardHeader className="pb-2">
-							<CardTitle className="text-base flex items-center gap-2">
-								<Clock className="h-4 w-4" />
-								Timestamps
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="rounded-md bg-muted/20 p-3">
-								<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-									{subtitleTranslation.withTimeWords.map((word, index) => (
-										<div
-											key={`word-${word.start}-${word.end}-${index}`}
-											className="flex flex-col items-center mb-2 bg-card p-2 rounded-md shadow-sm hover:shadow-md transition-shadow"
-										>
-											<span className="text-base font-medium mb-1 text-center">{word.word}</span>
-											<Badge variant="outline" className="text-xs px-1 py-0">
-												{formatSubTitleTime(word.start)} - {formatSubTitleTime(word.end)}
-											</Badge>
-										</div>
-									))}
-								</div>
-							</div>
-						</CardContent>
-					</Card>
 				</div>
 			) : (
 				<Card className="mb-6 bg-muted/30 border-0 shadow-sm">
