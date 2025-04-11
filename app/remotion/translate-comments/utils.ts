@@ -13,8 +13,8 @@ export function calculateOptimalFontSize({
 	availableWidth,
 	availableHeight,
 	minFontSize = 10,
-	maxFontSize = 75,
-	lineHeightRatio = 1.2,
+	maxFontSize = 60,
+	lineHeightRatio = 1.1,
 	charWidthRatio = 1.2,
 }: CalculateFontSizeParams): number {
 	let currentMin = minFontSize
@@ -24,9 +24,7 @@ export function calculateOptimalFontSize({
 	while (currentMax - currentMin > 1) {
 		fontSize = Math.floor((currentMin + currentMax) / 2)
 
-		const charsPerLine = Math.floor(
-			availableWidth / (fontSize * charWidthRatio),
-		)
+		const charsPerLine = Math.floor(availableWidth / (fontSize * charWidthRatio))
 		const estimatedLines = Math.ceil(text.length / charsPerLine)
 		const totalHeight = estimatedLines * fontSize * lineHeightRatio
 
