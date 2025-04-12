@@ -26,6 +26,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 	// Generate audio for each sentence
 	for (let idx = 0; idx < sentences.length; idx++) {
 		const sentence = sentences[idx]
+		let needsUpdate = false
 
 		// Generate word audio if it doesn't exist
 		if (!sentence.wordPronunciationPath) {
@@ -43,6 +44,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 
 			sentence.wordPronunciationPath = wordFilePath
 			sentence.wordDuration = wordDuration
+			needsUpdate = true
 		}
 
 		// Generate sentence audio if it doesn't exist
@@ -61,16 +63,19 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 
 			sentence.sentencePronunciationPath = sentenceFilePath
 			sentence.sentenceDuration = sentenceDuration
+			needsUpdate = true
+		}
+
+		// Save the current sentence if changes were made
+		if (needsUpdate) {
+			await db
+				.update(schema.words)
+				.set({
+					sentences,
+				})
+				.where(eq(schema.words.id, id))
 		}
 	}
-
-	// Update the database with all sentences
-	await db
-		.update(schema.words)
-		.set({
-			sentences,
-		})
-		.where(eq(schema.words.id, id))
 
 	return json({ success: true })
 }

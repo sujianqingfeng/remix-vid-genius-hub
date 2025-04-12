@@ -192,11 +192,6 @@ export default function CreateWordPage() {
 										</div>
 									</div>
 
-									<div className="mb-2">
-										<p className="text-sm font-medium mb-1">Word Pronunciation Path:</p>
-										<p className="text-sm truncate">{item.wordPronunciationPath}</p>
-									</div>
-
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
 										<div>
 											<p className="text-sm font-medium mb-1">Sentence:</p>
@@ -206,11 +201,6 @@ export default function CreateWordPage() {
 											<p className="text-sm font-medium mb-1">Sentence (Chinese):</p>
 											<p className="text-sm">{item.sentenceZh}</p>
 										</div>
-									</div>
-
-									<div>
-										<p className="text-sm font-medium mb-1">Sentence Pronunciation Path:</p>
-										<p className="text-sm truncate">{item.sentencePronunciationPath}</p>
 									</div>
 								</div>
 							))}

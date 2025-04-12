@@ -21,7 +21,7 @@ For each pair, provide the following fields exactly:
 3. sentence: A natural, conversational sentence using the word in a clear context
 4. sentenceZh: Chinese translation of the sentence that maintains the original meaning
 
-Generate 5 varied word-sentence pairs based on the user's prompt.
+Generate 20 varied word-sentence pairs based on the user's prompt.
 Ensure diversity in word types (nouns, verbs, adjectives, etc.) and sentence structures.
 If no specific topic is given, create pairs around common, useful everyday vocabulary.
 `
