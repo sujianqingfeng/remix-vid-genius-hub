@@ -452,66 +452,70 @@ export async function splitTextToSentencesWithAI(sentence: string, model: AiMode
 	// Chinese system prompt for splitting text
 	const chineseSystemPrompt = `将输入文本分割成更短的句子，遵循以下规则：
 1. 保持原文内容完整，不增减、修改或翻译任何内容
-2. 严格控制每个分割后的句子长度在30-50个字符之间
+2. 严格控制每个分割后的句子长度在20-40个字符之间
 3. 分割优先级：
    - 首先在句号、问号、感叹号等自然句末处分割
-   - 必须在逗号处分割，尤其是当句子超过40个字符时
+   - 必须在逗号处分割，尤其是当句子超过25个字符时
    - 在分号、冒号后分割
    - 在引号结束后分割
    - 然后在连词（如and, but, or, because, about, whether等）处分割
    - 接着在介词短语、名词短语或从句边界处分割
+   - 根据语义单元分割，保证每个句子表达一个完整的语义单元
    - 最后在任何可能的单词边界处分割
 4. 逗号分割规则：
-   - 看到逗号立即考虑分割，特别是当前部分已达到30字符以上
-   - 多个逗号连接的句子应拆分为多个短句
+   - 看到逗号立即考虑分割，特别是当前部分已达到20字符以上
+   - 多个逗号连接的句子必须拆分为多个短句
    - 即使会稍微破坏语义完整性，也要在逗号处分割长句
-5. 对于带引语的长句，必须在引语结束处分割
-6. 对于复合句，拆分成多个简单句，每个子句应该作为独立句子
-7. 对于没有明显分割点的长句，强制在40字符处的单词边界分割
-8. 对于超过50字符的句子，必须再次分割，不允许例外
-9. 确保分割后每个句子保持基本语义连贯性，但语义完整性优先级低于长度限制
+5. 对于带引语的句子，必须在引语结束处分割
+6. 对于复合句，必须拆分成多个简单句，每个子句作为独立句子
+7. 对于没有明显分割点的长句，根据语义单元在25字符附近的单词边界分割
+8. 对于超过40字符的句子，必须再次分割，不允许例外
+9. 确保分割后每个句子保持基本语义连贯性
 10. 返回的所有句子拼接起来必须与原文完全一致
-11. 每次分割前检查剩余文本长度，防止生成过短句子（少于15字符）
+11. 每次分割前检查剩余文本长度，防止生成过短句子（少于10字符）
 
 验证步骤（必须执行）：
 1. 记录原始输入文本的每个字符
-2. 分割后，检查每个句子的字符数，确保都在30-50范围内
-3. 特别检查是否有未在逗号处分割的长句（超过40字符）
-4. 将所有句子拼接并逐字符比对原文，确保100%匹配
-5. 对于任何超过50字符的句子，立即重新分割
-6. 确保最后一个句子不会过短（少于15字符）`
+2. 分割后，检查每个句子的字符数，确保都在20-40范围内
+3. 特别检查是否有未在逗号处分割的长句（超过25字符）
+4. 检查每个句子是否表达了一个相对完整的语义单元
+5. 将所有句子拼接并逐字符比对原文，确保100%匹配
+6. 对于任何超过40字符的句子，立即重新分割
+7. 确保最后一个句子不会过短（少于10字符）`
 
 	// English system prompt for splitting text
 	const englishSystemPrompt = `Split the input text into shorter sentences following these rules:
 1. Keep the original content intact without adding, removing, or translating any content
-2. Strictly control each sentence length to be between 30-50 characters
+2. Strictly control each sentence length to be between 20-40 characters
 3. Split priority:
    - First at natural sentence endings (periods, question marks, exclamation points)
-   - Must split at commas, especially when the sentence exceeds 40 characters
+   - Must split at commas, especially when the sentence exceeds 25 characters
    - Split after semicolons and colons
    - Split after the end of quotations
    - Then at conjunctions (like and, but, or, because, about, whether)
    - Then at prepositional phrases, noun phrases, or clause boundaries
+   - Split according to semantic units, ensuring each sentence expresses one complete semantic unit
    - Finally at any possible word boundary
 4. Comma splitting rules:
-   - Consider splitting immediately when encountering a comma, especially if current part is already 30+ characters
-   - Sentences with multiple commas should be split into multiple shorter sentences
+   - Consider splitting immediately when encountering a comma, especially if current part is already 20+ characters
+   - Sentences with multiple commas must be split into multiple shorter sentences
    - Split at commas in long sentences even if it slightly disrupts semantic completeness
-5. For long sentences with quotations, must split at the end of quotations
-6. For compound sentences, break them into multiple simple sentences, each sub-clause should be an independent sentence
-7. For long sentences without obvious split points, force split at word boundaries at 40 characters
-8. For sentences over 50 characters, must split again, no exceptions
-9. Ensure basic semantic coherence in each sentence, but length limit takes priority over semantic completeness
+5. For sentences with quotations, must split at the end of quotations
+6. For compound sentences, must break them into multiple simple sentences, each sub-clause as an independent sentence
+7. For long sentences without obvious split points, split at word boundaries near 25 characters according to semantic units
+8. For sentences over 40 characters, must split again, no exceptions
+9. Ensure basic semantic coherence in each sentence
 10. All sentences concatenated must match the original text exactly
-11. Check remaining text length before each split to prevent generating very short sentences (less than 15 characters)
+11. Check remaining text length before each split to prevent generating very short sentences (less than 10 characters)
 
 Validation steps (must be executed):
 1. Record each character of the original input text
-2. After splitting, check character count of each sentence to ensure they're within 30-50 range
-3. Specifically check for any long sentences (over 40 characters) that weren't split at commas
-4. Concatenate all sentences and compare character by character with original, ensure 100% match
-5. For any sentence over 50 characters, split immediately
-6. Ensure the last sentence isn't too short (less than 15 characters)`
+2. After splitting, check character count of each sentence to ensure they're within 20-40 range
+3. Specifically check for any long sentences (over 25 characters) that weren't split at commas
+4. Check if each sentence expresses a relatively complete semantic unit
+5. Concatenate all sentences and compare character by character with original, ensure 100% match
+6. For any sentence over 40 characters, split immediately
+7. Ensure the last sentence isn't too short (less than 10 characters)`
 
 	// Select the appropriate system prompt based on content language detection
 	// For simplicity, we're using Chinese prompt for deepseek and English for others
