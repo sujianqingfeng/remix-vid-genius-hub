@@ -74,7 +74,8 @@ export default function TranslateCommentPage() {
 	const currentTime = format(translateComment.commentPullAt ?? new Date(), 'yyyy-MM-dd HH:mm')
 	const desc = `视频源ID：${videoId}
 本视频为娱乐向作品，请勿作过度延伸解读
-排序算法受点赞量、互动时效等多维度数据影响
+视频可能会消音一些敏感内容
+评论排序算法受点赞量、互动时效等多维度数据影响
 评论内容具有动态调整特性，当前数据获取时间：${currentTime}
 请务必保持理性判断，注意甄别信息真实性`
 	const publishTitle = `外网真实评论：${translateComment.translatedTitle}`
@@ -226,10 +227,6 @@ export default function TranslateCommentPage() {
 										<transformFetcher.Form action="transform" method="post">
 											<LoadingButtonWithState variant="secondary" size="sm" state={transformFetcher.state} idleText="Transform" />
 										</transformFetcher.Form>
-
-										<checkSensitiveWordsFetcher.Form action="check-sensitive-words" method="post">
-											<LoadingButtonWithState variant="secondary" size="sm" state={checkSensitiveWordsFetcher.state} idleText="Check Words" />
-										</checkSensitiveWordsFetcher.Form>
 									</div>
 
 									{/* Render Group */}

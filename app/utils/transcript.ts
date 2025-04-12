@@ -22,6 +22,7 @@ Style: Default,Microsoft YaHei,60,&HFFFFFF,&HFFFFFF,&H000000,&H40000000,0,0,0,0,
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`
 
 	const events = transcripts
+		.filter((transcript) => !transcript.excluded)
 		.map((transcript) => {
 			const start = formatASSTime(transcript.start)
 			const end = formatASSTime(transcript.end)

@@ -77,6 +77,7 @@ export type Transcript = {
 	textLiteralTranslation?: string
 	textInterpretation?: string
 	sentences?: Sentence[]
+	excluded?: boolean
 }
 
 // fill in blank

@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm'
 import invariant from 'tiny-invariant'
 import { TRANSLATE_VIDEO_COMBINED_SRT_FILE } from '~/constants'
 import { db, schema } from '~/lib/drizzle'
-import { generateFFmpegCommand } from '~/utils/ffmpeg'
+import { generateFFmpegCommand, generateMuteSegmentsFilter } from '~/utils/ffmpeg'
 import { createOperationDir } from '~/utils/file'
 import { generateASS } from '~/utils/transcript'
 
@@ -42,8 +42,27 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 
 	const escapedCombinedSrtPath = combinedSrtFile.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/'/g, "'\\\\''")
 
+	// Generate mute segments filter for excluded transcripts
+	const excludedTranscripts = transcripts?.filter((t) => t.excluded) ?? []
+	const muteFilter = generateMuteSegmentsFilter(excludedTranscripts)
+
 	await new Promise((resolve, reject) => {
+		// Get base command
 		const cmd = generateFFmpegCommand(filePath, escapedCombinedSrtPath)
+
+		// If we have segments to mute, we need to encode the audio instead of just copying it
+		if (excludedTranscripts.length > 0) {
+			// Replace "-c:a copy" with audio filter and encoding
+			const copyAudioIndex = cmd.indexOf('-c:a')
+			if (copyAudioIndex !== -1 && cmd[copyAudioIndex + 1] === 'copy') {
+				// Remove the copy command
+				cmd.splice(copyAudioIndex, 2)
+
+				// Add audio filter and encoding
+				cmd.push('-af', muteFilter)
+				cmd.push('-c:a', 'aac', '-b:a', '128k')
+			}
+		}
 
 		const ffmpeg = spawn('ffmpeg', cmd.concat(outputPath))
 

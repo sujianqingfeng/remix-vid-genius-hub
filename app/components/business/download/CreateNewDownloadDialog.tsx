@@ -51,7 +51,7 @@ export default function NewDownloadDialog() {
 					<div className="space-y-2">
 						<div>
 							<FormLabel name={fields.type.name} />
-							<Select key={fields.type.key} name={fields.type.name} defaultValue={fields.type.value}>
+							<Select key={fields.type.key} name={fields.type.name} defaultValue="youtube">
 								<SelectTrigger>
 									<SelectValue placeholder="Please select a type" />
 								</SelectTrigger>

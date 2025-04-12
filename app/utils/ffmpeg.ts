@@ -1,3 +1,5 @@
+import type { Transcript } from '~/types'
+
 export function generateFFmpegCommand(videoPath: string, escapedSrtPath: string) {
 	return [
 		'-y',
@@ -30,4 +32,23 @@ export function generateFFmpegCommand(videoPath: string, escapedSrtPath: string)
 		'-c:a',
 		'copy',
 	]
+}
+
+/**
+ * Generate FFmpeg audio filter for muting segments of the video
+ * Uses the 'volume' filter with timeline editing (enable/disable expressions)
+ * @param excludedTranscripts - Array of transcripts that should be muted
+ * @returns FFmpeg audio filter string or empty string if no segments to mute
+ */
+export function generateMuteSegmentsFilter(excludedTranscripts: Transcript[]): string {
+	if (!excludedTranscripts.length) {
+		return ''
+	}
+
+	// Create a volume filter with timeline editing to mute specific segments
+	// Format: volume=enable='between(t,start,end)':volume=0,volume=1
+	const muteExpressions = excludedTranscripts.map((transcript) => `between(t,${transcript.start},${transcript.end})`).join('+')
+
+	// If any expression is true, set volume to 0, otherwise keep volume at 1
+	return `volume=enable='${muteExpressions}':volume=0,volume=1`
 }
