@@ -7,3 +7,4 @@ alwaysApply: false
 
 - 使用渲染使用 remotion
 - remotion 模板放置在 app/remotion 下面
+- 样式方案使用 tailwind css

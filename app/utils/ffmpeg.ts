@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import type { Transcript } from '~/types'
 
 export function generateFFmpegCommand(videoPath: string, escapedSrtPath: string) {
@@ -51,4 +52,21 @@ export function generateMuteSegmentsFilter(excludedTranscripts: Transcript[]): s
 
 	// If any expression is true, set volume to 0, otherwise keep volume at 1
 	return `volume=enable='${muteExpressions}':volume=0,volume=1`
+}
+
+/**
+ * Get the duration of an audio file in seconds using ffmpeg
+ * @param filePath - Path to the audio file
+ * @returns Duration in seconds
+ */
+export function getAudioDuration(filePath: string): number {
+	try {
+		// Use ffprobe to get duration information
+		const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`
+		const output = execSync(command).toString().trim()
+		return Number.parseFloat(output)
+	} catch (error) {
+		console.error('Error getting audio duration:', error)
+		return 0
+	}
 }
