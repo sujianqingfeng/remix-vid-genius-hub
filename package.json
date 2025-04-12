@@ -1,7 +1,9 @@
 {
 	"name": "remix-vid-genius-hub",
 	"private": true,
-	"sideEffects": ["*.css"],
+	"sideEffects": [
+		"*.css"
+	],
 	"type": "module",
 	"scripts": {
 		"build": "remix vite:build",
@@ -71,6 +73,7 @@
 		"@types/archiver": "^6.0.3",
 		"@types/react": "^18.3.12",
 		"@types/react-dom": "^18.3.1",
+		"@types/uuid": "^10.0.0",
 		"autoprefixer": "^10.4.20",
 		"drizzle-kit": "^0.30.0",
 		"postcss": "^8.4.49",
