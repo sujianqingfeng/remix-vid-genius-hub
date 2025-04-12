@@ -38,6 +38,10 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 		// Process sentences for Remotion using the shared utility
 		const { wordSentences, totalDurationInFrames } = processWordSentences(sentences, word.fps)
 
+		// Add 2 seconds (in frames) for the title cover
+		const titleCoverDurationInFrames = word.fps * 2
+		const totalDurationWithTitleCover = totalDurationInFrames + titleCoverDurationInFrames
+
 		// Bundle the remotion components
 		const entryPoint = path.join(process.cwd(), 'app', 'remotion', 'words', 'index.ts')
 		const bundled = await bundle({
@@ -50,6 +54,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 		const inputProps = {
 			wordSentences,
 			id,
+			title: word.title || 'Word Learning Video',
 		}
 
 		// Select the composition
@@ -60,7 +65,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 		})
 
 		// Set composition properties
-		composition.durationInFrames = totalDurationInFrames
+		composition.durationInFrames = totalDurationWithTitleCover
 		composition.fps = word.fps
 		composition.width = DEFAULT_VIDEO_CONFIG.width
 		composition.height = DEFAULT_VIDEO_CONFIG.height

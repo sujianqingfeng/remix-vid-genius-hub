@@ -70,10 +70,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	// Process sentences for Remotion
 	const { wordSentences, totalDurationInFrames } = processWordSentences(wordWithPublicPaths.sentences, word.fps)
 
+	// Add 2 seconds (in frames) for the title cover
+	const titleCoverDurationInFrames = word.fps * 2
+	const totalDurationWithTitleCover = totalDurationInFrames + titleCoverDurationInFrames
+
 	return {
 		word: wordWithPublicPaths,
 		wordSentences,
-		totalDurationInFrames,
+		totalDurationInFrames: totalDurationWithTitleCover,
 		compositionWidth: DEFAULT_VIDEO_CONFIG.width,
 		compositionHeight: DEFAULT_VIDEO_CONFIG.height,
 	}
@@ -260,6 +264,7 @@ export default function WordDetailPage() {
 									inputProps={{
 										wordSentences,
 										id: word.id,
+										title: titleValue,
 									}}
 									durationInFrames={totalDurationInFrames}
 									compositionWidth={compositionWidth}
