@@ -1,6 +1,11 @@
 import { AbsoluteFill, Audio, Img, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion'
 import type { RemotionFillInBlankSentence } from '~/types'
 
+// Add CSS to load the font
+const fontStyle = {
+	fontFamily: "'Huiwen-mincho', serif",
+}
+
 type FillInBlankProps = {
 	sentences: RemotionFillInBlankSentence[]
 }
@@ -35,8 +40,8 @@ export default function FillInBlank({ sentences }: FillInBlankProps) {
 		const countdownValue = Math.ceil((QUESTION_DURATION - (frame % (QUESTION_DURATION + ANSWER_DURATION))) / fps)
 
 		return (
-			<div className="text-7xl text-center font-bold leading-tight tracking-wide text-gray-100">
-				<div className="drop-shadow-md">
+			<div className="text-7xl text-center font-bold leading-tight tracking-wide text-stone-700" style={fontStyle}>
+				<div className="drop-shadow-sm">
 					{parts[0]}
 					<div className="relative inline-flex flex-col items-center px-2 mx-1">
 						<div className="relative">
@@ -44,11 +49,12 @@ export default function FillInBlank({ sentences }: FillInBlankProps) {
 							<div className="absolute inset-0 flex items-center justify-center">
 								{showAnswer ? (
 									<span
-										className="text-amber-300 font-black"
+										className="text-red-700 font-black"
 										style={{
 											opacity,
 											transform: `scale(${interpolate(opacity, [0, 1], [0.8, 1])})`,
-											textShadow: '0 0 10px rgba(250, 204, 21, 0.4)',
+											textShadow: '0 0 1px rgba(185, 28, 28, 0.4)',
+											fontFamily: "'Huiwen-mincho', serif",
 										}}
 									>
 										{word}
@@ -56,10 +62,11 @@ export default function FillInBlank({ sentences }: FillInBlankProps) {
 								) : (
 									<div className="flex flex-col items-center">
 										<span
-											className="text-blue-400 font-black text-8xl"
+											className="text-blue-700 font-black text-8xl"
 											style={{
 												transform: `scale(${1 + Math.sin(frame * 0.1) * 0.05})`,
-												textShadow: '0 0 10px rgba(96, 165, 250, 0.4)',
+												textShadow: '0 0 1px rgba(29, 78, 216, 0.4)',
+												fontFamily: "'Huiwen-mincho', serif",
 											}}
 										>
 											{countdownValue}
@@ -70,11 +77,11 @@ export default function FillInBlank({ sentences }: FillInBlankProps) {
 						</div>
 						<div className="h-12 flex items-center justify-center mt-3">
 							<span
-								className="text-teal-300 text-3xl font-medium"
+								className="text-stone-500 text-3xl font-medium"
 								style={{
 									opacity: showAnswer ? opacity : 0,
 									transform: `translateY(${showAnswer ? 0 : 10}px)`,
-									textShadow: '0 0 8px rgba(103, 232, 249, 0.4)',
+									fontFamily: "'Huiwen-mincho', serif",
 								}}
 							>
 								{pronunciation}
@@ -98,14 +105,14 @@ export default function FillInBlank({ sentences }: FillInBlankProps) {
 
 		return (
 			<div
-				className="text-5xl text-center font-medium tracking-wider text-gray-300"
+				className="text-5xl text-center font-medium tracking-wider text-stone-600"
 				style={{
 					opacity,
-					textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+					fontFamily: "'Huiwen-mincho', serif",
 				}}
 			>
 				{parts[0]}
-				<span className="text-rose-300 font-bold px-1">{word}</span>
+				<span className="text-red-700 font-bold px-1">{word}</span>
 				{parts[1]}
 			</div>
 		)
@@ -124,37 +131,32 @@ export default function FillInBlank({ sentences }: FillInBlankProps) {
 	})
 
 	return (
-		<AbsoluteFill className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
-			{/* Dynamic background elements */}
+		<AbsoluteFill className="bg-amber-50 overflow-hidden" style={fontStyle}>
+			{/* Paper texture background */}
 			<div className="absolute inset-0 overflow-hidden">
-				{/* Animated gradient overlay */}
+				{/* Subtle paper texture overlay */}
 				<div
-					className="absolute inset-0 opacity-20"
+					className="absolute inset-0 opacity-100"
 					style={{
-						background: `radial-gradient(circle at ${50 + Math.sin(frame * 0.01) * 30}% ${50 + Math.cos(frame * 0.01) * 30}%, rgba(79, 70, 229, 0.4) 0%, rgba(109, 40, 217, 0.3) 45%, rgba(91, 33, 182, 0) 70%)`,
+						background: `
+							linear-gradient(to right, rgba(245, 243, 238, 0.9), rgba(252, 249, 241, 0.95), rgba(245, 243, 238, 0.9)),
+							url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iLjc1IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ibWF0cml4IiB2YWx1ZXM9IjAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAuMSAwIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC40Ii8+PC9zdmc+')
+						`,
+						backgroundBlendMode: 'overlay',
 					}}
 				/>
 
-				{/* Floating particles */}
+				{/* Yellowed edges */}
+				<div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-amber-100/40 to-transparent" />
+				<div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-amber-100/40 to-transparent" />
+				<div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-amber-100/40 to-transparent" />
+				<div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-amber-100/40 to-transparent" />
+
+				{/* Very subtle page fold */}
 				<div
-					className="absolute -top-10 -left-10 w-64 h-64 rounded-full bg-blue-500/10 blur-3xl"
+					className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-amber-100/10 to-transparent"
 					style={{
-						transform: `translate(${Math.sin(frame * 0.01) * 20}px, ${Math.cos(frame * 0.01) * 20}px)`,
-						opacity: 0.15 + Math.sin(frame * 0.02) * 0.05,
-					}}
-				/>
-				<div
-					className="absolute bottom-20 right-10 w-80 h-80 rounded-full bg-purple-500/10 blur-3xl"
-					style={{
-						transform: `translate(${Math.cos(frame * 0.01) * 20}px, ${Math.sin(frame * 0.01) * 20}px)`,
-						opacity: 0.15 + Math.cos(frame * 0.02) * 0.05,
-					}}
-				/>
-				<div
-					className="absolute top-1/3 -right-20 w-72 h-72 rounded-full bg-pink-500/10 blur-3xl"
-					style={{
-						transform: `translate(${Math.sin(frame * 0.015) * 20}px, ${Math.cos(frame * 0.015) * 20}px)`,
-						opacity: 0.15 + Math.sin(frame * 0.015) * 0.05,
+						transform: 'rotate(-5deg) translate(20px, -40px)',
 					}}
 				/>
 			</div>
@@ -176,12 +178,12 @@ export default function FillInBlank({ sentences }: FillInBlankProps) {
 							<div className="relative">
 								<Img
 									src={staticFile(currentSentence.publicCoverPath)}
-									className="h-[400px] w-auto object-cover rounded-2xl"
+									className="h-[400px] w-auto object-cover rounded-lg"
 									style={{
-										boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 15px rgba(79, 70, 229, 0.3)',
+										boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2), 0 0 15px rgba(180, 83, 9, 0.1)',
 									}}
 								/>
-								<div className="absolute inset-0 rounded-2xl ring-1 ring-white/10" />
+								<div className="absolute inset-0 rounded-lg ring-1 ring-black/10" />
 							</div>
 						</div>
 					)}
