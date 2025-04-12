@@ -2,12 +2,15 @@ import type { LoaderFunctionArgs } from '@remix-run/node'
 import { useFetcher, useLoaderData } from '@remix-run/react'
 import { Player } from '@remotion/player'
 import { eq } from 'drizzle-orm'
-import { Edit, Trash } from 'lucide-react'
+import { Edit, FileVideo, Headphones, Trash, Type } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import invariant from 'tiny-invariant'
 import BackPrevious from '~/components/BackPrevious'
 import LoadingButtonWithState from '~/components/LoadingButtonWithState'
+import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Separator } from '~/components/ui/separator'
 import { db, schema } from '~/lib/drizzle'
 import { Words } from '~/remotion'
 import { copyFiles, ensurePublicDir, fileExist, getPublicAssetPath } from '~/utils/file'
@@ -100,51 +103,62 @@ function SentenceItem({
 	const isDeleting = deleteFetcher.state !== 'idle'
 
 	return (
-		<div className="border rounded-lg p-4 mb-4 bg-white">
-			<div className="flex justify-between items-start mb-2">
+		<Card className="overflow-hidden transition-all hover:shadow-md">
+			<CardContent className="p-5">
+				<div className="flex justify-between items-start gap-4">
+					<div className="flex-1">
+						<div className="flex items-center gap-2">
+							<h3 className="font-semibold text-lg">{sentence.word}</h3>
+							{isComplete && (
+								<Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+									Complete
+								</Badge>
+							)}
+						</div>
+						<p className="text-sm text-gray-500">{sentence.wordZh}</p>
+						{sentence.wordDuration && <p className="text-xs text-gray-400 mt-1">Word audio: {sentence.wordDuration.toFixed(2)}s</p>}
+					</div>
+					<deleteFetcher.Form method="post" action={`/app/words/${wordId}/delete-sentence`}>
+						<input type="hidden" name="index" value={index} />
+						<Button variant="outline" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8" disabled={isDeleting} type="submit">
+							<Trash className="h-4 w-4" />
+						</Button>
+					</deleteFetcher.Form>
+				</div>
+
+				<Separator className="my-3" />
+
 				<div>
-					<h3 className="font-semibold text-lg">{sentence.word}</h3>
-					<p className="text-sm text-gray-500">{sentence.wordZh}</p>
-					{sentence.wordDuration && <p className="text-xs text-gray-400 mt-1">Word audio: {sentence.wordDuration.toFixed(2)}s</p>}
+					<p className="text-gray-800">{sentence.sentence}</p>
+					<p className="text-sm text-gray-500 mt-1">{sentence.sentenceZh}</p>
+					{sentence.sentenceDuration && <p className="text-xs text-gray-400 mt-1">Sentence audio: {sentence.sentenceDuration.toFixed(2)}s</p>}
 				</div>
-				<deleteFetcher.Form method="post" action={`/app/words/${wordId}/delete-sentence`}>
-					<input type="hidden" name="index" value={index} />
-					<Button variant="outline" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50" disabled={isDeleting} type="submit">
-						<Trash className="h-4 w-4" />
-					</Button>
-				</deleteFetcher.Form>
-			</div>
-			<div className="mt-2">
-				<p className="text-gray-800">{sentence.sentence}</p>
-				<p className="text-sm text-gray-500 mt-1">{sentence.sentenceZh}</p>
-				{sentence.sentenceDuration && <p className="text-xs text-gray-400 mt-1">Sentence audio: {sentence.sentenceDuration.toFixed(2)}s</p>}
-			</div>
-			{isComplete && (
-				<div className="mt-3 space-y-2">
-					<div className="text-xs text-green-600">Audio generated ✓</div>
 
-					{sentence.wordPronunciationPublicPath && (
-						<div className="flex items-center gap-2">
-							<span className="text-xs text-gray-500">Word audio:</span>
-							<audio controls className="h-8 w-full max-w-xs" src={`/${sentence.wordPronunciationPublicPath}`}>
-								<track kind="captions" />
-								Your browser does not support the audio element.
-							</audio>
-						</div>
-					)}
+				{isComplete && (
+					<div className="mt-4 space-y-3 bg-gray-50 p-3 rounded-md">
+						{sentence.wordPronunciationPublicPath && (
+							<div className="flex items-center gap-2">
+								<span className="text-xs font-medium text-gray-600 min-w-16">Word:</span>
+								<audio controls className="h-8 w-full" src={`/${sentence.wordPronunciationPublicPath}`}>
+									<track kind="captions" />
+									Your browser does not support the audio element.
+								</audio>
+							</div>
+						)}
 
-					{sentence.sentencePronunciationPublicPath && (
-						<div className="flex items-center gap-2">
-							<span className="text-xs text-gray-500">Sentence audio:</span>
-							<audio controls className="h-8 w-full max-w-xs" src={`/${sentence.sentencePronunciationPublicPath}`}>
-								<track kind="captions" />
-								Your browser does not support the audio element.
-							</audio>
-						</div>
-					)}
-				</div>
-			)}
-		</div>
+						{sentence.sentencePronunciationPublicPath && (
+							<div className="flex items-center gap-2">
+								<span className="text-xs font-medium text-gray-600 min-w-16">Sentence:</span>
+								<audio controls className="h-8 w-full" src={`/${sentence.sentencePronunciationPublicPath}`}>
+									<track kind="captions" />
+									Your browser does not support the audio element.
+								</audio>
+							</div>
+						)}
+					</div>
+				)}
+			</CardContent>
+		</Card>
 	)
 }
 
@@ -188,136 +202,163 @@ export default function WordDetailPage() {
 	}, [titleFetcher.data])
 
 	return (
-		<div className="min-h-screen bg-gray-50">
+		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
 			<div className="max-w-7xl mx-auto px-6 py-8">
 				<div className="mb-6">
 					<BackPrevious />
 				</div>
 
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+				<h1 className="text-3xl font-bold mb-6 text-gray-800">{titleValue || 'Word Collection'}</h1>
+
+				<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 					{/* Left column - Information and Remotion Player */}
-					<div className="space-y-6">
-						<div className="bg-white rounded-lg shadow-sm p-6">
-							<h1 className="text-2xl font-bold mb-4">Word Details</h1>
-							<div className="flex justify-between mb-2">
-								<span className="text-gray-500">ID:</span>
-								<span className="font-mono">{word.id}</span>
-							</div>
+					<div className="lg:col-span-5 space-y-6">
+						<Card>
+							<CardHeader className="pb-3">
+								<CardTitle>Details</CardTitle>
+							</CardHeader>
 
-							{/* Title section with edit functionality */}
-							<div className="flex justify-between items-center mb-2">
-								<span className="text-gray-500">Title:</span>
-								{isEditingTitle ? (
-									<div className="flex items-center gap-2 w-3/4">
-										<input
-											type="text"
-											value={titleValue}
-											onChange={(e) => setTitleValue(e.target.value)}
-											className="flex-1 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-300"
+							<CardContent className="space-y-4">
+								<div className="grid grid-cols-2 gap-2 text-sm">
+									<span className="text-gray-500">ID:</span>
+									<span className="font-mono text-gray-700">{word.id}</span>
+
+									<span className="text-gray-500">Sentences:</span>
+									<span className="text-gray-700">{word.sentences.length}</span>
+
+									<span className="text-gray-500">FPS:</span>
+									<span className="text-gray-700">{word.fps}</span>
+								</div>
+
+								<Separator />
+
+								{/* Title section with edit functionality */}
+								<div className="space-y-2">
+									<div className="flex justify-between items-center">
+										<span className="text-gray-700 font-medium">Title</span>
+										{!isEditingTitle && (
+											<Button variant="ghost" size="sm" onClick={() => setIsEditingTitle(true)} className="h-8 px-2" aria-label="Edit title">
+												<Edit size={16} className="mr-1" />
+												<span>Edit</span>
+											</Button>
+										)}
+									</div>
+
+									{isEditingTitle ? (
+										<div className="flex flex-col gap-2">
+											<input
+												type="text"
+												value={titleValue}
+												onChange={(e) => setTitleValue(e.target.value)}
+												className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-300"
+												placeholder="Enter a title..."
+											/>
+											<div className="flex justify-end gap-2">
+												<Button variant="outline" size="sm" onClick={() => setIsEditingTitle(false)} disabled={isUpdatingTitle}>
+													Cancel
+												</Button>
+												<Button variant="default" size="sm" onClick={handleTitleUpdate} disabled={isUpdatingTitle}>
+													{isUpdatingTitle ? 'Saving...' : 'Save'}
+												</Button>
+											</div>
+										</div>
+									) : (
+										<div className="flex items-center">
+											<span className="font-medium text-xl text-indigo-600">{titleValue || 'No title'}</span>
+										</div>
+									)}
+
+									<titleFetcher.Form action={`/app/words/${word.id}/generate-title`} method="post">
+										<LoadingButtonWithState
+											variant="outline"
+											size="sm"
+											state={isGeneratingTitle ? 'loading' : 'idle'}
+											idleText="Generate Fun Title"
+											loadingText="Generating Title..."
+											disabled={isGeneratingTitle || word.sentences.length === 0 || isEditingTitle}
+											type="submit"
+											className="w-full mt-2"
+											icon={<Type className="mr-2 h-4 w-4" />}
 										/>
-										<Button variant="ghost" size="sm" onClick={() => setIsEditingTitle(false)} disabled={isUpdatingTitle}>
-											Cancel
-										</Button>
-										<Button variant="outline" size="sm" onClick={handleTitleUpdate} disabled={isUpdatingTitle}>
-											{isUpdatingTitle ? 'Saving...' : 'Save'}
-										</Button>
-									</div>
-								) : (
-									<div className="flex items-center gap-2">
-										<span className="font-medium text-indigo-600">{titleValue || 'No title'}</span>
-										<Button variant="ghost" size="sm" onClick={() => setIsEditingTitle(true)} className="h-6 w-6 p-0" aria-label="Edit title">
-											<Edit size={16} />
-										</Button>
-									</div>
-								)}
-							</div>
+									</titleFetcher.Form>
+								</div>
+							</CardContent>
+						</Card>
 
-							<div className="flex justify-between mb-2">
-								<span className="text-gray-500">Number of Sentences:</span>
-								<span>{word.sentences.length}</span>
-							</div>
-							<div className="flex justify-between mb-2">
-								<span className="text-gray-500">FPS:</span>
-								<span>{word.fps}</span>
-							</div>
-							<div className="mt-4">
-								<titleFetcher.Form action={`/app/words/${word.id}/generate-title`} method="post">
-									<LoadingButtonWithState
-										variant="outline"
-										size="sm"
-										state={isGeneratingTitle ? 'loading' : 'idle'}
-										idleText="Generate Fun Title"
-										loadingText="Generating Title..."
-										disabled={isGeneratingTitle || word.sentences.length === 0 || isEditingTitle}
-										type="submit"
-										className="w-full"
+						<Card>
+							<CardHeader className="pb-3">
+								<CardTitle>Preview</CardTitle>
+							</CardHeader>
+
+							<CardContent className="space-y-4">
+								<div className="aspect-video bg-gray-900 rounded-lg overflow-hidden border border-gray-200">
+									<Player
+										component={Words}
+										inputProps={{
+											wordSentences,
+											id: word.id,
+											title: titleValue,
+										}}
+										durationInFrames={totalDurationInFrames}
+										compositionWidth={compositionWidth}
+										compositionHeight={compositionHeight}
+										fps={word.fps}
+										acknowledgeRemotionLicense
+										style={{
+											width: '100%',
+											height: '100%',
+										}}
+										controls
 									/>
-								</titleFetcher.Form>
-							</div>
-						</div>
+								</div>
 
-						<div className="bg-white rounded-lg shadow-sm p-6">
-							<h2 className="text-xl font-bold mb-4">Remotion Player</h2>
-							<div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-								<Player
-									component={Words}
-									inputProps={{
-										wordSentences,
-										id: word.id,
-										title: titleValue,
-									}}
-									durationInFrames={totalDurationInFrames}
-									compositionWidth={compositionWidth}
-									compositionHeight={compositionHeight}
-									fps={word.fps}
-									acknowledgeRemotionLicense
-									style={{
-										width: '100%',
-										height: '100%',
-									}}
-									controls
-								/>
-							</div>
-							<div className="mt-4">
 								<renderFetcher.Form action={`/app/words/${word.id}/render`} method="post">
 									<LoadingButtonWithState
 										variant="default"
-										size="sm"
+										size="lg"
 										state={isRendering ? 'loading' : 'idle'}
 										idleText="Render Video"
 										loadingText="Rendering Video..."
 										disabled={!allAudioGenerated || isRendering || isGenerating}
 										type="submit"
 										className="w-full"
+										icon={<FileVideo className="mr-2 h-5 w-5" />}
 									/>
 								</renderFetcher.Form>
-							</div>
-						</div>
+							</CardContent>
+						</Card>
 					</div>
 
 					{/* Right column - Sentences list */}
-					<div className="bg-white rounded-lg shadow-sm p-6">
-						<div className="flex justify-between items-center mb-6">
-							<h2 className="text-xl font-bold">Sentences</h2>
+					<div className="lg:col-span-7">
+						<Card className="h-full">
+							<CardHeader className="flex flex-row items-center justify-between pb-2">
+								<CardTitle>Sentences</CardTitle>
 
-							<audioFetcher.Form action={`/app/words/${word.id}/generate-audio`} method="post">
-								<LoadingButtonWithState
-									variant="default"
-									size="sm"
-									state={isGenerating ? 'loading' : 'idle'}
-									idleText="Generate All Audio"
-									loadingText="Generating Audio..."
-									disabled={allAudioGenerated || isGenerating}
-									type="submit"
-								/>
-							</audioFetcher.Form>
-						</div>
+								<audioFetcher.Form action={`/app/words/${word.id}/generate-audio`} method="post">
+									<LoadingButtonWithState
+										variant="default"
+										size="sm"
+										state={isGenerating ? 'loading' : 'idle'}
+										idleText="Generate All Audio"
+										loadingText="Generating Audio..."
+										disabled={allAudioGenerated || isGenerating}
+										type="submit"
+										icon={<Headphones className="mr-2 h-4 w-4" />}
+									/>
+								</audioFetcher.Form>
+							</CardHeader>
 
-						<div className="space-y-4">
-							{word.sentences.map((sentence: any, index: number) => (
-								<SentenceItem key={`${sentence.word}-${index}`} sentence={sentence} index={index} wordId={word.id} />
-							))}
-						</div>
+							<CardContent>
+								<div className="overflow-y-auto pr-2 space-y-5 max-h-[calc(100vh-16rem)]">
+									{word.sentences.length === 0 ? (
+										<div className="text-center py-12 text-gray-500">No sentences added yet</div>
+									) : (
+										word.sentences.map((sentence: any, index: number) => <SentenceItem key={`${sentence.word}-${index}`} sentence={sentence} index={index} wordId={word.id} />)
+									)}
+								</div>
+							</CardContent>
+						</Card>
 					</div>
 				</div>
 			</div>
