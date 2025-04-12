@@ -189,11 +189,13 @@ function SentenceItem({
 export default function WordDetailPage() {
 	const { word, wordSentences, totalDurationInFrames, compositionWidth, compositionHeight } = useLoaderData<typeof loader>()
 	const audioFetcher = useFetcher()
+	const renderFetcher = useFetcher()
 
 	// Check if all sentences have audio generated
 	const allAudioGenerated = word.sentences.every((sentence: any) => sentence.wordPronunciationPath && sentence.sentencePronunciationPath)
 
 	const isGenerating = audioFetcher.state !== 'idle'
+	const isRendering = renderFetcher.state !== 'idle'
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -218,6 +220,20 @@ export default function WordDetailPage() {
 							<div className="flex justify-between">
 								<span className="text-gray-500">FPS:</span>
 								<span>{word.fps}</span>
+							</div>
+							<div className="mt-4">
+								<renderFetcher.Form action={`/app/words/${word.id}/render`} method="post">
+									<LoadingButtonWithState
+										variant="default"
+										size="sm"
+										state={isRendering ? 'loading' : 'idle'}
+										idleText="Render Video"
+										loadingText="Rendering Video..."
+										disabled={!allAudioGenerated || isRendering || isGenerating}
+										type="submit"
+										className="w-full"
+									/>
+								</renderFetcher.Form>
 							</div>
 						</div>
 
