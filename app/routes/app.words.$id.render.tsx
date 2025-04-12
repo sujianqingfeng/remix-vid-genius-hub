@@ -1,30 +1,14 @@
-import fs from 'node:fs/promises'
 import path from 'node:path'
-import { type ActionFunctionArgs, json, redirect } from '@remix-run/node'
+import { type ActionFunctionArgs, data, redirect } from '@remix-run/node'
 import { bundle } from '@remotion/bundler'
 import { renderMedia, selectComposition } from '@remotion/renderer'
 import { eq } from 'drizzle-orm'
 import invariant from 'tiny-invariant'
 import { db, schema } from '~/lib/drizzle'
 import { webpackOverride } from '~/remotion/webpack-override'
-import type { WordSentence } from '~/types'
 import { createOperationDir, ensurePublicDir, getPublicAssetPath } from '~/utils/file'
 import { bundleOnProgress, throttleRenderOnProgress } from '~/utils/remotion'
-
-interface ProcessedSentence extends Omit<WordSentence, 'wordPronunciationPath' | 'sentencePronunciationPath'> {
-	form: number
-	durationInFrames: number
-	wordPronunciationPath?: string
-	sentencePronunciationPath?: string
-	wordPronunciationPublicPath?: string
-	sentencePronunciationPublicPath?: string
-	wordDuration?: number
-	sentenceDuration?: number
-	word: string
-	wordZh: string
-	sentence: string
-	sentenceZh: string
-}
+import { DEFAULT_VIDEO_CONFIG, processWordSentences } from '~/utils/words-video'
 
 export const action = async ({ params }: ActionFunctionArgs) => {
 	const { id } = params
@@ -38,52 +22,21 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 
 		invariant(word, 'Word not found')
 
-		// Process sentences to ensure all audio files are accessible
-		const wordSentences: ProcessedSentence[] = []
-
-		// Process sentences and prepare paths
-		for (const sentence of word.sentences) {
-			// Get actual durations from sentence data or use defaults
-			const wordAudioDuration = sentence.wordDuration || 2
-			const sentenceAudioDuration = sentence.sentenceDuration || 3
-
-			// Calculate display times
-			const wordDisplayDuration = Math.max(1.5, wordAudioDuration / 2)
-			const sentenceDisplayDuration = Math.max(1.5, sentenceAudioDuration / 2)
-
-			// Calculate total segment duration in seconds
-			const segmentDurationInSeconds = wordDisplayDuration + wordAudioDuration + sentenceDisplayDuration + sentenceAudioDuration
-
-			// Calculate form (starting frame) based on previous segments
-			const form = wordSentences.length > 0 ? wordSentences[wordSentences.length - 1].form + wordSentences[wordSentences.length - 1].durationInFrames : 0
-
-			// Convert segment duration to frames
-			const durationInFrames = Math.ceil(segmentDurationInSeconds * word.fps)
-
-			// Use public asset paths directly (no need to copy)
-			// Remotion will use staticFile to access these during rendering
+		// Process sentences and prepare public paths for audio files
+		const sentences = word.sentences.map((sentence) => {
+			// Prepare paths that will be used by Remotion during rendering
 			const wordAudioPublicPath = getPublicAssetPath(id, `word_${sentence.word}.mp3`)
 			const sentenceAudioPublicPath = getPublicAssetPath(id, `sentence_${sentence.word}.mp3`)
 
-			// Use public paths for audio files
-			wordSentences.push({
+			return {
 				...sentence,
-				form,
-				durationInFrames,
-				// Set the paths that will be used by Remotion during rendering
 				wordPronunciationPublicPath: wordAudioPublicPath,
 				sentencePronunciationPublicPath: sentenceAudioPublicPath,
-			})
-		}
+			}
+		})
 
-		// Calculate total duration
-		const totalDurationInFrames = wordSentences.reduce((total: number, sentence: ProcessedSentence) => total + sentence.durationInFrames, 0)
-
-		// Video configuration
-		const videoConfig = {
-			width: 1920,
-			height: 1080,
-		}
+		// Process sentences for Remotion using the shared utility
+		const { wordSentences, totalDurationInFrames } = processWordSentences(sentences, word.fps)
 
 		// Bundle the remotion components
 		const entryPoint = path.join(process.cwd(), 'app', 'remotion', 'words', 'index.ts')
@@ -109,12 +62,12 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 		// Set composition properties
 		composition.durationInFrames = totalDurationInFrames
 		composition.fps = word.fps
-		composition.width = videoConfig.width
-		composition.height = videoConfig.height
+		composition.width = DEFAULT_VIDEO_CONFIG.width
+		composition.height = DEFAULT_VIDEO_CONFIG.height
 
 		// Ensure output directory exists
 		const dir = await createOperationDir(id)
-		const outputPath = path.join(dir, `${id}.mp4`)
+		const outputPath = path.join(dir, `${id}-output.mp4`)
 
 		// Render the video
 		await renderMedia({
@@ -137,6 +90,6 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 		return redirect(`/app/words/${id}`)
 	} catch (error) {
 		console.error('Error rendering video:', error)
-		return json({ error: 'Failed to render video' }, { status: 500 })
+		return data({ error: 'Failed to render video' }, { status: 500 })
 	}
 }

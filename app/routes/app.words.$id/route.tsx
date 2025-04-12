@@ -1,6 +1,4 @@
-import path from 'node:path'
 import type { LoaderFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
 import { useFetcher, useLoaderData } from '@remix-run/react'
 import { Player } from '@remotion/player'
 import { eq } from 'drizzle-orm'
@@ -11,8 +9,8 @@ import LoadingButtonWithState from '~/components/LoadingButtonWithState'
 import { Button } from '~/components/ui/button'
 import { db, schema } from '~/lib/drizzle'
 import { Words } from '~/remotion'
-import type { WordSentence } from '~/types'
-import { copyFiles, ensurePublicDir, fileExist, getPublicAssetPath, getPublicFilePath } from '~/utils/file'
+import { copyFiles, ensurePublicDir, fileExist, getPublicAssetPath } from '~/utils/file'
+import { DEFAULT_VIDEO_CONFIG, processWordSentences } from '~/utils/words-video'
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id } = params
@@ -68,60 +66,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		sentences: processedSentences,
 	}
 
-	// Define type for processed sentence with duration and form
-	interface ProcessedSentence extends Omit<WordSentence, 'wordPronunciationPath' | 'sentencePronunciationPath'> {
-		form: number
-		durationInFrames: number
-		wordPronunciationPublicPath?: string
-		sentencePronunciationPublicPath?: string
-		wordPronunciationPath?: string
-		sentencePronunciationPath?: string
-		wordDuration?: number
-		sentenceDuration?: number
-		word: string
-		wordZh: string
-		sentence: string
-		sentenceZh: string
-	}
+	// Process sentences for Remotion
+	const { wordSentences, totalDurationInFrames } = processWordSentences(wordWithPublicPaths.sentences, word.fps)
 
-	// Calculate word sentences remotion data
-	const wordSentences: ProcessedSentence[] = []
-
-	wordWithPublicPaths.sentences.forEach((sentence, index) => {
-		// Get actual durations from sentence data or use defaults
-		const wordAudioDuration = sentence.wordDuration || 2 // Default 2 seconds if no duration
-		const sentenceAudioDuration = sentence.sentenceDuration || 3 // Default 3 seconds if no duration
-
-		// Calculate display times (minimum 1.5 seconds or half of audio duration)
-		const wordDisplayDuration = Math.max(1.5, wordAudioDuration / 2)
-		const sentenceDisplayDuration = Math.max(1.5, sentenceAudioDuration / 2)
-
-		// Calculate total segment duration in seconds
-		const segmentDurationInSeconds = wordDisplayDuration + wordAudioDuration + sentenceDisplayDuration + sentenceAudioDuration
-
-		// Calculate form (starting frame) based on previous segments
-		const form = index > 0 ? wordSentences[index - 1].form + wordSentences[index - 1].durationInFrames : 0
-
-		// Convert segment duration to frames
-		const durationInFrames = Math.ceil(segmentDurationInSeconds * word.fps)
-
-		wordSentences.push({
-			...sentence,
-			form,
-			durationInFrames,
-		})
-	})
-
-	// Calculate total duration by summing all segment durations
-	const totalDurationInFrames = wordSentences.reduce((total: number, sentence: ProcessedSentence) => total + sentence.durationInFrames, 0)
-
-	return json({
+	return {
 		word: wordWithPublicPaths,
 		wordSentences,
 		totalDurationInFrames,
-		compositionWidth: 1920,
-		compositionHeight: 1080,
-	})
+		compositionWidth: DEFAULT_VIDEO_CONFIG.width,
+		compositionHeight: DEFAULT_VIDEO_CONFIG.height,
+	}
 }
 
 // Create a component to render each sentence with its details
