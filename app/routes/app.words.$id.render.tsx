@@ -16,6 +16,8 @@ interface ProcessedSentence extends Omit<WordSentence, 'wordPronunciationPath' |
 	durationInFrames: number
 	wordPronunciationPath?: string
 	sentencePronunciationPath?: string
+	wordPronunciationPublicPath?: string
+	sentencePronunciationPublicPath?: string
 	wordDuration?: number
 	sentenceDuration?: number
 	word: string
@@ -39,7 +41,8 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 		// Process sentences to ensure all audio files are accessible
 		const wordSentences: ProcessedSentence[] = []
 
-		word.sentences.forEach((sentence: any, index: number) => {
+		// Process sentences and prepare paths
+		for (const sentence of word.sentences) {
 			// Get actual durations from sentence data or use defaults
 			const wordAudioDuration = sentence.wordDuration || 2
 			const sentenceAudioDuration = sentence.sentenceDuration || 3
@@ -52,21 +55,26 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 			const segmentDurationInSeconds = wordDisplayDuration + wordAudioDuration + sentenceDisplayDuration + sentenceAudioDuration
 
 			// Calculate form (starting frame) based on previous segments
-			const form = index > 0 ? wordSentences[index - 1].form + wordSentences[index - 1].durationInFrames : 0
+			const form = wordSentences.length > 0 ? wordSentences[wordSentences.length - 1].form + wordSentences[wordSentences.length - 1].durationInFrames : 0
 
 			// Convert segment duration to frames
 			const durationInFrames = Math.ceil(segmentDurationInSeconds * word.fps)
+
+			// Use public asset paths directly (no need to copy)
+			// Remotion will use staticFile to access these during rendering
+			const wordAudioPublicPath = getPublicAssetPath(id, `word_${sentence.word}.mp3`)
+			const sentenceAudioPublicPath = getPublicAssetPath(id, `sentence_${sentence.word}.mp3`)
 
 			// Use public paths for audio files
 			wordSentences.push({
 				...sentence,
 				form,
 				durationInFrames,
-				// Replace paths with public paths
-				wordPronunciationPath: `/${getPublicAssetPath(id, `word_${sentence.word}.mp3`)}`,
-				sentencePronunciationPath: `/${getPublicAssetPath(id, `sentence_${sentence.word}.mp3`)}`,
+				// Set the paths that will be used by Remotion during rendering
+				wordPronunciationPublicPath: wordAudioPublicPath,
+				sentencePronunciationPublicPath: sentenceAudioPublicPath,
 			})
-		})
+		}
 
 		// Calculate total duration
 		const totalDurationInFrames = wordSentences.reduce((total: number, sentence: ProcessedSentence) => total + sentence.durationInFrames, 0)

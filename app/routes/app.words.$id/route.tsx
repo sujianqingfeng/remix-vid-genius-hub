@@ -24,9 +24,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	invariant(word, 'Word not found')
 
+	// Prepare a word with public URL information
+	const wordWithPublicUrls = { ...word }
+
 	// Process sentences to check for audio files and copy them to public directory if they exist
 	const processedSentences = await Promise.all(
-		word.sentences.map(async (sentence: any) => {
+		wordWithPublicUrls.sentences.map(async (sentence: any) => {
 			const sentenceWithPublicPaths = { ...sentence }
 			const copyTasks: [string, string][] = []
 
@@ -61,7 +64,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	// Update word with processed sentences
 	const wordWithPublicPaths = {
-		...word,
+		...wordWithPublicUrls,
 		sentences: processedSentences,
 	}
 
@@ -221,20 +224,6 @@ export default function WordDetailPage() {
 								<span className="text-gray-500">FPS:</span>
 								<span>{word.fps}</span>
 							</div>
-							<div className="mt-4">
-								<renderFetcher.Form action={`/app/words/${word.id}/render`} method="post">
-									<LoadingButtonWithState
-										variant="default"
-										size="sm"
-										state={isRendering ? 'loading' : 'idle'}
-										idleText="Render Video"
-										loadingText="Rendering Video..."
-										disabled={!allAudioGenerated || isRendering || isGenerating}
-										type="submit"
-										className="w-full"
-									/>
-								</renderFetcher.Form>
-							</div>
 						</div>
 
 						<div className="bg-white rounded-lg shadow-sm p-6">
@@ -250,12 +239,27 @@ export default function WordDetailPage() {
 									compositionWidth={compositionWidth}
 									compositionHeight={compositionHeight}
 									fps={word.fps}
+									acknowledgeRemotionLicense
 									style={{
 										width: '100%',
 										height: '100%',
 									}}
 									controls
 								/>
+							</div>
+							<div className="mt-4">
+								<renderFetcher.Form action={`/app/words/${word.id}/render`} method="post">
+									<LoadingButtonWithState
+										variant="default"
+										size="sm"
+										state={isRendering ? 'loading' : 'idle'}
+										idleText="Render Video"
+										loadingText="Rendering Video..."
+										disabled={!allAudioGenerated || isRendering || isGenerating}
+										type="submit"
+										className="w-full"
+									/>
+								</renderFetcher.Form>
 							</div>
 						</div>
 					</div>

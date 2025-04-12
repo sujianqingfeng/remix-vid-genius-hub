@@ -1,5 +1,5 @@
 import React from 'react'
-import { AbsoluteFill, Audio, Sequence, useCurrentFrame, useVideoConfig } from 'remotion'
+import { AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig } from 'remotion'
 import type { WordSentence } from '~/types'
 
 // Extended WordSentence to include public paths needed for Remotion
@@ -73,7 +73,7 @@ export default function Words({ wordSentences, id }: WordsProps) {
 						{sentence.wordPronunciationPublicPath && (
 							<Sequence from={wordAudioStart} durationInFrames={wordAudioDuration} key={`${sentenceId}-word-audio`}>
 								<WordDisplay sentence={sentence} />
-								<Audio src={`/${sentence.wordPronunciationPublicPath}`} />
+								<Audio src={staticFile(`${sentence.wordPronunciationPublicPath}`)} />
 							</Sequence>
 						)}
 
@@ -86,7 +86,7 @@ export default function Words({ wordSentences, id }: WordsProps) {
 						{sentence.sentencePronunciationPublicPath && (
 							<Sequence from={sentenceAudioStart} durationInFrames={sentenceAudioDuration} key={`${sentenceId}-sentence-audio`}>
 								<SentenceDisplay sentence={sentence} />
-								<Audio src={`/${sentence.sentencePronunciationPublicPath}`} />
+								<Audio src={staticFile(`${sentence.sentencePronunciationPublicPath}`)} />
 							</Sequence>
 						)}
 					</React.Fragment>
