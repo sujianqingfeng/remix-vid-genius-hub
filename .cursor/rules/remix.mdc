@@ -3,5 +3,5 @@ description: remix
 globs: *.tsx,*.ts
 alwaysApply: false
 ---
-- 项目使用 remix 开发，使用最新的Api
+- 项目使用 remix 开发，使用最新的Api，不要使用过时的 api
 - 如果需要一个action，需要提取成一个新的action文件

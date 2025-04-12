@@ -1,6 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import type { Comment, Dialogue, FillInBlankSentence, GeneralCommentTypeTextInfo, LittleDifficultWord, SentenceTranscript, Transcript, WordTranscript, WordWithTime } from '~/types'
+import type { Comment, Dialogue, FillInBlankSentence, GeneralCommentTypeTextInfo, Transcript, WordSentence, WordWithTime } from '~/types'
 
 export const downloads = sqliteTable(
 	'downloads',
@@ -130,38 +130,6 @@ export const subtitleTranslations = sqliteTable(
 	(t) => [index('subtitle_translations_id_idx').on(t.id)],
 )
 
-export const shortTexts = sqliteTable(
-	'short_texts',
-	{
-		id: text()
-			.notNull()
-			.$defaultFn(() => createId())
-			.unique(),
-
-		fps: integer('fps').notNull().default(120),
-
-		title: text('title').notNull(),
-		titleZh: text('title_zh').notNull(),
-		shortText: text('short_text').notNull(),
-		shortTextZh: text('short_text_zh').notNull(),
-		littleDifficultWords: text('little_difficult_words', { mode: 'json' }).$type<LittleDifficultWord[]>().default([]),
-
-		wordTranscripts: text('word_transcripts', { mode: 'json' }).$type<WordTranscript[]>().default([]),
-		sentenceTranscripts: text('sentence_transcripts', { mode: 'json' }).$type<SentenceTranscript[]>().default([]),
-
-		direction: integer('direction').notNull().default(0),
-
-		audioFilePath: text('audio_file_path'),
-		coverFilePath: text('cover_file_path'),
-		outputFilePath: text('output_file_path'),
-		jobId: text('job_id'),
-		createdAt: integer('created_at', { mode: 'timestamp_ms' })
-			.notNull()
-			.$defaultFn(() => new Date()),
-	},
-	(t) => [index('short_texts_id_idx').on(t.id)],
-)
-
 export const fillInBlanks = sqliteTable(
 	'fill_in_blanks',
 	{
@@ -196,6 +164,24 @@ export const dialogues = sqliteTable(
 			.$defaultFn(() => new Date()),
 	},
 	(t) => [index('dialogues_id_idx').on(t.id)],
+)
+
+export const words = sqliteTable(
+	'words',
+	{
+		id: text()
+			.notNull()
+			.$defaultFn(() => createId())
+			.unique(),
+		sentences: text('sentences', { mode: 'json' }).notNull().$type<WordSentence[]>().default([]),
+		fps: integer('fps').notNull().default(40),
+		outputFilePath: text('output_file_path'),
+		jobId: text('job_id'),
+		createdAt: integer('created_at', { mode: 'timestamp_ms' })
+			.notNull()
+			.$defaultFn(() => new Date()),
+	},
+	(t) => [index('words_id_idx').on(t.id)],
 )
 
 export const tasks = sqliteTable(

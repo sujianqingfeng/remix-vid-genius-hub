@@ -1,5 +1,16 @@
+import type { SubmissionResult } from '@conform-to/react'
 import type { z } from 'zod'
-import type { GenerateDialogueSchema } from './schema'
+import type { GenerateDialogueSchema, GenerateWordSentencesSchema } from './schema'
+
+export type SubmissionReply = {
+	submissionReply?: SubmissionResult<string[]>
+}
+
+export type CreateNewDownloadActionData = {
+	success: boolean
+} & SubmissionReply
+
+// youtube comment
 
 export type YoutubeComment = {
 	content: string
@@ -143,4 +154,30 @@ export interface GeneralComment {
 	source: 'twitter' | 'youtube' | 'manual'
 	audioPath?: string
 	publicAudioPath?: string
+}
+
+// words
+export type GenerationWordSentencesErrors = {
+	prompt?: string[]
+	model?: string[]
+	_form?: string[]
+}
+
+export type GenerateWordSentencesActionData =
+	| {
+			success: true
+			data: GenerateWordSentences['list']
+	  }
+	| {
+			success: false
+			errors: GenerationWordSentencesErrors
+	  }
+
+export type GenerateWordSentences = z.infer<typeof GenerateWordSentencesSchema>
+
+export type WordSentence = GenerateWordSentences['list'][number] & {
+	wordPronunciationPath?: string
+	wordDuration?: number
+	sentencePronunciationPath?: string
+	sentenceDuration?: number
 }

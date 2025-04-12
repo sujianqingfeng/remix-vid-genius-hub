@@ -55,16 +55,22 @@ const menuItems: MenuItem[] = [
 		text: 'Subtitle Translations',
 	},
 	{
-		to: '/app/fill-in-blank',
-		title: 'Fill in Blanks',
-		icon: BookOpen,
-		text: 'Fill in Blanks',
+		to: '/app/words',
+		title: 'Words',
+		icon: FileText,
+		text: 'Words',
 	},
 	{
 		to: '/app/cover-generator',
 		title: 'Cover Generator',
 		icon: SquareChartGantt,
 		text: 'Cover Generator',
+	},
+	{
+		to: '/app/fill-in-blank',
+		title: 'Fill in Blanks',
+		icon: BookOpen,
+		text: 'Fill in Blanks',
 	},
 	{
 		to: '/app/dialogue',

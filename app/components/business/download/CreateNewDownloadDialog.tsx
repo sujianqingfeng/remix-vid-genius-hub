@@ -2,7 +2,6 @@ import { getFormProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
 import { useFetcher } from '@remix-run/react'
 import { useEffect, useState } from 'react'
-import { downloadsInsertSchema } from '~/api/schema'
 import type { CreateNewDownloadActionData } from '~/api/types'
 import FormLabel from '~/components/FormLabel'
 import { Button } from '~/components/ui/button'
@@ -10,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '~/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { useHydrated } from '~/hooks/useHydrated'
+import { downloadsInsertSchema } from '~/schema'
 
 export default function NewDownloadDialog() {
 	const isHydrated = useHydrated()
