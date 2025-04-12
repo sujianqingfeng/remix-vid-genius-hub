@@ -180,4 +180,5 @@ export type WordSentence = GenerateWordSentences['list'][number] & {
 	wordDuration?: number
 	sentencePronunciationPath?: string
 	sentenceDuration?: number
+	imagePath?: string
 }

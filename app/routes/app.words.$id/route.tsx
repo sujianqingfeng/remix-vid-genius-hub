@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node'
 import { useFetcher, useLoaderData } from '@remix-run/react'
 import { Player } from '@remotion/player'
 import { eq } from 'drizzle-orm'
-import { Edit, FileVideo, Headphones, Trash, Type } from 'lucide-react'
+import { Edit, FileVideo, Headphones, Image, Trash, Type } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import invariant from 'tiny-invariant'
 import BackPrevious from '~/components/BackPrevious'
@@ -55,6 +55,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				sentenceWithPublicPaths.sentencePronunciationPublicPath = publicPath
 			}
 
+			// Check and copy image file if it exists
+			if (sentence.imagePath && (await fileExist(sentence.imagePath))) {
+				const fileName = `image_${sentence.word}.jpg`
+				const publicPath = getPublicAssetPath(id, fileName)
+				const publicFilePath = await ensurePublicDir(publicPath)
+
+				copyTasks.push([sentence.imagePath, publicFilePath])
+				sentenceWithPublicPaths.imagePublicPath = publicPath
+			}
+
 			// Execute all copy tasks
 			if (copyTasks.length > 0) {
 				await copyFiles(copyTasks)
@@ -100,7 +110,9 @@ function SentenceItem({
 	const hasSentenceAudio = !!sentence.sentencePronunciationPath
 	const isComplete = hasWordAudio && hasSentenceAudio
 	const deleteFetcher = useFetcher()
+	const generateImageFetcher = useFetcher()
 	const isDeleting = deleteFetcher.state !== 'idle'
+	const isGeneratingImage = generateImageFetcher.state !== 'idle'
 
 	return (
 		<Card className="overflow-hidden transition-all hover:shadow-md">
@@ -118,12 +130,30 @@ function SentenceItem({
 						<p className="text-sm text-gray-500">{sentence.wordZh}</p>
 						{sentence.wordDuration && <p className="text-xs text-gray-400 mt-1">Word audio: {sentence.wordDuration.toFixed(2)}s</p>}
 					</div>
-					<deleteFetcher.Form method="post" action={`/app/words/${wordId}/delete-sentence`}>
-						<input type="hidden" name="index" value={index} />
-						<Button variant="outline" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8" disabled={isDeleting} type="submit">
-							<Trash className="h-4 w-4" />
-						</Button>
-					</deleteFetcher.Form>
+					<div className="flex gap-2">
+						<generateImageFetcher.Form method="post" action={`/app/words/${wordId}/generate-image`}>
+							<input type="hidden" name="index" value={index} />
+							<input type="hidden" name="word" value={sentence.word} />
+							<LoadingButtonWithState
+								variant="outline"
+								size="icon"
+								state={isGeneratingImage ? 'loading' : 'idle'}
+								idleText=""
+								loadingText=""
+								className="h-8 w-8 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50"
+								icon={<Image className="h-4 w-4" />}
+								disabled={isGeneratingImage}
+								type="submit"
+								title="Generate Image"
+							/>
+						</generateImageFetcher.Form>
+						<deleteFetcher.Form method="post" action={`/app/words/${wordId}/delete-sentence`}>
+							<input type="hidden" name="index" value={index} />
+							<Button variant="outline" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8" disabled={isDeleting} type="submit">
+								<Trash className="h-4 w-4" />
+							</Button>
+						</deleteFetcher.Form>
+					</div>
 				</div>
 
 				<Separator className="my-3" />
@@ -133,6 +163,17 @@ function SentenceItem({
 					<p className="text-sm text-gray-500 mt-1">{sentence.sentenceZh}</p>
 					{sentence.sentenceDuration && <p className="text-xs text-gray-400 mt-1">Sentence audio: {sentence.sentenceDuration.toFixed(2)}s</p>}
 				</div>
+
+				{/* Display generated image if available */}
+				{sentence.imagePath && (
+					<div className="mt-4">
+						<img
+							src={sentence.imagePublicPath ? `/${sentence.imagePublicPath}` : sentence.imagePath}
+							alt={sentence.word}
+							className="w-full h-auto rounded-md border border-gray-200"
+						/>
+					</div>
+				)}
 
 				{isComplete && (
 					<div className="mt-4 space-y-3 bg-gray-50 p-3 rounded-md">
