@@ -173,6 +173,7 @@ export const words = sqliteTable(
 			.notNull()
 			.$defaultFn(() => createId())
 			.unique(),
+		title: text('title'),
 		sentences: text('sentences', { mode: 'json' }).notNull().$type<WordSentence[]>().default([]),
 		fps: integer('fps').notNull().default(40),
 		outputFilePath: text('output_file_path'),

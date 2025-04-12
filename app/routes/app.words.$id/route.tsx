@@ -2,7 +2,8 @@ import type { LoaderFunctionArgs } from '@remix-run/node'
 import { useFetcher, useLoaderData } from '@remix-run/react'
 import { Player } from '@remotion/player'
 import { eq } from 'drizzle-orm'
-import { Trash } from 'lucide-react'
+import { Edit, Trash } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import invariant from 'tiny-invariant'
 import BackPrevious from '~/components/BackPrevious'
 import LoadingButtonWithState from '~/components/LoadingButtonWithState'
@@ -147,12 +148,40 @@ export default function WordDetailPage() {
 	const { word, wordSentences, totalDurationInFrames, compositionWidth, compositionHeight } = useLoaderData<typeof loader>()
 	const audioFetcher = useFetcher()
 	const renderFetcher = useFetcher()
+	const titleFetcher = useFetcher<{ success?: boolean; title?: string }>()
+	const updateTitleFetcher = useFetcher<{ success?: boolean; title?: string }>()
+
+	// State for title editing
+	const [isEditingTitle, setIsEditingTitle] = useState(false)
+	const [titleValue, setTitleValue] = useState(word.title || '')
 
 	// Check if all sentences have audio generated
 	const allAudioGenerated = word.sentences.every((sentence: any) => sentence.wordPronunciationPath && sentence.sentencePronunciationPath)
 
 	const isGenerating = audioFetcher.state !== 'idle'
 	const isRendering = renderFetcher.state !== 'idle'
+	const isGeneratingTitle = titleFetcher.state !== 'idle'
+	const isUpdatingTitle = updateTitleFetcher.state !== 'idle'
+
+	// Handle title update submission
+	const handleTitleUpdate = () => {
+		updateTitleFetcher.submit({ title: titleValue }, { method: 'post', action: `/app/words/${word.id}/update-title` })
+		setIsEditingTitle(false)
+	}
+
+	// Update local title when fetcher data returns
+	useEffect(() => {
+		if (updateTitleFetcher.data?.success && updateTitleFetcher.data.title) {
+			setTitleValue(updateTitleFetcher.data.title)
+		}
+	}, [updateTitleFetcher.data])
+
+	// Update local title when AI generates title
+	useEffect(() => {
+		if (titleFetcher.data?.success && titleFetcher.data.title) {
+			setTitleValue(titleFetcher.data.title)
+		}
+	}, [titleFetcher.data])
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -170,13 +199,56 @@ export default function WordDetailPage() {
 								<span className="text-gray-500">ID:</span>
 								<span className="font-mono">{word.id}</span>
 							</div>
+
+							{/* Title section with edit functionality */}
+							<div className="flex justify-between items-center mb-2">
+								<span className="text-gray-500">Title:</span>
+								{isEditingTitle ? (
+									<div className="flex items-center gap-2 w-3/4">
+										<input
+											type="text"
+											value={titleValue}
+											onChange={(e) => setTitleValue(e.target.value)}
+											className="flex-1 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-300"
+										/>
+										<Button variant="ghost" size="sm" onClick={() => setIsEditingTitle(false)} disabled={isUpdatingTitle}>
+											Cancel
+										</Button>
+										<Button variant="outline" size="sm" onClick={handleTitleUpdate} disabled={isUpdatingTitle}>
+											{isUpdatingTitle ? 'Saving...' : 'Save'}
+										</Button>
+									</div>
+								) : (
+									<div className="flex items-center gap-2">
+										<span className="font-medium text-indigo-600">{titleValue || 'No title'}</span>
+										<Button variant="ghost" size="sm" onClick={() => setIsEditingTitle(true)} className="h-6 w-6 p-0" aria-label="Edit title">
+											<Edit size={16} />
+										</Button>
+									</div>
+								)}
+							</div>
+
 							<div className="flex justify-between mb-2">
 								<span className="text-gray-500">Number of Sentences:</span>
 								<span>{word.sentences.length}</span>
 							</div>
-							<div className="flex justify-between">
+							<div className="flex justify-between mb-2">
 								<span className="text-gray-500">FPS:</span>
 								<span>{word.fps}</span>
+							</div>
+							<div className="mt-4">
+								<titleFetcher.Form action={`/app/words/${word.id}/generate-title`} method="post">
+									<LoadingButtonWithState
+										variant="outline"
+										size="sm"
+										state={isGeneratingTitle ? 'loading' : 'idle'}
+										idleText="Generate Fun Title"
+										loadingText="Generating Title..."
+										disabled={isGeneratingTitle || word.sentences.length === 0 || isEditingTitle}
+										type="submit"
+										className="w-full"
+									/>
+								</titleFetcher.Form>
 							</div>
 						</div>
 
