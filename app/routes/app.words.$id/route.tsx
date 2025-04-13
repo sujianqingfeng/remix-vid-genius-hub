@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node'
 import { useFetcher, useLoaderData } from '@remix-run/react'
 import { Player } from '@remotion/player'
 import { eq } from 'drizzle-orm'
-import { Edit, FileVideo, Headphones, Image, Trash, Type } from 'lucide-react'
+import { Camera, Edit, FileVideo, Headphones, Image, Trash, Type } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import invariant from 'tiny-invariant'
 import BackPrevious from '~/components/BackPrevious'
@@ -209,6 +209,10 @@ export default function WordDetailPage() {
 	const renderFetcher = useFetcher()
 	const titleFetcher = useFetcher<{ success?: boolean; title?: string }>()
 	const updateTitleFetcher = useFetcher<{ success?: boolean; title?: string }>()
+	const screenshotFetcher = useFetcher<{ success: boolean; message?: string }>()
+
+	// State for timestamp input
+	const [timestamp, setTimestamp] = useState('1')
 
 	// State for title editing
 	const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -221,6 +225,7 @@ export default function WordDetailPage() {
 	const isRendering = renderFetcher.state !== 'idle'
 	const isGeneratingTitle = titleFetcher.state !== 'idle'
 	const isUpdatingTitle = updateTitleFetcher.state !== 'idle'
+	const isScreenshotting = screenshotFetcher.state !== 'idle'
 
 	// Handle title update submission
 	const handleTitleUpdate = () => {
@@ -353,19 +358,54 @@ export default function WordDetailPage() {
 									/>
 								</div>
 
-								<renderFetcher.Form action={`/app/words/${word.id}/render`} method="post">
-									<LoadingButtonWithState
-										variant="default"
-										size="lg"
-										state={isRendering ? 'loading' : 'idle'}
-										idleText="Render Video"
-										loadingText="Rendering Video..."
-										disabled={!allAudioGenerated || isRendering || isGenerating}
-										type="submit"
-										className="w-full"
-										icon={<FileVideo className="mr-2 h-5 w-5" />}
-									/>
-								</renderFetcher.Form>
+								<div className="space-y-2">
+									<renderFetcher.Form action={`/app/words/${word.id}/render`} method="post">
+										<LoadingButtonWithState
+											variant="default"
+											size="lg"
+											state={isRendering ? 'loading' : 'idle'}
+											idleText="Render Video"
+											loadingText="Rendering Video..."
+											disabled={!allAudioGenerated || isRendering || isGenerating}
+											type="submit"
+											className="w-full"
+											icon={<FileVideo className="mr-2 h-5 w-5" />}
+										/>
+									</renderFetcher.Form>
+
+									{word.outputFilePath && (
+										<screenshotFetcher.Form action={`/app/words/${word.id}/screenshot`} method="post">
+											<div className="mb-2">
+												<div className="flex items-center gap-2">
+													<label htmlFor="timestamp" className="text-sm text-gray-600">
+														Screenshot Time (seconds):
+													</label>
+													<input
+														id="timestamp"
+														name="timestamp"
+														type="number"
+														min="0"
+														step="0.1"
+														value={timestamp}
+														onChange={(e) => setTimestamp(e.target.value)}
+														className="w-20 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-indigo-300"
+													/>
+												</div>
+											</div>
+											<LoadingButtonWithState
+												variant="outline"
+												size="lg"
+												state={isScreenshotting ? 'loading' : 'idle'}
+												idleText="Take Screenshot"
+												loadingText="Taking Screenshot..."
+												disabled={isScreenshotting}
+												type="submit"
+												className="w-full"
+												icon={<Camera className="mr-2 h-5 w-5" />}
+											/>
+										</screenshotFetcher.Form>
+									)}
+								</div>
 							</CardContent>
 						</Card>
 					</div>

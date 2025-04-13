@@ -70,3 +70,23 @@ export function getAudioDuration(filePath: string): number {
 		return 0
 	}
 }
+
+/**
+ * Generate FFmpeg command to take a screenshot at the specified time
+ * @param videoPath - Path to the video file
+ * @param timestamp - Time in seconds to take screenshot at
+ * @returns FFmpeg command arguments array
+ */
+export function generateScreenshotCommand(videoPath: string, timestamp: number) {
+	return [
+		'-y',
+		'-ss',
+		timestamp.toString(), // Take screenshot at specified timestamp
+		'-i',
+		videoPath,
+		'-vframes',
+		'1', // Extract only one frame
+		'-q:v',
+		'2', // High quality
+	]
+}
