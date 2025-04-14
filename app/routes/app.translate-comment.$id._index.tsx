@@ -67,7 +67,6 @@ export default function TranslateCommentPage() {
 	const renderFetcher = useFetcher()
 	const remoteRenderFetcher = useFetcher()
 	const transformFetcher = useFetcher()
-	const checkSensitiveWordsFetcher = useFetcher()
 	const deleteFetcher = useFetcher()
 
 	const currentTime = format(translateComment.commentPullAt ?? new Date(), 'yyyy-MM-dd HH:mm')
@@ -236,7 +235,7 @@ export default function TranslateCommentPage() {
 						<div className="flex justify-between items-center">
 							<h3 className="font-medium text-lg">Comments</h3>
 							{translateComment.comments?.length ? (
-								<deleteFetcher.Form action="delete-comments" method="post">
+								<deleteFetcher.Form action="delete-comment" method="post">
 									<Button variant="ghost" size="sm" className="hover:bg-destructive/10 hover:text-destructive text-destructive">
 										<Trash size={14} className="mr-1" />
 										Delete All

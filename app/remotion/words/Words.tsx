@@ -20,6 +20,22 @@ const removePunctuation = (text: string) => {
 	return text.replace(/[.!?,;:。！？，；：]+$/, '')
 }
 
+// Avatar component that shows in the top-right corner
+const Avatar = () => {
+	return (
+		<div className="absolute top-8 right-8 z-10">
+			<img
+				src={staticFile('hens-avatar.png')}
+				alt="Avatar"
+				className="w-20 h-20 rounded-full border-2 border-amber-400 shadow-lg"
+				style={{
+					objectFit: 'cover',
+				}}
+			/>
+		</div>
+	)
+}
+
 // Title cover component to show at the beginning of the video
 const TitleCover = ({ title }: { title?: string }) => {
 	const frame = useCurrentFrame()
@@ -105,6 +121,9 @@ export default function Words({ wordSentences, id, title }: WordsProps) {
 
 	return (
 		<AbsoluteFill className="bg-amber-50">
+			{/* Add the avatar that will appear throughout the video */}
+			<Avatar />
+
 			{/* Title cover sequence at the beginning */}
 			<Sequence from={0} durationInFrames={titleCoverDurationInFrames} key="title-cover">
 				<TitleCover title={title} />
@@ -125,12 +144,7 @@ export default function Words({ wordSentences, id, title }: WordsProps) {
 				const startFrame = sentence.form + titleCoverDurationInFrames
 				const sentenceDisplayStart = startFrame + wordDisplayDuration
 
-				// Ensure we don't have gaps between sequences by making audio play during display
-				const wordAudioStart = startFrame
-				const sentenceAudioStart = sentenceDisplayStart
-
 				const sentenceId = `${sentence.word}-${index}`
-
 				return (
 					<React.Fragment key={sentenceId}>
 						{/* Word Display and Audio combined for smoother experience */}
