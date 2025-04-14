@@ -1,5 +1,6 @@
 import { useFetcher } from '@remix-run/react'
-import { Trash2, Upload } from 'lucide-react'
+import { Headphones, Trash2, Upload } from 'lucide-react'
+import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import type { RemotionFillInBlankSentence } from '~/types'
 
@@ -27,7 +28,15 @@ export default function Sentences({ sentences }: SentencesProps) {
 					<div className="space-y-4">
 						{/* English & Chinese Text */}
 						<div className="space-y-2">
-							<p className="text-lg font-medium text-gray-900">{sentence.sentence}</p>
+							<div className="flex items-center justify-between">
+								<p className="text-lg font-medium text-gray-900">{sentence.sentence}</p>
+								{(sentence.audioFilePath || sentence.publicAudioPath) && (
+									<Badge className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
+										<Headphones className="h-3 w-3" />
+										<span className="text-xs">Audio Ready</span>
+									</Badge>
+								)}
+							</div>
 							<p className="text-base text-gray-600">{sentence.sentenceZh}</p>
 						</div>
 
@@ -70,6 +79,20 @@ export default function Sentences({ sentences }: SentencesProps) {
 								<Upload className="h-4 w-4" />
 							</Button>
 						</uploadCoverFetcher.Form>
+
+						{/* Audio Preview */}
+						{(sentence.audioFilePath || sentence.publicAudioPath) && (
+							<div className="mt-2">
+								{sentence.publicAudioPath && (
+									<audio controls className="w-full h-8">
+										<source src={sentence.publicAudioPath} type="audio/mpeg" />
+										<track kind="captions" />
+										Your browser does not support the audio element.
+									</audio>
+								)}
+								{sentence.audioDuration && <p className="text-xs text-gray-500 mt-1">Duration: {sentence.audioDuration.toFixed(2)}s</p>}
+							</div>
+						)}
 					</div>
 				</div>
 			))}

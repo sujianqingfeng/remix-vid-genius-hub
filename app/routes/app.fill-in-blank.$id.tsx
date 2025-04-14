@@ -94,10 +94,6 @@ export default function AppFillInBlankPage() {
 
 						{/* Action Buttons */}
 						<div className="flex items-center gap-4">
-							<generateAudioFetcher.Form method="post" action="generate-audio">
-								<LoadingButtonWithState state={generateAudioFetcher.state} idleText="Generate Audio" className="bg-blue-600 hover:bg-blue-700 text-white" />
-							</generateAudioFetcher.Form>
-
 							<renderFetcher.Form method="post" action="render">
 								<LoadingButtonWithState state={renderFetcher.state} idleText="Render Video" className="bg-indigo-600 hover:bg-indigo-700 text-white" />
 							</renderFetcher.Form>
@@ -112,7 +108,12 @@ export default function AppFillInBlankPage() {
 
 					{/* Sidebar - Sentences */}
 					<div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-						<h2 className="text-lg font-semibold text-gray-900 mb-6">Sentences</h2>
+						<div className="flex items-center justify-between mb-6">
+							<h2 className="text-lg font-semibold text-gray-900">Sentences</h2>
+							<generateAudioFetcher.Form method="post" action="generate-audio">
+								<LoadingButtonWithState state={generateAudioFetcher.state} idleText="Generate Audio" className="bg-blue-600 hover:bg-blue-700 text-white" />
+							</generateAudioFetcher.Form>
+						</div>
 						<div className="overflow-y-auto max-h-[calc(100vh-200px)]">
 							<Sentences sentences={remotionFillInBlankSentences} />
 						</div>
