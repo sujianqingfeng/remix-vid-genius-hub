@@ -48,12 +48,6 @@ const menuItems: MenuItem[] = [
 		text: 'Comment Translation',
 	},
 	{
-		to: '/app/general-comment',
-		title: 'Twitter Comment',
-		icon: Twitter,
-		text: 'Twitter Comment',
-	},
-	{
 		to: '/app/translate-video',
 		title: 'Video Translation',
 		icon: FileVideo,
@@ -64,6 +58,12 @@ const menuItems: MenuItem[] = [
 		title: 'Subtitle Translations',
 		icon: Subtitles,
 		text: 'Subtitle Translations',
+	},
+	{
+		to: '/app/general-comment',
+		title: 'Twitter Comment',
+		icon: Twitter,
+		text: 'Twitter Comment',
 	},
 	{
 		to: '/app/words',

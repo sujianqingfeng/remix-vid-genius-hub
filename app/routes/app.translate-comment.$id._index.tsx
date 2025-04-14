@@ -69,7 +69,6 @@ export default function TranslateCommentPage() {
 	const transformFetcher = useFetcher()
 	const checkSensitiveWordsFetcher = useFetcher()
 	const deleteFetcher = useFetcher()
-	const generatePublishTitleFetcher = useFetcher()
 
 	const currentTime = format(translateComment.commentPullAt ?? new Date(), 'yyyy-MM-dd HH:mm')
 	const desc = `视频源ID：${videoId}
@@ -79,7 +78,6 @@ export default function TranslateCommentPage() {
 评论内容具有动态调整特性，当前数据获取时间：${currentTime}
 请务必保持理性判断，注意甄别信息真实性`
 	const publishTitle = `外网真实评论：${translateComment.translatedTitle}`
-	const generatedTitle = (generatePublishTitleFetcher.data as { title: string } | undefined)?.title
 
 	const onCopy = async (text?: string) => {
 		if (!text) {
@@ -138,29 +136,6 @@ export default function TranslateCommentPage() {
 								<Copy size={16} className="opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
 								<p className="text-sm font-medium">{publishTitle}</p>
 							</button>
-
-							{generatedTitle && (
-								<button
-									type="button"
-									className="flex items-start gap-3 group cursor-pointer w-full text-left hover:bg-accent p-2 rounded-md transition-colors"
-									onClick={() => onCopy(generatedTitle)}
-									onKeyDown={(e) => e.key === 'Enter' && onCopy(generatedTitle)}
-								>
-									<Copy size={16} className="opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
-									<p className="text-sm font-medium">{generatedTitle}</p>
-								</button>
-							)}
-
-							<generatePublishTitleFetcher.Form action="generate-publish-title" method="post">
-								<LoadingButtonWithState
-									variant="ghost"
-									size="sm"
-									className="w-full justify-start"
-									state={generatePublishTitleFetcher.state}
-									idleText="Generate Publish Title"
-									icon={<Wand2 size={14} />}
-								/>
-							</generatePublishTitleFetcher.Form>
 
 							<button
 								type="button"
