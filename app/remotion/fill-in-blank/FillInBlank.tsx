@@ -147,7 +147,7 @@ export default function FillInBlank({ sentences }: FillInBlankProps) {
 		if (parts.length < 2) {
 			return (
 				<div
-					className="text-6xl text-center font-medium tracking-wider text-stone-600"
+					className="text-7xl text-center font-medium tracking-wider text-stone-600"
 					style={{
 						opacity: spring({
 							frame: frame - startFrame,
@@ -176,7 +176,7 @@ export default function FillInBlank({ sentences }: FillInBlankProps) {
 
 		return (
 			<div
-				className="text-6xl text-center font-medium tracking-wider text-stone-600"
+				className="text-7xl text-center font-medium tracking-wider text-stone-600"
 				style={{
 					opacity,
 					fontFamily: "'Huiwen-mincho', serif",

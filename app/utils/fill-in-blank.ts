@@ -8,18 +8,19 @@ type BuildFillInBlankRenderDataOptions = {
 
 export function buildFillInBlankRenderData({ sentences, fps }: BuildFillInBlankRenderDataOptions) {
 	const defaultDurationInSeconds = 6 // Default duration if no audio duration available
+	const bufferTimeInSeconds = 3 // Increased buffer time between sentences
 
 	const remotionFillInBlankSentences = sentences.map((sentence, index) => {
 		// Calculate frames based on actual audio duration or default to 6 seconds
 		const durationInSeconds = sentence.audioDuration || defaultDurationInSeconds
-		// Add 1 second buffer to ensure audio completes playing
-		const sentenceDurationInFrames = Math.ceil((durationInSeconds + 1) * fps)
+		// Add buffer time to ensure audio completes playing with pause
+		const sentenceDurationInFrames = Math.ceil((durationInSeconds + bufferTimeInSeconds) * fps)
 
 		// Calculate form position (starting frame) based on previous sentences
 		let formPosition = 0
 		for (let i = 0; i < index; i++) {
 			const prevDuration = sentences[i].audioDuration || defaultDurationInSeconds
-			formPosition += Math.ceil((prevDuration + 1) * fps)
+			formPosition += Math.ceil((prevDuration + bufferTimeInSeconds) * fps)
 		}
 
 		return {
