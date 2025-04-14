@@ -10,7 +10,7 @@ const model = 'gpt-4o-image'
 export async function generateImage({ prompt, outputPath, size }: GenerateImageInput) {
 	const openai = createOpenAI({
 		baseURL: API_BASE_URL,
-		apiKey: process.env.TUI_ZI_API_KEY,
+		apiKey: process.env.TU_ZI_API_KEY,
 	})
 
 	const { images } = await generateImageAI({
@@ -19,7 +19,6 @@ export async function generateImage({ prompt, outputPath, size }: GenerateImageI
 		n: 1,
 		size,
 	})
-	console.log('🚀 ~ generateImage ~ images:', images)
 
 	const dir = path.dirname(outputPath)
 	await fs.mkdir(dir, { recursive: true })
