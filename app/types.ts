@@ -101,6 +101,7 @@ export type FillInBlankSentence = {
 	wordInSentenceZh: string
 
 	audioFilePath?: string
+	audioDuration?: number
 	coverFilePath?: string
 }
 

@@ -3,6 +3,7 @@ import type { ActionFunctionArgs } from '@remix-run/node'
 import { eq } from 'drizzle-orm'
 import invariant from 'tiny-invariant'
 import { db, schema } from '~/lib/drizzle'
+import { getAudioDuration } from '~/utils/ffmpeg'
 import { createOperationDir } from '~/utils/file'
 import { generateSpeech } from '~/utils/tts/fm'
 
@@ -34,7 +35,11 @@ export async function action({ params }: ActionFunctionArgs) {
 				voice: 'echo',
 			})
 
+			// Measure the audio duration
+			const audioDuration = getAudioDuration(audioFilePath)
+
 			sentence.audioFilePath = audioFilePath
+			sentence.audioDuration = audioDuration
 			return sentence
 		}),
 	)
