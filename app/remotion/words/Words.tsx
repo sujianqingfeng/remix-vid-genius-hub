@@ -98,16 +98,16 @@ const SentenceDisplay = ({ sentence }: { sentence: WordSentenceWithPublicPaths }
 	const cleanChineseSentence = removePunctuation(sentence.sentenceZh)
 
 	return (
-		<AbsoluteFill className="bg-amber-50 flex items-center justify-center text-gray-800 px-24">
+		<AbsoluteFill className="bg-amber-50 flex items-center justify-center text-gray-800 px-16">
 			<div
-				className="flex flex-col items-center justify-center gap-10 text-center  w-full"
+				className="flex flex-col items-center justify-center gap-10 text-center w-full"
 				style={{
 					opacity,
 					fontFamily: 'Huiwen-mincho, serif',
 				}}
 			>
-				<h2 className="text-6xl font-bold m-0 leading-relaxed">{cleanEnglishSentence}</h2>
-				<h3 className="text-6xl m-0 text-gray-600 leading-relaxed">{cleanChineseSentence}</h3>
+				<h2 className="text-7xl font-bold m-0 leading-relaxed">{cleanEnglishSentence}</h2>
+				<h3 className="text-7xl m-0 text-gray-600 leading-relaxed">{cleanChineseSentence}</h3>
 			</div>
 		</AbsoluteFill>
 	)

@@ -293,7 +293,7 @@ export default function WordDetailPage() {
 
 				<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 					{/* Left column - Information and Remotion Player */}
-					<div className="lg:col-span-5 space-y-6">
+					<div className="lg:col-span-7 space-y-6">
 						<Card>
 							<CardHeader className="pb-3">
 								<CardTitle>Details</CardTitle>
@@ -446,7 +446,7 @@ export default function WordDetailPage() {
 					</div>
 
 					{/* Right column - Sentences list */}
-					<div className="lg:col-span-7">
+					<div className="lg:col-span-5">
 						<Card className="h-full">
 							<CardHeader className="flex flex-row items-center justify-between pb-2">
 								<CardTitle>Sentences</CardTitle>
