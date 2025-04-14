@@ -30,7 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 }
 
 const defaultPromptText =
-	'你是一个英语老师，需要给学生出填空题，需要根据给定的主题出10道题，每道题需要包含一个全量的英文句子，一个对应的中文翻译的句子， 一个对应在英文句子中的单词，一个对应的单词发音，一个对应中文翻译句子中的中文词。请确保每次生成的内容都不一样，句子的难度也要有变化，从简单到中等难度都要覆盖。主题：xxxx'
+	'你是一个英语老师，需要给学生出填空题，需要根据给定的主题出10道题，每道题需要包含一个全量的英文句子，一个对应的中文翻译的句子， 一个对应在英文句子中的单词，一个对应的单词发音，一个对应中文翻译句子中的中文词。另外，请提供一个额外的字段，表示这个单词在中文句子中的实际形式（wordInSentenceZh），因为有时候单词的直接翻译和在句子中的表现形式会有所不同。请确保每次生成的内容都不一样，句子的难度也要有变化，从简单到中等难度都要覆盖。主题：xxxx'
 
 export default function AppFillInBlankCreatePage() {
 	const generateFetcher = useFetcher<FillInBlankSentence[]>()
@@ -43,19 +43,6 @@ export default function AppFillInBlankCreatePage() {
 
 	const onEdit = (index: number, field: keyof FillInBlankSentence, value: string) => {
 		setSentences((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)))
-	}
-
-	const onAddNew = () => {
-		setSentences((prev) => [
-			...prev,
-			{
-				sentence: '',
-				word: '',
-				sentenceZh: '',
-				wordZh: '',
-				wordPronunciation: '',
-			},
-		])
 	}
 
 	useEffect(() => {
@@ -149,18 +136,27 @@ export default function AppFillInBlankCreatePage() {
 									className="focus:ring-2 focus:ring-blue-100"
 								/>
 							</div>
+							<div className="space-y-2">
+								<label htmlFor={`word-in-sentence-zh-${index}`} className="text-sm font-medium text-gray-700">
+									Word Form in Chinese Sentence
+								</label>
+								<Input
+									id={`word-in-sentence-zh-${index}`}
+									placeholder="How the word actually appears in Chinese sentence"
+									value={sentence.wordInSentenceZh}
+									onChange={(e) => onEdit(index, 'wordInSentenceZh', e.target.value)}
+									className="focus:ring-2 focus:ring-blue-100"
+								/>
+							</div>
 						</div>
 					</div>
 				))}
 			</div>
 
 			<div className="flex gap-4 sticky bottom-0 bg-white/80 backdrop-blur-sm py-4 px-6 -mx-6 border-t">
-				<Button onClick={onAddNew} variant="outline" className="hover:bg-gray-50">
-					Add New Sentence
-				</Button>
-				<Form method="post" className="flex-1 sm:flex-none">
+				<Form method="post" className="flex-1">
 					<input type="hidden" name="sentences" value={JSON.stringify(sentences)} />
-					<Button type="submit" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
+					<Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
 						Create Exercise
 					</Button>
 				</Form>

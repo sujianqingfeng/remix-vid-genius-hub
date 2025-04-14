@@ -12,6 +12,7 @@ const GenerateSchema = z.object({
 			sentenceZh: z.string(),
 			wordZh: z.string(),
 			wordPronunciation: z.string(),
+			wordInSentenceZh: z.string(),
 		}),
 	),
 })

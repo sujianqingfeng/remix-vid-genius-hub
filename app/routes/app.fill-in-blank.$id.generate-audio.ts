@@ -2,10 +2,9 @@ import path from 'node:path'
 import type { ActionFunctionArgs } from '@remix-run/node'
 import { eq } from 'drizzle-orm'
 import invariant from 'tiny-invariant'
-import { PROXY } from '~/constants'
 import { db, schema } from '~/lib/drizzle'
 import { createOperationDir } from '~/utils/file'
-import { generateTTS } from '~/utils/tts/edge'
+import { generateSpeech } from '~/utils/tts/fm'
 
 export async function action({ params }: ActionFunctionArgs) {
 	const { id } = params
@@ -26,15 +25,13 @@ export async function action({ params }: ActionFunctionArgs) {
 
 	await Promise.all(
 		notAudioSentences.map(async (sentence, index) => {
-			const fileName = `${id}-${index}.webm`
+			const fileName = `${id}-${index}.mp3`
 			const audioFilePath = path.join(operationDir, fileName)
 
-			await generateTTS({
+			await generateSpeech({
 				text: sentence.sentence,
-				outPath: audioFilePath,
-				proxy: PROXY,
-				saveSubtitles: false,
-				rate: '0%',
+				outputPath: audioFilePath,
+				voice: 'echo',
 			})
 
 			sentence.audioFilePath = audioFilePath

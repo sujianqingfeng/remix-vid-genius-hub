@@ -87,6 +87,7 @@ export default function AppFillInBlankPage() {
 										height: '100%',
 									}}
 									controls
+									acknowledgeRemotionLicense
 								/>
 							</div>
 						</div>

@@ -98,6 +98,7 @@ export type FillInBlankSentence = {
 	sentenceZh: string
 	wordZh: string
 	wordPronunciation: string
+	wordInSentenceZh: string
 
 	audioFilePath?: string
 	coverFilePath?: string
