@@ -111,8 +111,10 @@ function SentenceItem({
 	const isComplete = hasWordAudio && hasSentenceAudio
 	const deleteFetcher = useFetcher()
 	const generateImageFetcher = useFetcher()
+	const audioFetcher = useFetcher()
 	const isDeleting = deleteFetcher.state !== 'idle'
 	const isGeneratingImage = generateImageFetcher.state !== 'idle'
+	const isGeneratingAudio = audioFetcher.state !== 'idle'
 
 	return (
 		<Card className="overflow-hidden transition-all hover:shadow-md">
@@ -128,9 +130,33 @@ function SentenceItem({
 							)}
 						</div>
 						<p className="text-sm text-gray-500">{sentence.wordZh}</p>
-						{sentence.wordDuration && <p className="text-xs text-gray-400 mt-1">Word audio: {sentence.wordDuration.toFixed(2)}s</p>}
+						{sentence.wordDuration && (
+							<div className="flex items-center gap-2 mt-1">
+								<p className="text-xs text-gray-400">Word audio: {sentence.wordDuration.toFixed(2)}s</p>
+								{sentence.wordDuration > 10 && (
+									<Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs h-5">
+										Too Long
+									</Badge>
+								)}
+							</div>
+						)}
 					</div>
 					<div className="flex gap-2">
+						<audioFetcher.Form action={`/app/words/${wordId}/generate-audio`} method="post">
+							<input type="hidden" name="index" value={index} />
+							<LoadingButtonWithState
+								variant="outline"
+								size="icon"
+								state={isGeneratingAudio ? 'loading' : 'idle'}
+								idleText=""
+								loadingText=""
+								className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+								icon={<Headphones className="h-4 w-4" />}
+								disabled={isGeneratingAudio}
+								type="submit"
+								title="Regenerate Audio"
+							/>
+						</audioFetcher.Form>
 						<generateImageFetcher.Form method="post" action={`/app/words/${wordId}/generate-image`}>
 							<input type="hidden" name="index" value={index} />
 							<input type="hidden" name="word" value={sentence.word} />
@@ -161,7 +187,16 @@ function SentenceItem({
 				<div>
 					<p className="text-gray-800">{sentence.sentence}</p>
 					<p className="text-sm text-gray-500 mt-1">{sentence.sentenceZh}</p>
-					{sentence.sentenceDuration && <p className="text-xs text-gray-400 mt-1">Sentence audio: {sentence.sentenceDuration.toFixed(2)}s</p>}
+					{sentence.sentenceDuration && (
+						<div className="flex items-center gap-2 mt-1">
+							<p className="text-xs text-gray-400">Sentence audio: {sentence.sentenceDuration.toFixed(2)}s</p>
+							{sentence.sentenceDuration > 10 && (
+								<Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs h-5">
+									Too Long
+								</Badge>
+							)}
+						</div>
+					)}
 				</div>
 
 				{/* Display generated image if available */}

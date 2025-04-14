@@ -8,9 +8,14 @@ import { getAudioDuration } from '~/utils/ffmpeg'
 import { createOperationDir } from '~/utils/file'
 import { generateSpeech } from '~/utils/tts'
 
-export const action = async ({ params }: ActionFunctionArgs) => {
+export const action = async ({ params, request }: ActionFunctionArgs) => {
 	const { id } = params
 	invariant(id, 'id is required')
+
+	// Get form data to check if a specific index was provided
+	const formData = await request.formData()
+	const specificIndex = formData.get('index') ? Number.parseInt(formData.get('index')?.toString() || '-1', 10) : -1
+	const hasSpecificIndex = specificIndex >= 0
 
 	const word = await db.query.words.findFirst({
 		where: eq(schema.words.id, id),
@@ -23,13 +28,16 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 
 	const sentences = [...word.sentences]
 
-	// Generate audio for each sentence
+	// Process either a specific sentence or all sentences
 	for (let idx = 0; idx < sentences.length; idx++) {
+		// Skip if we're targeting a specific index and this isn't it
+		if (hasSpecificIndex && idx !== specificIndex) continue
+
 		const sentence = sentences[idx]
 		let needsUpdate = false
 
-		// Generate word audio if it doesn't exist
-		if (!sentence.wordPronunciationPath) {
+		// Generate word audio (regenerate if specific index)
+		if (!sentence.wordPronunciationPath || hasSpecificIndex) {
 			const wordFileName = `${id}-word-${idx}.mp3`
 			const wordFilePath = path.join(operationDir, wordFileName)
 
@@ -47,8 +55,8 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 			needsUpdate = true
 		}
 
-		// Generate sentence audio if it doesn't exist
-		if (!sentence.sentencePronunciationPath) {
+		// Generate sentence audio (regenerate if specific index)
+		if (!sentence.sentencePronunciationPath || hasSpecificIndex) {
 			const sentenceFileName = `${id}-sentence-${idx}.mp3`
 			const sentenceFilePath = path.join(operationDir, sentenceFileName)
 
