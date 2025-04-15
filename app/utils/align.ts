@@ -82,274 +82,309 @@ export function splitTextToSentences({ text, maxSentenceLength = 100 }: SplitTex
 	})
 }
 
+// 合并碎片 words，提升对齐准确性（保守策略：只合并连续长度<minLength的短词）
+function mergeShortWords(words: WordWithTime[], minLength = 3): WordWithTime[] {
+	const merged: WordWithTime[] = []
+	let buffer = ''
+	let bufferStartTime = 0
+	let bufferEndTime = 0
+	let buffering = false
+
+	const flush = () => {
+		if (buffering) {
+			merged.push({
+				word: buffer,
+				start: bufferStartTime,
+				end: bufferEndTime,
+			})
+			buffer = ''
+			buffering = false
+		}
+	}
+
+	for (let i = 0; i < words.length; i++) {
+		const w = words[i]
+		const alphaLen = w.word.replace(/[^a-zA-Z]/g, '').length
+		if (alphaLen > 0 && alphaLen < minLength) {
+			if (!buffering) {
+				bufferStartTime = w.start
+				buffer = ''
+				buffering = true
+			}
+			buffer += w.word
+			bufferEndTime = w.end
+		} else {
+			flush()
+			merged.push(w)
+		}
+	}
+	flush()
+	return merged
+}
+
 export function alignWordsAndSentences(words: WordWithTime[], sentences: string[]): Sentence[] {
-	if (!words.length || !sentences.length) {
-		return []
+	console.time('alignWordsAndSentences_total')
+	if (!words.length || !sentences.length) return []
+
+	// 合并碎片 words
+	const mergedWords = mergeShortWords(words)
+
+	// 增强归一化：去除所有标点、所有格、缩写点，统一小写
+	const normalize = (str: string) =>
+		str
+			.replace(/'s\b/g, ' s') // 所有格
+			.replace(/\./g, ' ') // 缩写点
+			.replace(/[^a-zA-Z0-9 ]/g, ' ') // 其它标点
+			.replace(/\s+/g, ' ') // 多空格合一
+			.trim()
+			.toLowerCase()
+	const normalizedWords = mergedWords.map((w) => normalize(w.word))
+	const used = Array(mergedWords.length).fill(false)
+	const results: Sentence[] = []
+
+	// Levenshtein距离
+	function levenshtein(a: string, b: string): number {
+		console.time('levenshtein')
+		const m = a.length
+		const n = b.length
+		const dp = Array(m + 1)
+			.fill(0)
+			.map(() => Array(n + 1).fill(0))
+		for (let i = 0; i <= m; i++) dp[i][0] = i
+		for (let j = 0; j <= n; j++) dp[0][j] = j
+		for (let i = 1; i <= m; i++) {
+			for (let j = 1; j <= n; j++) {
+				dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+			}
+		}
+		console.timeEnd('levenshtein')
+		return dp[m][n]
 	}
 
-	// 构建完整的转录文本
-	const fullTranscript = words.map((w) => w.word).join('')
+	// 将句子拆分为单词数组
+	const splitToWords = (sentence: string) => normalize(sentence).split(/\s+/).filter(Boolean)
 
-	// 规范化文本以便于匹配
-	const normalizeText = (text: string) => {
-		return text.replace(/\s+/g, ' ').trim().toLowerCase()
+	// LCS+合并+模糊匹配（窗口内）
+	function lcsAlign(windowWords: string[], sentenceWords: string[]) {
+		console.time('lcsAlign')
+		const m = windowWords.length
+		const n = sentenceWords.length
+		const dp: { score: number; matches: number; path: { wi: number[]; si: number }[] }[][] = Array(m + 1)
+			.fill(0)
+			.map(() =>
+				Array(n + 1)
+					.fill(0)
+					.map(() => ({ score: 0, matches: 0, path: [] })),
+			)
+		dp[0][0] = { score: 0, matches: 0, path: [] }
+		for (let i = 0; i <= m; i++) {
+			for (let j = 0; j <= n; j++) {
+				// 匹配：合并1~4个windowWords与sentenceWords[j]模糊匹配
+				if (i < m && j < n) {
+					for (let k = 1; k <= 4 && i + k <= m; k++) {
+						const merged = windowWords.slice(i, i + k).join('')
+						if (merged && sentenceWords[j] && levenshtein(merged, sentenceWords[j]) <= 2) {
+							const prev = dp[i][j]
+							const next = dp[i + k][j + 1]
+							const newScore = prev.score + 2
+							if (newScore > next.score) {
+								dp[i + k][j + 1] = {
+									score: newScore,
+									matches: prev.matches + 1,
+									path: [...prev.path, { wi: [i, i + k], si: j }],
+								}
+							}
+						}
+					}
+				}
+				// 跳过windowWords[i]（惩罚-1）
+				if (i < m) {
+					const prev = dp[i][j]
+					const next = dp[i + 1][j]
+					const newScore = prev.score - 1
+					if (newScore > next.score) {
+						dp[i + 1][j] = {
+							score: newScore,
+							matches: prev.matches,
+							path: [...prev.path],
+						}
+					}
+				}
+				// 跳过sentenceWords[j]（惩罚-1）
+				if (j < n) {
+					const prev = dp[i][j]
+					const next = dp[i][j + 1]
+					const newScore = prev.score - 1
+					if (newScore > next.score) {
+						dp[i][j + 1] = {
+							score: newScore,
+							matches: prev.matches,
+							path: [...prev.path],
+						}
+					}
+				}
+			}
+		}
+		// 找到最大分数和路径
+		let maxScore = Number.NEGATIVE_INFINITY
+		let bestPath: { wi: number[]; si: number }[] = []
+		let bestMatches = 0
+		for (let i = 0; i <= m; i++) {
+			if (dp[i][n].score > maxScore) {
+				maxScore = dp[i][n].score
+				bestPath = dp[i][n].path
+				bestMatches = dp[i][n].matches
+			}
+		}
+		// F1-like分数
+		const f1Score = bestMatches / Math.max(m, n)
+		console.timeEnd('lcsAlign')
+		return { matchedCount: bestMatches, mapping: bestPath, f1Score }
 	}
 
-	// 创建结果数组
-	const result: Sentence[] = []
-
-	// 创建单词索引映射，用于快速查找单词位置
-	const wordPositions: { [key: string]: number[] } = {}
-	let currentPos = 0
-	words.forEach((word, index) => {
-		const normalizedWord = normalizeText(word.word)
-		if (!wordPositions[normalizedWord]) {
-			wordPositions[normalizedWord] = []
+	let lastUsedIdx = 0
+	for (const sentence of sentences) {
+		console.time(`align_sentence_${sentence.slice(0, 20)}`)
+		const sentenceWords = splitToWords(sentence)
+		if (sentenceWords.length === 0) continue
+		let bestScore = 0
+		let bestStart = -1
+		let bestLen = 0
+		let bestMapping: { wi: number[]; si: number }[] = []
+		let bestF1 = 0
+		// 优化：窗口长度范围收缩，步长加大为2
+		for (let win = Math.max(1, sentenceWords.length - 1); win <= sentenceWords.length + 2 && win <= mergedWords.length - lastUsedIdx; win++) {
+			for (let i = lastUsedIdx; i <= mergedWords.length - win; i += 2) {
+				// 步长2
+				if (used.slice(i, i + win).some(Boolean)) continue
+				const windowWords = normalizedWords.slice(i, i + win)
+				const { matchedCount, mapping, f1Score } = lcsAlign(windowWords, sentenceWords)
+				if (f1Score > bestF1 || (f1Score === bestF1 && matchedCount > bestScore)) {
+					bestScore = matchedCount
+					bestStart = i
+					bestLen = win
+					bestMapping = mapping
+					bestF1 = f1Score
+				}
+			}
 		}
-		wordPositions[normalizedWord].push(index)
-		currentPos += word.word.length
-	})
-
-	// 第一阶段：尝试匹配每个句子的开头和结尾
-	const normalizedTranscript = normalizeText(fullTranscript)
-	const sentenceData: {
-		sentence: string
-		normalizedSentence: string
-		firstWords: string[]
-		lastWords: string[]
-		matchedStartIndex: number
-		matchedEndIndex: number
-		processed: boolean
-	}[] = sentences.map((sentence) => {
-		const normalizedSentence = normalizeText(sentence)
-		const words = normalizedSentence.split(/\s+/).filter((w) => w.length > 0)
-
-		return {
-			sentence,
-			normalizedSentence,
-			firstWords: words.slice(0, Math.min(3, words.length)),
-			lastWords: words.slice(Math.max(0, words.length - 3)),
-			matchedStartIndex: -1,
-			matchedEndIndex: -1,
-			processed: false,
-		}
-	})
-
-	// 找到可能的句子边界
-	for (const sentenceInfo of sentenceData) {
-		if (!sentenceInfo.sentence.trim()) {
-			sentenceInfo.processed = true
+		// 边界检查，防止数组越界
+		if (bestStart < 0 || bestLen <= 0 || bestStart + bestLen > mergedWords.length) {
+			console.timeEnd(`align_sentence_${sentence.slice(0, 20)}`)
+			// 兜底策略：用未分配 words 拼成字符串，与句子做 Levenshtein 相似度
+			const unusedWordsArr = mergedWords.filter((_, idx) => !used[idx]).map((w) => w.word)
+			const unusedStr = unusedWordsArr.join(' ').replace(/\s+/g, ' ').trim()
+			const sentenceStr = sentence.replace(/\s+/g, ' ').trim()
+			const sim = calculateSimilarity(unusedStr, sentenceStr)
+			if (sim > 0.7 && unusedWordsArr.length > 0) {
+				results.push({
+					words: mergedWords.filter((_, idx) => !used[idx]),
+					text: sentence,
+					start: mergedWords.find((_, idx) => !used[idx])?.start ?? 0,
+					end:
+						mergedWords
+							.slice()
+							.reverse()
+							.find((_, idx) => !used[mergedWords.length - 1 - idx])?.end ?? 0,
+				})
+				// 标记已用
+				for (let i = 0; i < used.length; i++) if (!used[i]) used[i] = true
+				continue
+			}
 			continue
 		}
-
-		// 直接匹配完整句子
-		const directMatchIndex = normalizedTranscript.indexOf(sentenceInfo.normalizedSentence)
-		if (directMatchIndex !== -1) {
-			// 找到对应的单词索引
-			let charCount = 0
-			let startWordIdx = -1
-			let endWordIdx = -1
-
-			for (let i = 0; i < words.length; i++) {
-				const prevCharCount = charCount
-				charCount += words[i].word.length
-
-				if (prevCharCount <= directMatchIndex && charCount > directMatchIndex && startWordIdx === -1) {
-					startWordIdx = i
-				}
-
-				if (startWordIdx !== -1 && charCount >= directMatchIndex + sentenceInfo.normalizedSentence.length) {
-					endWordIdx = i
-					break
+		// 阈值降低到 0.5
+		if (bestF1 >= 0.5 && bestStart !== -1 && bestMapping.length > 0) {
+			// 标记已用
+			for (const m of bestMapping) {
+				for (let i = m.wi[0]; i < m.wi[1]; i++) {
+					used[bestStart + i] = true
 				}
 			}
-
-			if (startWordIdx !== -1 && endWordIdx !== -1) {
-				result.push({
-					words: words.slice(startWordIdx, endWordIdx + 1),
-					text: sentenceInfo.sentence,
-					start: words[startWordIdx].start,
-					end: words[endWordIdx].end,
+			// 组装words
+			const alignedWords: WordWithTime[] = []
+			for (const m of bestMapping) {
+				const from = bestStart + m.wi[0]
+				const to = bestStart + m.wi[1] - 1
+				const merged = {
+					word: mergedWords
+						.slice(from, to + 1)
+						.map((w) => w.word)
+						.join(''),
+					start: mergedWords[from].start,
+					end: mergedWords[to].end,
+				}
+				alignedWords.push(merged)
+			}
+			results.push({
+				words: alignedWords,
+				text: sentence,
+				start: alignedWords[0]?.start ?? 0,
+				end: alignedWords[alignedWords.length - 1]?.end ?? 0,
+			})
+			lastUsedIdx = bestStart + bestLen
+		} else {
+			// 匹配失败，输出详细调试信息
+			const unusedWords = mergedWords
+				.filter((_, idx) => !used[idx])
+				.map((w) => w.word)
+				.join(' ')
+			// eslint-disable-next-line no-console
+			console.warn(
+				'[alignWordsAndSentences][滑窗LCS] 未能对齐句子:',
+				sentence,
+				'\n分词:',
+				sentenceWords.join(' '),
+				'\n最佳窗口:',
+				bestStart,
+				'-',
+				bestStart + bestLen,
+				'\n窗口内容:',
+				mergedWords
+					.slice(bestStart, bestStart + bestLen)
+					.map((w) => w.word)
+					.join(' '),
+				'\n最佳分数:',
+				bestF1,
+				'\n最佳匹配映射:',
+				JSON.stringify(bestMapping),
+				'\n未分配words:',
+				unusedWords,
+			)
+			// 兜底策略：用未分配 words 拼成字符串，与句子做 Levenshtein 相似度
+			const unusedWordsArr = mergedWords.filter((_, idx) => !used[idx]).map((w) => w.word)
+			const unusedStr = unusedWordsArr.join(' ').replace(/\s+/g, ' ').trim()
+			const sentenceStr = sentence.replace(/\s+/g, ' ').trim()
+			const sim = calculateSimilarity(unusedStr, sentenceStr)
+			if (sim > 0.7 && unusedWordsArr.length > 0) {
+				results.push({
+					words: mergedWords.filter((_, idx) => !used[idx]),
+					text: sentence,
+					start: mergedWords.find((_, idx) => !used[idx])?.start ?? 0,
+					end:
+						mergedWords
+							.slice()
+							.reverse()
+							.find((_, idx) => !used[mergedWords.length - 1 - idx])?.end ?? 0,
 				})
-				sentenceInfo.processed = true
+				// 标记已用
+				for (let i = 0; i < used.length; i++) if (!used[i]) used[i] = true
 				continue
 			}
 		}
-
-		// 尝试匹配第一个单词组合
-		for (let numFirstWords = Math.min(3, sentenceInfo.firstWords.length); numFirstWords > 0; numFirstWords--) {
-			const firstWordsPhrase = sentenceInfo.firstWords.slice(0, numFirstWords).join(' ')
-			const firstPhraseIndex = normalizedTranscript.indexOf(firstWordsPhrase)
-
-			if (firstPhraseIndex !== -1) {
-				sentenceInfo.matchedStartIndex = firstPhraseIndex
-				break
-			}
-		}
-
-		// 尝试匹配最后一个单词组合
-		for (let numLastWords = Math.min(3, sentenceInfo.lastWords.length); numLastWords > 0; numLastWords--) {
-			const lastWordsPhrase = sentenceInfo.lastWords.slice(sentenceInfo.lastWords.length - numLastWords).join(' ')
-			// 从matched start index开始查找
-			const startSearchFrom = sentenceInfo.matchedStartIndex !== -1 ? sentenceInfo.matchedStartIndex : 0
-
-			// 我们期望最后的部分在句子开始之后的合理位置
-			const expectedMinLength = sentenceInfo.normalizedSentence.length * 0.5
-			const expectedMaxLength = sentenceInfo.normalizedSentence.length * 2
-
-			// 搜索在合理范围内的最后一个单词组合
-			let lastPhraseIndex = -1
-			let currentSearchPos = startSearchFrom
-
-			while (true) {
-				const nextOccurrence = normalizedTranscript.indexOf(lastWordsPhrase, currentSearchPos)
-				if (nextOccurrence === -1) break
-
-				// 检查这个位置是否在合理的范围内
-				const distance = nextOccurrence - startSearchFrom
-				if (distance >= expectedMinLength && distance <= expectedMaxLength) {
-					lastPhraseIndex = nextOccurrence
-					break
-				}
-
-				currentSearchPos = nextOccurrence + 1
-				if (currentSearchPos >= normalizedTranscript.length) break
-			}
-
-			if (lastPhraseIndex !== -1) {
-				sentenceInfo.matchedEndIndex = lastPhraseIndex + lastWordsPhrase.length
-				break
-			}
-		}
+		console.timeEnd(`align_sentence_${sentence.slice(0, 20)}`)
 	}
-
-	// 第二阶段：根据边界提取单词并创建句子
-	for (const sentenceInfo of sentenceData) {
-		if (sentenceInfo.processed) continue
-
-		if (sentenceInfo.matchedStartIndex !== -1 && sentenceInfo.matchedEndIndex !== -1) {
-			// 找到对应的单词索引
-			let startWordIdx = -1
-			let endWordIdx = -1
-			let charCount = 0
-
-			for (let i = 0; i < words.length; i++) {
-				const prevCharCount = charCount
-				charCount += words[i].word.length
-
-				if (prevCharCount <= sentenceInfo.matchedStartIndex && charCount > sentenceInfo.matchedStartIndex && startWordIdx === -1) {
-					startWordIdx = i
-				}
-
-				if (startWordIdx !== -1 && charCount >= sentenceInfo.matchedEndIndex) {
-					endWordIdx = i
-					break
-				}
-			}
-
-			if (startWordIdx !== -1 && endWordIdx !== -1) {
-				const sentenceWords = words.slice(startWordIdx, endWordIdx + 1)
-
-				// 计算相似度验证匹配的合理性
-				const extractedText = sentenceWords.map((w) => w.word).join('')
-				const normalizedExtracted = normalizeText(extractedText)
-				const similarity = calculateSimilarity(normalizedExtracted, sentenceInfo.normalizedSentence)
-
-				// 相似度阈值降低到0.5，因为我们已经使用了开始和结尾锚点
-				if (similarity > 0.4) {
-					result.push({
-						words: sentenceWords,
-						text: sentenceInfo.sentence,
-						start: sentenceWords[0].start,
-						end: sentenceWords[sentenceWords.length - 1].end,
-					})
-					sentenceInfo.processed = true
-				}
-			}
-		}
+	// 最后输出未分配words和未对齐句子
+	const unusedWords = mergedWords
+		.filter((_, idx) => !used[idx])
+		.map((w) => w.word)
+		.join(' ')
+	if (unusedWords.length > 0) {
+		// eslint-disable-next-line no-console
+		console.warn('[alignWordsAndSentences][滑窗LCS] 未分配words:', unusedWords)
 	}
-
-	// 第三阶段：使用更宽松的方法尝试匹配剩余的句子
-	const unprocessedSentences = sentenceData.filter((info) => !info.processed)
-
-	if (unprocessedSentences.length > 0) {
-		// 对于剩余的句子，尝试使用更模糊的匹配
-		// 按句子的起始位置排序结果，以确定空白区域
-		result.sort((a, b) => a.start - b.start)
-
-		// 找出转录文本中的空白区域
-		const coveredRanges: { start: number; end: number }[] = result.map((item) => ({
-			start: item.start,
-			end: item.end,
-		}))
-
-		// 合并重叠的区间
-		coveredRanges.sort((a, b) => a.start - b.start)
-		const mergedRanges: { start: number; end: number }[] = []
-
-		for (const range of coveredRanges) {
-			if (mergedRanges.length === 0) {
-				mergedRanges.push(range)
-				continue
-			}
-
-			const lastRange = mergedRanges[mergedRanges.length - 1]
-			if (range.start <= lastRange.end) {
-				// 重叠区间，合并
-				lastRange.end = Math.max(lastRange.end, range.end)
-			} else {
-				// 新区间
-				mergedRanges.push(range)
-			}
-		}
-
-		// 找出空白区域
-		const gaps: { start: number; end: number }[] = []
-		let lastEnd = 0
-
-		for (const range of mergedRanges) {
-			if (range.start > lastEnd) {
-				gaps.push({ start: lastEnd, end: range.start })
-			}
-			lastEnd = range.end
-		}
-
-		// 如果最后一个区间结束后还有单词，添加最后一个空白区域
-		if (lastEnd < words[words.length - 1].end) {
-			gaps.push({ start: lastEnd, end: words[words.length - 1].end })
-		}
-
-		// 对于每个空白区域，尝试将未处理的句子与之匹配
-		for (const gap of gaps) {
-			// 找出这个空白区域内的单词
-			const gapWords = words.filter((word) => word.start >= gap.start && word.end <= gap.end)
-			if (gapWords.length === 0) continue
-
-			// 尝试匹配未处理的句子
-			for (const sentenceInfo of unprocessedSentences) {
-				if (sentenceInfo.processed) continue
-
-				const gapText = gapWords.map((w) => w.word).join('')
-				const normalizedGapText = normalizeText(gapText)
-				const similarity = calculateSimilarity(normalizedGapText, sentenceInfo.normalizedSentence)
-
-				// 使用更低的相似度阈值
-				if (similarity > 0.35) {
-					result.push({
-						words: gapWords,
-						text: sentenceInfo.sentence,
-						start: gapWords[0].start,
-						end: gapWords[gapWords.length - 1].end,
-					})
-					sentenceInfo.processed = true
-					break // 一个空白区域只匹配一个句子
-				}
-			}
-		}
-	}
-
-	// 按照单词的开始时间对结果排序
-	return result.sort((a, b) => a.start - b.start)
+	console.timeEnd('alignWordsAndSentences_total')
+	return results
 }
 
 // 辅助函数：找到最佳匹配位置
@@ -451,11 +486,11 @@ export async function splitTextToSentencesWithAI(sentence: string, model: AiMode
 
 	// Chinese system prompt for splitting text
 	const chineseSystemPrompt = `将输入文本分割成更短的句子，遵循以下规则：
-1. 保持原文内容完整，不增减、修改或翻译任何内容
-2. 严格控制每个分割后的句子长度在20-40个字符之间
+1. 保持原文内容完整，不增减、修改或翻译任何内容，不要添加任何多余内容（如空格、标点、换行、注释、解释等），只返回原文的拆分句子
+2. 严格控制每个分割后的句子长度在30-50个字符之间
 3. 分割优先级：
    - 首先在句号、问号、感叹号等自然句末处分割
-   - 必须在逗号处分割，尤其是当句子超过25个字符时
+   - 必须在逗号处分割，尤其是当句子超过35个字符时
    - 在分号、冒号后分割
    - 在引号结束后分割
    - 然后在连词（如and, but, or, because, about, whether等）处分割
@@ -463,33 +498,33 @@ export async function splitTextToSentencesWithAI(sentence: string, model: AiMode
    - 根据语义单元分割，保证每个句子表达一个完整的语义单元
    - 最后在任何可能的单词边界处分割
 4. 逗号分割规则：
-   - 看到逗号立即考虑分割，特别是当前部分已达到20字符以上
+   - 看到逗号立即考虑分割，特别是当前部分已达到30字符以上
    - 多个逗号连接的句子必须拆分为多个短句
    - 即使会稍微破坏语义完整性，也要在逗号处分割长句
 5. 对于带引语的句子，必须在引语结束处分割
 6. 对于复合句，必须拆分成多个简单句，每个子句作为独立句子
-7. 对于没有明显分割点的长句，根据语义单元在25字符附近的单词边界分割
-8. 对于超过40字符的句子，必须再次分割，不允许例外
+7. 对于没有明显分割点的长句，根据语义单元在35字符附近的单词边界分割
+8. 对于超过50字符的句子，必须再次分割，不允许例外
 9. 确保分割后每个句子保持基本语义连贯性
 10. 返回的所有句子拼接起来必须与原文完全一致
-11. 每次分割前检查剩余文本长度，防止生成过短句子（少于10字符）
+11. 每次分割前检查剩余文本长度，防止生成过短句子（少于15字符）
 
 验证步骤（必须执行）：
 1. 记录原始输入文本的每个字符
-2. 分割后，检查每个句子的字符数，确保都在20-40范围内
-3. 特别检查是否有未在逗号处分割的长句（超过25字符）
+2. 分割后，检查每个句子的字符数，确保都在30-50范围内
+3. 特别检查是否有未在逗号处分割的长句（超过35字符）
 4. 检查每个句子是否表达了一个相对完整的语义单元
 5. 将所有句子拼接并逐字符比对原文，确保100%匹配
-6. 对于任何超过40字符的句子，立即重新分割
-7. 确保最后一个句子不会过短（少于10字符）`
+6. 对于任何超过50字符的句子，立即重新分割
+7. 确保最后一个句子不会过短（少于15字符）`
 
 	// English system prompt for splitting text
 	const englishSystemPrompt = `Split the input text into shorter sentences following these rules:
-1. Keep the original content intact without adding, removing, or translating any content
-2. Strictly control each sentence length to be between 20-40 characters
+1. Keep the original content intact without adding, removing, or translating any content. Do not add any extra content (such as spaces, punctuation, line breaks, comments, or explanations). Only return the split sentences from the original text.
+2. Strictly control each sentence length to be between 30-50 characters
 3. Split priority:
    - First at natural sentence endings (periods, question marks, exclamation points)
-   - Must split at commas, especially when the sentence exceeds 25 characters
+   - Must split at commas, especially when the sentence exceeds 35 characters
    - Split after semicolons and colons
    - Split after the end of quotations
    - Then at conjunctions (like and, but, or, because, about, whether)
@@ -497,25 +532,25 @@ export async function splitTextToSentencesWithAI(sentence: string, model: AiMode
    - Split according to semantic units, ensuring each sentence expresses one complete semantic unit
    - Finally at any possible word boundary
 4. Comma splitting rules:
-   - Consider splitting immediately when encountering a comma, especially if current part is already 20+ characters
+   - Consider splitting immediately when encountering a comma, especially if current part is already 30+ characters
    - Sentences with multiple commas must be split into multiple shorter sentences
    - Split at commas in long sentences even if it slightly disrupts semantic completeness
 5. For sentences with quotations, must split at the end of quotations
 6. For compound sentences, must break them into multiple simple sentences, each sub-clause as an independent sentence
-7. For long sentences without obvious split points, split at word boundaries near 25 characters according to semantic units
-8. For sentences over 40 characters, must split again, no exceptions
+7. For long sentences without obvious split points, split at word boundaries near 35 characters according to semantic units
+8. For sentences over 50 characters, must split again, no exceptions
 9. Ensure basic semantic coherence in each sentence
 10. All sentences concatenated must match the original text exactly
-11. Check remaining text length before each split to prevent generating very short sentences (less than 10 characters)
+11. Check remaining text length before each split to prevent generating very short sentences (less than 15 characters)
 
 Validation steps (must be executed):
 1. Record each character of the original input text
-2. After splitting, check character count of each sentence to ensure they're within 20-40 range
-3. Specifically check for any long sentences (over 25 characters) that weren't split at commas
+2. After splitting, check character count of each sentence to ensure they're within 30-50 range
+3. Specifically check for any long sentences (over 35 characters) that weren't split at commas
 4. Check if each sentence expresses a relatively complete semantic unit
 5. Concatenate all sentences and compare character by character with original, ensure 100% match
-6. For any sentence over 40 characters, split immediately
-7. Ensure the last sentence isn't too short (less than 10 characters)`
+6. For any sentence over 50 characters, split immediately
+7. Ensure the last sentence isn't too short (less than 15 characters)`
 
 	// Select the appropriate system prompt based on content language detection
 	// For simplicity, we're using Chinese prompt for deepseek and English for others

@@ -33,6 +33,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	if (alignmentMethod === 'ai') {
 		sentences = await splitTextToSentencesWithAI(text, model)
+		console.log('🚀 ~ action ~ sentences:', sentences)
 		console.log(`AI split text into ${sentences.length} sentences using model: ${model}`)
 	} else {
 		sentences = splitTextToSentences({ text })
@@ -40,6 +41,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	}
 
 	subtitles = alignWordsAndSentences(withTimeWords, sentences)
+	console.log('🚀 ~ action ~ subtitles:', subtitles)
 
 	await db
 		.update(schema.subtitleTranslations)

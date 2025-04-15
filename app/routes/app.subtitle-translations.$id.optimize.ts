@@ -14,7 +14,7 @@ type OptimizeSentencesOptions = {
 // 优化展示，将长句子分割成多个句子
 // text 为英文字段
 // textInterpretation 为中文字段
-function optimizeSentences({ sentences, englishMaxLength = 70, chineseMaxLength = 35 }: OptimizeSentencesOptions) {
+function optimizeSentences({ sentences, englishMaxLength = 90, chineseMaxLength = 35 }: OptimizeSentencesOptions) {
 	const optimizedSentences: Transcript[] = []
 
 	for (const sentence of sentences) {
