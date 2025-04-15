@@ -5,7 +5,7 @@ import type { z } from 'zod'
 
 const API_BASE_URL = 'https://api.chatanywhere.tech'
 
-const model = 'gpt-4o-mini'
+const model = 'gpt-4.1-mini'
 
 function createChatGPT({ apiKey }: { apiKey: string }) {
 	const openai = createOpenAI({
