@@ -13,10 +13,13 @@ ScriptType: v4.00+
 PlayResX: 1920
 PlayResY: 1080
 ScaledBorderAndShadow: yes
+WrapStyle: 0
+YCbCr Matrix: TV.709
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Microsoft YaHei,60,&HFFFFFF,&HFFFFFF,&H000000,&H40000000,0,0,0,0,100,100,0,0,4,1,0,2,0,0,100,1
+Style: English,Arial,55,&HFFFFFF,&HFFFFFF,&H000000,&H40000000,0,0,0,0,100,100,0,0,1,3,0,2,10,10,150,1
+Style: Chinese,Helvetica,80,&H00FFFF,&H00FFFF,&H000000,&H40000000,0,0,0,0,100,100,0,0,1,3,0,2,10,10,120,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`
@@ -26,10 +29,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`
 		.map((transcript) => {
 			const start = formatASSTime(transcript.start)
 			const end = formatASSTime(transcript.end)
-			const text = transcript.text
-			const translation = transcript.textInterpretation || ''
+			const text = transcript.text.replace(/\\/g, '\\\\').replace(/\{/g, '\\{').replace(/\}/g, '\\}')
+			const translation = transcript.textInterpretation ? transcript.textInterpretation.replace(/\\/g, '\\\\').replace(/\{/g, '\\{').replace(/\}/g, '\\}') : ''
 
-			return `Dialogue: 0,${start},${end},Default,,0,0,0,,{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H40&}${text}\\N${translation}`
+			// Chinese positioned above English, both at the bottom
+			let result = `Dialogue: 0,${start},${end},English,,0,0,0,,${text}`
+			if (translation) {
+				// Chinese subtitles above English, both at the bottom of the screen
+				result = `Dialogue: 0,${start},${end},Chinese,,0,0,0,,${translation}\n${result}`
+			}
+			return result
 		})
 		.join('\n')
 
