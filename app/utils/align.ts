@@ -123,7 +123,6 @@ function mergeShortWords(words: WordWithTime[], minLength = 3): WordWithTime[] {
 }
 
 export function alignWordsAndSentences(words: WordWithTime[], sentences: string[]): Sentence[] {
-	console.time('alignWordsAndSentences_total')
 	if (!words.length || !sentences.length) return []
 
 	// 合并碎片 words
@@ -144,7 +143,6 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 
 	// Levenshtein距离
 	function levenshtein(a: string, b: string): number {
-		console.time('levenshtein')
 		const m = a.length
 		const n = b.length
 		const dp = Array(m + 1)
@@ -157,7 +155,6 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 				dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
 			}
 		}
-		console.timeEnd('levenshtein')
 		return dp[m][n]
 	}
 
@@ -166,7 +163,6 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 
 	// LCS+合并+模糊匹配（窗口内）
 	function lcsAlign(windowWords: string[], sentenceWords: string[]) {
-		console.time('lcsAlign')
 		const m = windowWords.length
 		const n = sentenceWords.length
 		const dp: { score: number; matches: number; path: { wi: number[]; si: number }[] }[][] = Array(m + 1)
@@ -238,13 +234,11 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 		}
 		// F1-like分数
 		const f1Score = bestMatches / Math.max(m, n)
-		console.timeEnd('lcsAlign')
 		return { matchedCount: bestMatches, mapping: bestPath, f1Score }
 	}
 
 	let lastUsedIdx = 0
 	for (const sentence of sentences) {
-		console.time(`align_sentence_${sentence.slice(0, 20)}`)
 		const sentenceWords = splitToWords(sentence)
 		if (sentenceWords.length === 0) continue
 		let bestScore = 0
@@ -270,7 +264,6 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 		}
 		// 边界检查，防止数组越界
 		if (bestStart < 0 || bestLen <= 0 || bestStart + bestLen > mergedWords.length) {
-			console.timeEnd(`align_sentence_${sentence.slice(0, 20)}`)
 			// 兜底策略：用未分配 words 拼成字符串，与句子做 Levenshtein 相似度
 			const unusedWordsArr = mergedWords.filter((_, idx) => !used[idx]).map((w) => w.word)
 			const unusedStr = unusedWordsArr.join(' ').replace(/\s+/g, ' ').trim()
@@ -289,90 +282,65 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 				})
 				// 标记已用
 				for (let i = 0; i < used.length; i++) if (!used[i]) used[i] = true
-				continue
 			}
-			continue
-		}
-		// 阈值降低到 0.5
-		if (bestF1 >= 0.5 && bestStart !== -1 && bestMapping.length > 0) {
-			// 标记已用
-			for (const m of bestMapping) {
-				for (let i = m.wi[0]; i < m.wi[1]; i++) {
-					used[bestStart + i] = true
-				}
-			}
-			// 组装words
-			const alignedWords: WordWithTime[] = []
-			for (const m of bestMapping) {
-				const from = bestStart + m.wi[0]
-				const to = bestStart + m.wi[1] - 1
-				const merged = {
-					word: mergedWords
-						.slice(from, to + 1)
-						.map((w) => w.word)
-						.join(''),
-					start: mergedWords[from].start,
-					end: mergedWords[to].end,
-				}
-				alignedWords.push(merged)
-			}
-			results.push({
-				words: alignedWords,
-				text: sentence,
-				start: alignedWords[0]?.start ?? 0,
-				end: alignedWords[alignedWords.length - 1]?.end ?? 0,
-			})
-			lastUsedIdx = bestStart + bestLen
 		} else {
-			// 匹配失败，输出详细调试信息
-			const unusedWords = mergedWords
-				.filter((_, idx) => !used[idx])
-				.map((w) => w.word)
-				.join(' ')
-			// eslint-disable-next-line no-console
-			console.warn(
-				'[alignWordsAndSentences][滑窗LCS] 未能对齐句子:',
-				sentence,
-				'\n分词:',
-				sentenceWords.join(' '),
-				'\n最佳窗口:',
-				bestStart,
-				'-',
-				bestStart + bestLen,
-				'\n窗口内容:',
-				mergedWords
-					.slice(bestStart, bestStart + bestLen)
-					.map((w) => w.word)
-					.join(' '),
-				'\n最佳分数:',
-				bestF1,
-				'\n最佳匹配映射:',
-				JSON.stringify(bestMapping),
-				'\n未分配words:',
-				unusedWords,
-			)
-			// 兜底策略：用未分配 words 拼成字符串，与句子做 Levenshtein 相似度
-			const unusedWordsArr = mergedWords.filter((_, idx) => !used[idx]).map((w) => w.word)
-			const unusedStr = unusedWordsArr.join(' ').replace(/\s+/g, ' ').trim()
-			const sentenceStr = sentence.replace(/\s+/g, ' ').trim()
-			const sim = calculateSimilarity(unusedStr, sentenceStr)
-			if (sim > 0.7 && unusedWordsArr.length > 0) {
-				results.push({
-					words: mergedWords.filter((_, idx) => !used[idx]),
-					text: sentence,
-					start: mergedWords.find((_, idx) => !used[idx])?.start ?? 0,
-					end:
-						mergedWords
-							.slice()
-							.reverse()
-							.find((_, idx) => !used[mergedWords.length - 1 - idx])?.end ?? 0,
-				})
+			// 阈值降低到 0.5
+			if (bestF1 >= 0.5 && bestStart !== -1 && bestMapping.length > 0) {
 				// 标记已用
-				for (let i = 0; i < used.length; i++) if (!used[i]) used[i] = true
-				continue
+				for (const m of bestMapping) {
+					for (let i = m.wi[0]; i < m.wi[1]; i++) {
+						used[bestStart + i] = true
+					}
+				}
+				// 组装words
+				const alignedWords: WordWithTime[] = []
+				for (const m of bestMapping) {
+					const from = bestStart + m.wi[0]
+					const to = bestStart + m.wi[1] - 1
+					const merged = {
+						word: mergedWords
+							.slice(from, to + 1)
+							.map((w) => w.word)
+							.join(''),
+						start: mergedWords[from].start,
+						end: mergedWords[to].end,
+					}
+					alignedWords.push(merged)
+				}
+				results.push({
+					words: alignedWords,
+					text: sentence,
+					start: alignedWords[0]?.start ?? 0,
+					end: alignedWords[alignedWords.length - 1]?.end ?? 0,
+				})
+				lastUsedIdx = bestStart + bestLen
+			} else {
+				// 匹配失败，输出详细调试信息
+				const unusedWords = mergedWords
+					.filter((_, idx) => !used[idx])
+					.map((w) => w.word)
+					.join(' ')
+				// 兜底策略：用未分配 words 拼成字符串，与句子做 Levenshtein 相似度
+				const unusedWordsArr = mergedWords.filter((_, idx) => !used[idx]).map((w) => w.word)
+				const unusedStr = unusedWordsArr.join(' ').replace(/\s+/g, ' ').trim()
+				const sentenceStr = sentence.replace(/\s+/g, ' ').trim()
+				const sim = calculateSimilarity(unusedStr, sentenceStr)
+				if (sim > 0.7 && unusedWordsArr.length > 0) {
+					results.push({
+						words: mergedWords.filter((_, idx) => !used[idx]),
+						text: sentence,
+						start: mergedWords.find((_, idx) => !used[idx])?.start ?? 0,
+						end:
+							mergedWords
+								.slice()
+								.reverse()
+								.find((_, idx) => !used[mergedWords.length - 1 - idx])?.end ?? 0,
+					})
+					// 标记已用
+					for (let i = 0; i < used.length; i++) if (!used[i]) used[i] = true
+				}
 			}
 		}
-		console.timeEnd(`align_sentence_${sentence.slice(0, 20)}`)
 	}
 	// 最后输出未分配words和未对齐句子
 	const unusedWords = mergedWords
@@ -380,10 +348,7 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 		.map((w) => w.word)
 		.join(' ')
 	if (unusedWords.length > 0) {
-		// eslint-disable-next-line no-console
-		console.warn('[alignWordsAndSentences][滑窗LCS] 未分配words:', unusedWords)
 	}
-	console.timeEnd('alignWordsAndSentences_total')
 	return results
 }
 
