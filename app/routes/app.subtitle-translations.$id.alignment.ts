@@ -4,13 +4,16 @@ import invariant from 'tiny-invariant'
 import { db, schema } from '~/lib/drizzle'
 import type { Sentence } from '~/types'
 import type { AiModel } from '~/utils/ai'
-import { alignWordsAndSentencesByAI, splitTextToSentences, splitTextToSentencesWithAI } from '~/utils/align'
+import { alignWordsAndSentences, alignWordsAndSentencesByAI, splitTextToSentences, splitTextToSentencesWithAI } from '~/utils/align'
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { id } = params
 	invariant(id, 'id is required')
 
 	const formData = await request.formData()
+	const splitSentencesMethod = formData.get('splitSentencesMethod')
+	invariant(splitSentencesMethod === 'ai' || splitSentencesMethod === 'code', 'Invalid alignment method')
+
 	const alignmentMethod = formData.get('alignmentMethod')
 	invariant(alignmentMethod === 'ai' || alignmentMethod === 'code', 'Invalid alignment method')
 
@@ -31,7 +34,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		return acc + item.word
 	}, '')
 
-	if (alignmentMethod === 'ai') {
+	if (splitSentencesMethod === 'ai') {
 		sentences = await splitTextToSentencesWithAI(text, model)
 		console.log('🚀 ~ action ~ sentences:', sentences)
 		console.log(`AI split text into ${sentences.length} sentences using model: ${model}`)
@@ -40,7 +43,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		console.log(`Code split text into ${sentences.length} sentences`)
 	}
 
-	subtitles = await alignWordsAndSentencesByAI(withTimeWords, sentences)
+	if (alignmentMethod === 'ai') {
+		subtitles = await alignWordsAndSentencesByAI(withTimeWords, sentences)
+		console.log(`AI aligned ${subtitles.length} sentences`)
+	} else {
+		subtitles = alignWordsAndSentences(withTimeWords, sentences)
+		console.log(`Code aligned ${subtitles.length} sentences`)
+	}
 
 	await db
 		.update(schema.subtitleTranslations)
