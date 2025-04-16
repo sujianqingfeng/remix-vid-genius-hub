@@ -4,7 +4,7 @@ import path from 'node:path'
 import type { ActionFunctionArgs } from '@remix-run/node'
 import { eq } from 'drizzle-orm'
 import invariant from 'tiny-invariant'
-import { TRANSLATE_VIDEO_COMBINED_SRT_FILE } from '~/constants'
+import { TRANSLATE_VIDEO_COMBINED_ASS_FILE } from '~/constants'
 import { db, schema } from '~/lib/drizzle'
 import { generateFFmpegCommand, generateMuteSegmentsFilter } from '~/utils/ffmpeg'
 import { createOperationDir } from '~/utils/file'
@@ -35,12 +35,12 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 	const operationDir = await createOperationDir(id)
 	const outputPath = path.join(operationDir, `${id}-output.mp4`)
 
-	// 生成合并的 SRT 字幕文件
+	// 生成合并的 ASS 字幕文件
 	const combined = generateASS(transcripts ?? [])
-	const combinedSrtFile = path.join(operationDir, TRANSLATE_VIDEO_COMBINED_SRT_FILE)
-	await fsp.writeFile(combinedSrtFile, combined)
+	const combinedASSFile = path.join(operationDir, TRANSLATE_VIDEO_COMBINED_ASS_FILE)
+	await fsp.writeFile(combinedASSFile, combined)
 
-	const escapedCombinedSrtPath = combinedSrtFile.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/'/g, "'\\\\''")
+	const escapedCombinedSrtPath = combinedASSFile.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/'/g, "'\\\\''")
 
 	// Generate mute segments filter for excluded transcripts
 	const excludedTranscripts = transcripts?.filter((t) => t.excluded) ?? []
