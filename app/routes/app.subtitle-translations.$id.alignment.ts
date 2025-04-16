@@ -4,7 +4,7 @@ import invariant from 'tiny-invariant'
 import { db, schema } from '~/lib/drizzle'
 import type { Sentence } from '~/types'
 import type { AiModel } from '~/utils/ai'
-import { alignWordsAndSentences, splitTextToSentences, splitTextToSentencesWithAI } from '~/utils/align'
+import { alignWordsAndSentencesByAI, splitTextToSentences, splitTextToSentencesWithAI } from '~/utils/align'
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { id } = params
@@ -40,8 +40,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		console.log(`Code split text into ${sentences.length} sentences`)
 	}
 
-	subtitles = alignWordsAndSentences(withTimeWords, sentences)
-	console.log('🚀 ~ action ~ subtitles:', subtitles)
+	subtitles = await alignWordsAndSentencesByAI(withTimeWords, sentences)
 
 	await db
 		.update(schema.subtitleTranslations)

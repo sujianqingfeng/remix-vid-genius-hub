@@ -352,50 +352,6 @@ export function alignWordsAndSentences(words: WordWithTime[], sentences: string[
 	return results
 }
 
-// 辅助函数：找到最佳匹配位置
-function findBestMatch(needle: string, haystack: string): number {
-	// 直接匹配
-	const directIndex = haystack.indexOf(needle)
-	if (directIndex !== -1) {
-		return directIndex
-	}
-
-	// 尝试模糊匹配
-	// 1. 移除所有标点符号后匹配
-	const cleanNeedle = needle.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
-	const cleanHaystack = haystack.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
-	const cleanIndex = cleanHaystack.indexOf(cleanNeedle)
-	if (cleanIndex !== -1) {
-		// 找到对应的原始索引
-		let originalIndex = 0
-		let cleanCounter = 0
-		while (cleanCounter < cleanIndex && originalIndex < haystack.length) {
-			if (!/[.,\/#!$%\^&\*;:{}=\-_`~()]/.test(haystack[originalIndex])) {
-				cleanCounter++
-			}
-			originalIndex++
-		}
-		return originalIndex
-	}
-
-	// 2. 尝试匹配前几个单词
-	const needleWords = needle.split(/\s+/)
-	if (needleWords.length > 2) {
-		// 匹配前3个单词，如果不行，尝试前2个
-		const firstFewWords = needleWords.slice(0, 3).join(' ')
-		const firstFewWordsIndex = haystack.indexOf(firstFewWords)
-		if (firstFewWordsIndex !== -1) {
-			return firstFewWordsIndex
-		}
-
-		// 尝试前2个单词
-		const first2Words = needleWords.slice(0, 2).join(' ')
-		return haystack.indexOf(first2Words)
-	}
-
-	return -1
-}
-
 // 计算两个字符串的相似度 (0-1)
 function calculateSimilarity(str1: string, str2: string): number {
 	if (!str1 || !str2) return 0
@@ -563,4 +519,63 @@ Validation steps (must be executed):
 	}
 
 	return result.sentences
+}
+
+/**
+ * 使用 Gemini AI 对齐 words 和 sentences，返回 Sentence[]
+ * @param words WordWithTime[]
+ * @param sentences string[]
+ * @returns Promise<Sentence[]>
+ */
+export async function alignWordsAndSentencesByAI(words: WordWithTime[], sentences: string[]): Promise<Sentence[]> {
+	if (!words.length || !sentences.length) return []
+
+	// 只传递 word 字符串，减少 token
+	const wordList = words.map((w) => w.word)
+
+	// 构造 prompt，要求 AI 返回 {"indices": ...} 结构，并严格约束输出格式
+	const systemPrompt =
+		'You are an alignment assistant. Given a list of words and a list of sentences (the sentences are split from the concatenation of all words), align the words to the sentences. For each sentence, return an array of the indices (0-based) of the words that belong to it. Only return a JSON object with an "indices" key, e.g. {"indices": [[0,1,2],[3,4,5]]}. Do not return any explanation, markdown, code block, or extra text. The output must be strictly valid JSON.'
+
+	// 组装输入
+	const prompt = `words: ${JSON.stringify(wordList)}\nsentences: ${JSON.stringify(sentences)}`
+
+	// 请求 AI，使用 generateText
+	const textResult = await gemini.generateText({
+		system: systemPrompt,
+		prompt,
+	})
+
+	// 解析 AI 返回的 JSON，自动去除 markdown 代码块包裹
+	let result: { indices: number[][] }
+	let jsonText = textResult.trim()
+	if (jsonText.startsWith('```json')) {
+		jsonText = jsonText
+			.replace(/^```json/, '')
+			.replace(/```$/, '')
+			.trim()
+	} else if (jsonText.startsWith('```')) {
+		jsonText = jsonText.replace(/^```/, '').replace(/```$/, '').trim()
+	}
+	try {
+		result = JSON.parse(jsonText)
+	} catch (e) {
+		throw new Error(`Failed to parse Gemini response as JSON: ${jsonText}`)
+	}
+
+	// 组装 Sentence[]
+	const output: Sentence[] = []
+	for (let i = 0; i < sentences.length; i++) {
+		const idxArr = result.indices[i] || []
+		if (idxArr.length === 0) continue
+		const sentenceWords = idxArr.map((idx) => words[idx]).filter(Boolean)
+		if (sentenceWords.length === 0) continue
+		output.push({
+			words: sentenceWords,
+			text: sentences[i],
+			start: sentenceWords[0].start,
+			end: sentenceWords[sentenceWords.length - 1].end,
+		})
+	}
+	return output
 }
