@@ -77,10 +77,15 @@ describe('alignWordsAndSentencesByAI', () => {
 		expect(result).toMatchInlineSnapshot(`
 			[
 			  {
-			    "end": 4.08,
-			    "start": 0.14,
+			    "end": 3.6,
+			    "start": 0,
 			    "text": "In a rare move, Chinese authorities have gestured zero tolerance",
 			    "words": [
+			      {
+			        "end": 0.14,
+			        "start": 0,
+			        "word": "",
+			      },
 			      {
 			        "end": 0.15,
 			        "start": 0.14,
@@ -141,18 +146,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 3.04,
 			        "word": " tolerance",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 7,
+			    "start": 3.6,
+			    "text": "concerning cyberattacks by offering rewards to the public",
+			    "words": [
 			      {
 			        "end": 4.08,
 			        "start": 3.6,
 			        "word": " concerning",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 7.16,
-			    "start": 4.08,
-			    "text": "concerning cyberattacks by offering rewards to the public",
-			    "words": [
 			      {
 			        "end": 4.48,
 			        "start": 4.08,
@@ -198,18 +203,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 6.59,
 			        "word": " public",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 9.7,
+			    "start": 7,
+			    "text": "for information that could lead to the arrest of a group",
+			    "words": [
 			      {
 			        "end": 7.16,
 			        "start": 7,
 			        "word": " for",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 12.64,
-			    "start": 7.16,
-			    "text": "for information that could lead to the arrest of a group",
-			    "words": [
 			      {
 			        "end": 7.92,
 			        "start": 7.16,
@@ -256,22 +261,17 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "word": " a",
 			      },
 			      {
-			        "end": 12.64,
-			        "start": 12.15,
-			        "word": " China",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 24.36,
-			    "start": 9.43,
-			    "text": "of U.S. government hackers targeting China.",
-			    "words": [
-			      {
 			        "end": 9.7,
 			        "start": 9.43,
 			        "word": " group",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 12.64,
+			    "start": 9.7,
+			    "text": "of U.S. government hackers targeting China.",
+			    "words": [
 			      {
 			        "end": 9.83,
 			        "start": 9.7,
@@ -314,9 +314,21 @@ describe('alignWordsAndSentencesByAI', () => {
 			      },
 			      {
 			        "end": 12.64,
+			        "start": 12.15,
+			        "word": " China",
+			      },
+			      {
+			        "end": 12.64,
 			        "start": 12.64,
 			        "word": ".",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 16.45,
+			    "start": 12.64,
+			    "text": "The Public Security Bureau Harbin in northeast China's Heilongjiang province",
+			    "words": [
 			      {
 			        "end": 12.8,
 			        "start": 12.64,
@@ -387,6 +399,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 15.92,
 			        "word": " province",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 21.41,
+			    "start": 16.45,
+			    "text": "disclosed that Katherine Wilson, Robert Snelling, and Stephen Johnson",
+			    "words": [
 			      {
 			        "end": 16.78,
 			        "start": 16.45,
@@ -452,6 +471,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 20.65,
 			        "word": " Johnson",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 24.15,
+			    "start": 21.41,
+			    "text": "were part of mass cyberattacks, skimmed by an office",
+			    "words": [
 			      {
 			        "end": 21.48,
 			        "start": 21.41,
@@ -522,18 +548,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 23.71,
 			        "word": " office",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 27.97,
+			    "start": 24.15,
+			    "text": "with U.S. National Security Agency, notoriously known as TAO,",
+			    "words": [
 			      {
 			        "end": 24.36,
 			        "start": 24.15,
 			        "word": " with",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 27.82,
-			    "start": 24.36,
-			    "text": "with U.S. National Security Agency, notoriously known as TAO,",
-			    "words": [
 			      {
 			        "end": 24.4,
 			        "start": 24.36,
@@ -604,13 +630,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 27.62,
 			        "word": " TA",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 30.15,
-			    "start": 27.82,
-			    "text": "short for Office of Tailored Access Operation.",
-			    "words": [
 			      {
 			        "end": 27.83,
 			        "start": 27.82,
@@ -621,6 +640,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 27.83,
 			        "word": ",",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 31.12,
+			    "start": 27.97,
+			    "text": "short for Office of Tailored Access Operation.",
+			    "words": [
 			      {
 			        "end": 28.33,
 			        "start": 27.97,
@@ -656,13 +682,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 29.78,
 			        "word": " Access",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 35.54,
-			    "start": 30.15,
-			    "text": "China also detected the mastermind behind a 2022 cyberattack",
-			    "words": [
 			      {
 			        "end": 30.76,
 			        "start": 30.15,
@@ -673,6 +692,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 30.76,
 			        "word": ".",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 35.54,
+			    "start": 31.12,
+			    "text": "China also detected the mastermind behind a 2022 cyberattack",
+			    "words": [
 			      {
 			        "end": 31.48,
 			        "start": 31.12,
@@ -719,6 +745,11 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "word": " 2022",
 			      },
 			      {
+			        "end": 34.97,
+			        "start": 34.61,
+			        "word": " cyber",
+			      },
+			      {
 			        "end": 35.54,
 			        "start": 34.97,
 			        "word": "attack",
@@ -727,14 +758,9 @@ describe('alignWordsAndSentencesByAI', () => {
 			  },
 			  {
 			    "end": 39.62,
-			    "start": 34.61,
+			    "start": 35.54,
 			    "text": "against a leading Chinese aviation university was TAO.",
 			    "words": [
-			      {
-			        "end": 34.97,
-			        "start": 34.61,
-			        "word": " cyber",
-			      },
 			      {
 			        "end": 35.86,
 			        "start": 35.54,
@@ -845,7 +871,7 @@ describe('alignWordsAndSentencesByAI', () => {
 			    ],
 			  },
 			  {
-			    "end": 45.43,
+			    "end": 45.66,
 			    "start": 42.4,
 			    "text": "the investigation found they repeatedly carried out cyberattacks",
 			    "words": [
@@ -894,18 +920,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 45.26,
 			        "word": "att",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 50.17,
-			    "start": 45.43,
-			    "text": "on China's critical information infrastructure and enterprises,",
-			    "words": [
 			      {
 			        "end": 45.66,
 			        "start": 45.43,
 			        "word": "acks",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 49.59,
+			    "start": 45.66,
+			    "text": "on China's critical information infrastructure and enterprises,",
+			    "words": [
 			      {
 			        "end": 45.77,
 			        "start": 45.66,
@@ -951,18 +977,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 49.46,
 			        "word": ",",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 51.43,
+			    "start": 49.59,
+			    "text": "including tech giant Huawei.",
+			    "words": [
 			      {
 			        "end": 50.17,
 			        "start": 49.59,
 			        "word": " including",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 51.43,
-			    "start": 50.17,
-			    "text": "including tech giant Huawei.",
-			    "words": [
 			      {
 			        "end": 50.43,
 			        "start": 50.17,
@@ -986,7 +1012,7 @@ describe('alignWordsAndSentencesByAI', () => {
 			    ],
 			  },
 			  {
-			    "end": 55.39,
+			    "end": 55.76,
 			    "start": 51.43,
 			    "text": "And the latest was Harbin's Asian Winter Games this February.",
 			    "words": [
@@ -1055,18 +1081,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 54.46,
 			        "word": " February",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 60.88,
-			    "start": 55.39,
-			    "text": "During the Asian Winter Games, the NSA purchased IP addresses",
-			    "words": [
 			      {
 			        "end": 55.76,
 			        "start": 55.39,
 			        "word": ".",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 59.84,
+			    "start": 55.76,
+			    "text": "During the Asian Winter Games, the NSA purchased IP addresses",
+			    "words": [
 			      {
 			        "end": 56.16,
 			        "start": 55.76,
@@ -1093,10 +1119,42 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "word": " Games",
 			      },
 			      {
+			        "end": 57.6,
+			        "start": 57.44,
+			        "word": ",",
+			      },
+			      {
+			        "end": 57.96,
+			        "start": 57.6,
+			        "word": " the",
+			      },
+			      {
+			        "end": 58.32,
+			        "start": 57.96,
+			        "word": " NSA",
+			      },
+			      {
+			        "end": 58.8,
+			        "start": 58.32,
+			        "word": " purchased",
+			      },
+			      {
+			        "end": 59.2,
+			        "start": 58.8,
+			        "word": " IP",
+			      },
+			      {
 			        "end": 59.84,
 			        "start": 59.2,
 			        "word": " addresses",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 63.12,
+			    "start": 59.84,
+			    "text": "in different countries and anonymously rented a large number",
+			    "words": [
 			      {
 			        "end": 59.92,
 			        "start": 59.84,
@@ -1112,13 +1170,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 60.32,
 			        "word": " countries",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 63.26,
-			    "start": 60.88,
-			    "text": "in different countries and anonymously rented a large number",
-			    "words": [
 			      {
 			        "end": 61.09,
 			        "start": 60.88,
@@ -1154,18 +1205,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 62.7,
 			        "word": " number",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 66.8,
+			    "start": 63.12,
+			    "text": "of network servers located in Europe, Asia and other countries",
+			    "words": [
 			      {
 			        "end": 63.26,
 			        "start": 63.12,
 			        "word": " of",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 66.8,
-			    "start": 63.26,
-			    "text": "of network servers located in Europe, Asia and other countries",
-			    "words": [
 			      {
 			        "end": 63.75,
 			        "start": 63.26,
@@ -1219,7 +1270,7 @@ describe('alignWordsAndSentencesByAI', () => {
 			    ],
 			  },
 			  {
-			    "end": 68.88,
+			    "end": 70.06,
 			    "start": 66.8,
 			    "text": "and regions to carry out attacks on relevant systems,",
 			    "words": [
@@ -1258,13 +1309,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 68.71,
 			        "word": " on",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 83.42,
-			    "start": 68.88,
-			    "text": "critical information infrastructure and specific departments.",
-			    "words": [
 			      {
 			        "end": 69.42,
 			        "start": 68.88,
@@ -1280,6 +1324,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 69.92,
 			        "word": ",",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 74.27,
+			    "start": 70.06,
+			    "text": "critical information infrastructure and specific departments.",
+			    "words": [
 			      {
 			        "end": 70.63,
 			        "start": 70.06,
@@ -1301,9 +1352,113 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "word": " and",
 			      },
 			      {
+			        "end": 73.12,
+			        "start": 72.64,
+			        "word": " specific",
+			      },
+			      {
+			        "end": 73.95,
+			        "start": 73.12,
+			        "word": " departments",
+			      },
+			      {
+			        "end": 74.27,
+			        "start": 73.95,
+			        "word": ".",
+			      },
+			    ],
+			  },
+			  {
+			    "end": 78.42,
+			    "start": 74.27,
+			    "text": "This time, we've also found the NSA has conducted zero-day attacks",
+			    "words": [
+			      {
+			        "end": 74.5,
+			        "start": 74.27,
+			        "word": " This",
+			      },
+			      {
+			        "end": 74.77,
+			        "start": 74.5,
+			        "word": " time",
+			      },
+			      {
+			        "end": 74.92,
+			        "start": 74.77,
+			        "word": ",",
+			      },
+			      {
+			        "end": 75.17,
+			        "start": 74.92,
+			        "word": " we",
+			      },
+			      {
+			        "end": 75.29,
+			        "start": 75.17,
+			        "word": "'ve",
+			      },
+			      {
+			        "end": 75.59,
+			        "start": 75.29,
+			        "word": " also",
+			      },
+			      {
+			        "end": 75.97,
+			        "start": 75.59,
+			        "word": " found",
+			      },
+			      {
 			        "end": 76.18,
 			        "start": 75.97,
 			        "word": " the",
+			      },
+			      {
+			        "end": 76.4,
+			        "start": 76.18,
+			        "word": " NSA",
+			      },
+			      {
+			        "end": 76.61,
+			        "start": 76.4,
+			        "word": " has",
+			      },
+			      {
+			        "end": 77.3,
+			        "start": 76.61,
+			        "word": " conducted",
+			      },
+			      {
+			        "end": 77.6,
+			        "start": 77.3,
+			        "word": " zero",
+			      },
+			      {
+			        "end": 77.67,
+			        "start": 77.6,
+			        "word": "-",
+			      },
+			      {
+			        "end": 77.89,
+			        "start": 77.67,
+			        "word": "day",
+			      },
+			      {
+			        "end": 78.42,
+			        "start": 77.89,
+			        "word": " attacks",
+			      },
+			    ],
+			  },
+			  {
+			    "end": 81.43,
+			    "start": 78.42,
+			    "text": "through which specific trojans can be implanted",
+			    "words": [
+			      {
+			        "end": 79.04,
+			        "start": 78.42,
+			        "word": " through",
 			      },
 			      {
 			        "end": 79.31,
@@ -1355,6 +1510,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 81.05,
 			        "word": "anted",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 86.24,
+			    "start": 81.43,
+			    "text": "after attacking the operating system to carry out a latent burial,",
+			    "words": [
 			      {
 			        "end": 81.81,
 			        "start": 81.43,
@@ -1375,110 +1537,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 82.73,
 			        "word": " operating",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 79.04,
-			    "start": 72.64,
-			    "text": "This time, we've also found the NSA has conducted zero-day attacks",
-			    "words": [
-			      {
-			        "end": 73.12,
-			        "start": 72.64,
-			        "word": " specific",
-			      },
-			      {
-			        "end": 73.95,
-			        "start": 73.12,
-			        "word": " departments",
-			      },
-			      {
-			        "end": 74.27,
-			        "start": 73.95,
-			        "word": ".",
-			      },
-			      {
-			        "end": 74.5,
-			        "start": 74.27,
-			        "word": " This",
-			      },
-			      {
-			        "end": 74.77,
-			        "start": 74.5,
-			        "word": " time",
-			      },
-			      {
-			        "end": 74.92,
-			        "start": 74.77,
-			        "word": ",",
-			      },
-			      {
-			        "end": 75.17,
-			        "start": 74.92,
-			        "word": " we",
-			      },
-			      {
-			        "end": 75.29,
-			        "start": 75.17,
-			        "word": "'ve",
-			      },
-			      {
-			        "end": 75.59,
-			        "start": 75.29,
-			        "word": " also",
-			      },
-			      {
-			        "end": 75.97,
-			        "start": 75.59,
-			        "word": " found",
-			      },
-			      {
-			        "end": 76.4,
-			        "start": 76.18,
-			        "word": " NSA",
-			      },
-			      {
-			        "end": 76.61,
-			        "start": 76.4,
-			        "word": " has",
-			      },
-			      {
-			        "end": 77.3,
-			        "start": 76.61,
-			        "word": " conducted",
-			      },
-			      {
-			        "end": 77.6,
-			        "start": 77.3,
-			        "word": " zero",
-			      },
-			      {
-			        "end": 77.67,
-			        "start": 77.6,
-			        "word": "-",
-			      },
-			      {
-			        "end": 77.89,
-			        "start": 77.67,
-			        "word": "day",
-			      },
-			      {
-			        "end": 78.42,
-			        "start": 77.89,
-			        "word": " attacks",
-			      },
-			      {
-			        "end": 79.04,
-			        "start": 78.42,
-			        "word": " through",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 86.7,
-			    "start": 83.42,
-			    "text": "after attacking the operating system to carry out a latent burial,",
-			    "words": [
 			      {
 			        "end": 83.92,
 			        "start": 83.42,
@@ -1519,18 +1577,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 86.18,
 			        "word": ",",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 89.09,
+			    "start": 86.24,
+			    "text": "similar to a time bomb that can be awakened at any time",
+			    "words": [
 			      {
 			        "end": 86.7,
 			        "start": 86.24,
 			        "word": " similar",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 89.09,
-			    "start": 86.7,
-			    "text": "similar to a time bomb that can be awakened at any time",
-			    "words": [
 			      {
 			        "end": 86.83,
 			        "start": 86.7,
@@ -1626,7 +1684,7 @@ describe('alignWordsAndSentencesByAI', () => {
 			    ],
 			  },
 			  {
-			    "end": 97.52,
+			    "end": 97.36,
 			    "start": 90.88,
 			    "text": "Further findings suggest that the attacks against the Asian Winter Games",
 			    "words": [
@@ -1685,18 +1743,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 97.04,
 			        "word": " Games",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 101.27,
+			    "start": 97.36,
+			    "text": "be traced to University of California and Virginia Tech.",
+			    "words": [
 			      {
 			        "end": 97.52,
 			        "start": 97.36,
 			        "word": " be",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 100.72,
-			    "start": 97.52,
-			    "text": "be traced to University of California and Virginia Tech.",
-			    "words": [
 			      {
 			        "end": 97.84,
 			        "start": 97.52,
@@ -1742,18 +1800,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 100.39,
 			        "word": " Tech",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 108.16,
-			    "start": 100.72,
-			    "text": "Both institutes were founded by the NSA in the realm of cyber warfare,",
-			    "words": [
 			      {
 			        "end": 101.27,
 			        "start": 100.72,
 			        "word": ".",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 105.6,
+			    "start": 101.27,
+			    "text": "Both institutes were founded by the NSA in the realm of cyber warfare,",
+			    "words": [
 			      {
 			        "end": 101.3,
 			        "start": 101.27,
@@ -1829,6 +1887,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 105.43,
 			        "word": ",",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 108.16,
+			    "start": 105.6,
+			    "text": "and this warfare is now in a smarter trend.",
+			    "words": [
 			      {
 			        "end": 105.8,
 			        "start": 105.6,
@@ -1882,9 +1947,9 @@ describe('alignWordsAndSentencesByAI', () => {
 			    ],
 			  },
 			  {
-			    "end": 108.81,
+			    "end": 114.09,
 			    "start": 108.16,
-			    "text": "and this warfare is now in a smarter trend.",
+			    "text": "The U.S. cyberattacks have applied AI technology in their scope.",
 			    "words": [
 			      {
 			        "end": 108.44,
@@ -1901,13 +1966,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 108.58,
 			        "word": ".",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 114.44,
-			    "start": 108.81,
-			    "text": "The U.S. cyberattacks have applied AI technology in their scope.",
-			    "words": [
 			      {
 			        "end": 108.9,
 			        "start": 108.81,
@@ -1973,6 +2031,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 113.63,
 			        "word": ".",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 116.98,
+			    "start": 114.09,
+			    "text": "Not only the games registration information systems,",
+			    "words": [
 			      {
 			        "end": 114.19,
 			        "start": 114.09,
@@ -1983,13 +2048,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 114.19,
 			        "word": " only",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 116.98,
-			    "start": 114.44,
-			    "text": "Not only the games registration information systems,",
-			    "words": [
 			      {
 			        "end": 114.64,
 			        "start": 114.44,
@@ -2090,7 +2148,7 @@ describe('alignWordsAndSentencesByAI', () => {
 			    ],
 			  },
 			  {
-			    "end": 121.38,
+			    "end": 121.68,
 			    "start": 120.77,
 			    "text": "were targeted.",
 			    "words": [
@@ -2104,18 +2162,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 120.95,
 			        "word": " targeted",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 124.37,
-			    "start": 121.38,
-			    "text": "The AI agents can copy a large number of digital hackers",
-			    "words": [
 			      {
 			        "end": 121.68,
 			        "start": 121.38,
 			        "word": ".",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 125.39,
+			    "start": 121.68,
+			    "text": "The AI agents can copy a large number of digital hackers",
+			    "words": [
 			      {
 			        "end": 121.84,
 			        "start": 121.68,
@@ -2166,13 +2224,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 124.23,
 			        "word": " of",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 128.34,
-			    "start": 124.37,
-			    "text": "and design combat plans, generate attack tools",
-			    "words": [
 			      {
 			        "end": 124.88,
 			        "start": 124.37,
@@ -2183,6 +2234,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 124.88,
 			        "word": " hackers",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 128.34,
+			    "start": 125.39,
+			    "text": "and design combat plans, generate attack tools",
+			    "words": [
 			      {
 			        "end": 125.61,
 			        "start": 125.39,
@@ -2209,18 +2267,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "word": ",",
 			      },
 			      {
-			        "end": 128.34,
-			        "start": 127.97,
-			        "word": " tools",
-			      },
-			    ],
-			  },
-			  {
-			    "end": 131.05,
-			    "start": 127.21,
-			    "text": "and implement indiscriminate attacks.",
-			    "words": [
-			      {
 			        "end": 127.55,
 			        "start": 127.21,
 			        "word": " generate",
@@ -2230,6 +2276,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 127.55,
 			        "word": " attack",
 			      },
+			      {
+			        "end": 128.34,
+			        "start": 127.97,
+			        "word": " tools",
+			      },
+			    ],
+			  },
+			  {
+			    "end": 131.05,
+			    "start": 128.34,
+			    "text": "and implement indiscriminate attacks.",
+			    "words": [
 			      {
 			        "end": 128.64,
 			        "start": 128.34,
@@ -2273,7 +2331,7 @@ describe('alignWordsAndSentencesByAI', () => {
 			    ],
 			  },
 			  {
-			    "end": 134.26,
+			    "end": 134.55,
 			    "start": 131.05,
 			    "text": "Digital hackers also react much faster than humans.",
 			    "words": [
@@ -2317,18 +2375,18 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 133.81,
 			        "word": " humans",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 138.88,
-			    "start": 134.26,
-			    "text": "This type of attack is unprecedented and poses a huge challenge",
-			    "words": [
 			      {
 			        "end": 134.55,
 			        "start": 134.26,
 			        "word": ".",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 138.88,
+			    "start": 134.55,
+			    "text": "This type of attack is unprecedented and poses a huge challenge",
+			    "words": [
 			      {
 			        "end": 135.21,
 			        "start": 134.55,
@@ -2387,7 +2445,7 @@ describe('alignWordsAndSentencesByAI', () => {
 			    ],
 			  },
 			  {
-			    "end": 148.52,
+			    "end": 140.24,
 			    "start": 138.88,
 			    "text": "to national security.",
 			    "words": [
@@ -2400,6 +2458,33 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "end": 139.49,
 			        "start": 138.98,
 			        "word": " national",
+			      },
+			      {
+			        "end": 140.04,
+			        "start": 139.49,
+			        "word": " security",
+			      },
+			      {
+			        "end": 140.24,
+			        "start": 140.04,
+			        "word": ".",
+			      },
+			    ],
+			  },
+			  {
+			    "end": 146.47,
+			    "start": 140.24,
+			    "text": "China has expressed serious concerns about cyberattacks it has exposed,",
+			    "words": [
+			      {
+			        "end": 142.23,
+			        "start": 140.24,
+			        "word": " China",
+			      },
+			      {
+			        "end": 143.04,
+			        "start": 142.23,
+			        "word": " has",
 			      },
 			      {
 			        "end": 143.44,
@@ -2456,6 +2541,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 146.33,
 			        "word": ",",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 149.32,
+			    "start": 146.47,
+			    "text": "noting it is one of the main victims of them,",
+			    "words": [
 			      {
 			        "end": 146.91,
 			        "start": 146.47,
@@ -2496,33 +2588,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 148.02,
 			        "word": " victims",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 155.1,
-			    "start": 139.49,
-			    "text": "China has expressed serious concerns about cyberattacks it has exposed,",
-			    "words": [
-			      {
-			        "end": 140.04,
-			        "start": 139.49,
-			        "word": " security",
-			      },
-			      {
-			        "end": 140.24,
-			        "start": 140.04,
-			        "word": ".",
-			      },
-			      {
-			        "end": 142.23,
-			        "start": 140.24,
-			        "word": " China",
-			      },
-			      {
-			        "end": 143.04,
-			        "start": 142.23,
-			        "word": " has",
-			      },
 			      {
 			        "end": 148.66,
 			        "start": 148.52,
@@ -2538,6 +2603,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 148.94,
 			        "word": ",",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 153.36,
+			    "start": 149.32,
+			    "text": "urging specifically the U.S. to adopt a responsible attitude",
+			    "words": [
 			      {
 			        "end": 149.61,
 			        "start": 149.32,
@@ -2603,6 +2675,13 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 152.82,
 			        "word": " attitude",
 			      },
+			    ],
+			  },
+			  {
+			    "end": 155.76,
+			    "start": 153.36,
+			    "text": "and refrain from slaughtering others.",
+			    "words": [
 			      {
 			        "end": 153.56,
 			        "start": 153.36,
@@ -2633,13 +2712,6 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "start": 154.77,
 			        "word": "ering",
 			      },
-			    ],
-			  },
-			  {
-			    "end": 155.76,
-			    "start": 155.1,
-			    "text": "and refrain from slaughtering others.",
-			    "words": [
 			      {
 			        "end": 155.5,
 			        "start": 155.1,
@@ -2653,7 +2725,7 @@ describe('alignWordsAndSentencesByAI', () => {
 			    ],
 			  },
 			  {
-			    "end": 158.23,
+			    "end": 158.24,
 			    "start": 155.76,
 			    "text": "Zhou Yaxing, CGTN, Beijing.",
 			    "words": [
@@ -2706,6 +2778,11 @@ describe('alignWordsAndSentencesByAI', () => {
 			        "end": 158.23,
 			        "start": 157.48,
 			        "word": " Beijing",
+			      },
+			      {
+			        "end": 158.24,
+			        "start": 158.23,
+			        "word": ".",
 			      },
 			    ],
 			  },

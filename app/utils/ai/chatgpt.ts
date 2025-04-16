@@ -3,9 +3,11 @@ import type { Schema } from '@ai-sdk/ui-utils'
 import { generateText as aiGenerateText, generateObject } from 'ai'
 import type { z } from 'zod'
 
-const API_BASE_URL = 'https://api.chatanywhere.tech'
+// const API_BASE_URL = 'https://api.chatanywhere.tech/v1'
+const API_BASE_URL = 'https://api.tu-zi.com/v1'
 
 const model = 'gpt-4.1-mini'
+// const model = 'gpt-4.1'
 
 function createChatGPT({ apiKey }: { apiKey: string }) {
 	const openai = createOpenAI({

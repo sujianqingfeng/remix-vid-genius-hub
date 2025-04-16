@@ -541,7 +541,7 @@ export async function alignWordsAndSentencesByAI(words: WordWithTime[], sentence
 	const prompt = `words: ${JSON.stringify(wordList)}\nsentences: ${JSON.stringify(sentences)}`
 
 	// 请求 AI，使用 generateText
-	const textResult = await gemini.generateText({
+	const textResult = await chatGPT.generateText({
 		system: systemPrompt,
 		prompt,
 	})
@@ -578,4 +578,247 @@ export async function alignWordsAndSentencesByAI(words: WordWithTime[], sentence
 		})
 	}
 	return output
+}
+
+/**
+ * 分批处理 words 和 sentences，避免超出 token 限制
+ * @param words 所有单词
+ * @param sentences 所有句子
+ * @param options 配置选项
+ * @returns 对齐后的句子数组
+ */
+export async function alignWordsAndSentencesByAIBatched(
+	words: WordWithTime[],
+	sentences: string[],
+	options: {
+		batchSize?: number
+		model?: AiModel
+		overlap?: number
+		maxTokensPerBatch?: number
+	} = {},
+): Promise<Sentence[]> {
+	if (!words.length || !sentences.length) return []
+
+	const {
+		batchSize = 50, // 减小默认批处理大小至50
+		overlap = 10, // 批次之间的重叠单词数，提高连续性
+		maxTokensPerBatch = 4000, // 减小每批次最大token数至4000
+	} = options
+
+	// 如果数据量小，直接使用原始函数处理
+	if (words.length <= 30 && sentences.length <= 10) {
+		return alignWordsAndSentencesByAI(words, sentences)
+	}
+
+	// 估算token数量（粗略估算：每个单词算4个token，每个句子算20个token）
+	const estimateTokens = (wordCount: number, sentenceCount: number) => {
+		return wordCount * 4 + sentenceCount * 20 + 300 // 额外300用于系统提示和其他开销
+	}
+
+	// 按句子长度动态调整批次大小
+	const avgWordsPerSentence = words.length / sentences.length
+	let dynamicBatchSize = Math.min(batchSize, 50) // 确保批次大小不超过50
+
+	// 如果句子平均长度过长，进一步减小批次大小
+	if (avgWordsPerSentence > 10) {
+		dynamicBatchSize = Math.min(dynamicBatchSize, Math.floor(maxTokensPerBatch / (avgWordsPerSentence * 5 + 30)))
+	}
+
+	// 结果集
+	const allResults: Sentence[] = []
+
+	// 创建单词批次，基于动态批次大小
+	for (let wordStartIdx = 0; wordStartIdx < words.length; wordStartIdx += dynamicBatchSize - overlap) {
+		const wordEndIdx = Math.min(wordStartIdx + dynamicBatchSize, words.length)
+		const wordBatch = words.slice(wordStartIdx, wordEndIdx)
+
+		// 估算当前批次的单词所属句子范围
+		const sentenceRatio = sentences.length / words.length
+		const estimatedSentenceStartIdx = Math.max(0, Math.floor(wordStartIdx * sentenceRatio) - 1)
+		const estimatedSentenceEndIdx = Math.min(sentences.length, Math.ceil(wordEndIdx * sentenceRatio) + 1)
+
+		// 获取当前批次的句子，但限制句子数量不超过10个
+		let sentenceBatch = sentences.slice(estimatedSentenceStartIdx, estimatedSentenceEndIdx)
+
+		// 如果句子太多，只取最可能匹配的句子
+		if (sentenceBatch.length > 10) {
+			const middleIndex = Math.floor(sentenceBatch.length / 2)
+			const halfLength = 5 // 取中间的10个句子
+			sentenceBatch = sentenceBatch.slice(Math.max(0, middleIndex - halfLength), Math.min(sentenceBatch.length, middleIndex + halfLength))
+		}
+
+		// 检查当前批次的token估算
+		const estimatedTokens = estimateTokens(wordBatch.length, sentenceBatch.length)
+
+		// 如果估算的token还是超出限制，进一步减小单词批次
+		if (estimatedTokens > maxTokensPerBatch) {
+			// 递归处理较小的子批次
+			const subBatchSize = Math.floor(wordBatch.length / 2)
+
+			// 处理第一部分
+			const firstHalfWords = wordBatch.slice(0, subBatchSize)
+			try {
+				const firstHalfResults = await processBatch(firstHalfWords, sentenceBatch, wordStartIdx, estimatedSentenceStartIdx)
+				allResults.push(...firstHalfResults)
+			} catch (error) {
+				console.error(`Error processing first half batch: ${error}`)
+				// 继续处理，不中断整个过程
+			}
+
+			// 处理第二部分
+			const secondHalfWords = wordBatch.slice(subBatchSize)
+			try {
+				const secondHalfResults = await processBatch(secondHalfWords, sentenceBatch, wordStartIdx + subBatchSize, estimatedSentenceStartIdx)
+				allResults.push(...secondHalfResults)
+			} catch (error) {
+				console.error(`Error processing second half batch: ${error}`)
+				// 继续处理，不中断整个过程
+			}
+		} else {
+			// 直接处理批次，带错误处理
+			try {
+				const batchResults = await processBatch(wordBatch, sentenceBatch, wordStartIdx, estimatedSentenceStartIdx)
+				allResults.push(...batchResults)
+			} catch (error) {
+				console.error(`Error processing batch: ${error}`)
+
+				// 失败时尝试减半处理
+				if (wordBatch.length > 10) {
+					const halfSize = Math.floor(wordBatch.length / 2)
+
+					try {
+						// 处理前半部分
+						const firstHalfWords = wordBatch.slice(0, halfSize)
+						const firstHalfResults = await processBatch(firstHalfWords, sentenceBatch, wordStartIdx, estimatedSentenceStartIdx)
+						allResults.push(...firstHalfResults)
+
+						// 处理后半部分
+						const secondHalfWords = wordBatch.slice(halfSize)
+						const secondHalfResults = await processBatch(secondHalfWords, sentenceBatch, wordStartIdx + halfSize, estimatedSentenceStartIdx)
+						allResults.push(...secondHalfResults)
+					} catch (retryError) {
+						console.error(`Error in retry processing: ${retryError}`)
+						// 失败了就继续，不中断整个过程
+					}
+				}
+			}
+		}
+	}
+
+	// 处理单批次的辅助函数
+	async function processBatch(wordBatch: WordWithTime[], sentenceBatch: string[], wordOffset: number, sentenceOffset: number): Promise<Sentence[]> {
+		if (wordBatch.length === 0 || sentenceBatch.length === 0) {
+			return []
+		}
+
+		// 使用AI对齐当前批次 - 添加重试逻辑
+		let retryCount = 0
+		const maxRetries = 2
+		let batchResults: Sentence[] = []
+
+		while (retryCount <= maxRetries) {
+			try {
+				// 如果是重试，且数据量大，减少处理量
+				if (retryCount > 0 && wordBatch.length > 10) {
+					// 只处理一部分单词
+					const reducedWordBatch = wordBatch.slice(0, Math.floor(wordBatch.length * 0.7))
+					batchResults = await alignWordsAndSentencesByAI(reducedWordBatch, sentenceBatch)
+				} else {
+					batchResults = await alignWordsAndSentencesByAI(wordBatch, sentenceBatch)
+				}
+				break // 成功就跳出循环
+			} catch (error) {
+				retryCount++
+				console.error(`Batch processing failed, retry ${retryCount}/${maxRetries}: ${error}`)
+
+				if (retryCount === maxRetries) {
+					// 最后一次尝试，使用超小批次
+					if (wordBatch.length > 5 && sentenceBatch.length > 1) {
+						const tinyWordBatch = wordBatch.slice(0, 5)
+						const tinySentenceBatch = sentenceBatch.slice(0, 1)
+						try {
+							batchResults = await alignWordsAndSentencesByAI(tinyWordBatch, tinySentenceBatch)
+							break
+						} catch (finalError) {
+							console.error(`Final tiny batch also failed: ${finalError}`)
+							throw finalError
+						}
+					} else {
+						throw error // 重试失败且已经足够小，抛出错误
+					}
+				}
+			}
+		}
+
+		// 处理结果，转换回原始索引
+		return batchResults.map((result) => {
+			// 使用绝对索引查找对应的句子文本
+			const sentenceIndex = sentenceOffset + sentenceBatch.indexOf(result.text)
+			const originalSentence = sentences[sentenceIndex]
+
+			// 创建新的结果对象
+			return {
+				words: result.words,
+				text: originalSentence || result.text, // 使用原始句子，如果找不到则使用批次中的句子
+				start: result.start,
+				end: result.end,
+			}
+		})
+	}
+
+	// 合并结果并按词索引去重
+	// 由于批次处理可能导致同一个单词被分配到多个句子，我们需要去重
+	const wordMap = new Map<string, Sentence>()
+
+	// 基于单词的唯一标识(使用时间戳创建唯一标识)创建映射
+	for (const result of allResults) {
+		for (const word of result.words) {
+			const wordKey = `${word.start}-${word.end}-${word.word}`
+			if (!wordMap.has(wordKey)) {
+				wordMap.set(wordKey, result)
+			}
+		}
+	}
+
+	// 重构句子结果，确保每个句子只包含唯一单词
+	const sentenceMap = new Map<string, WordWithTime[]>()
+
+	for (const [wordKey, sentence] of wordMap.entries()) {
+		// 从wordKey中提取单词信息
+		const [startStr, endStr, ...wordParts] = wordKey.split('-')
+		const word = wordParts.join('-') // 重新组合可能包含"-"的单词
+		const start = Number.parseFloat(startStr)
+		const end = Number.parseFloat(endStr)
+
+		const wordInfo: WordWithTime = { word, start, end }
+
+		if (!sentenceMap.has(sentence.text)) {
+			sentenceMap.set(sentence.text, [])
+		}
+
+		const wordsArray = sentenceMap.get(sentence.text)
+		if (wordsArray) {
+			wordsArray.push(wordInfo)
+		}
+	}
+
+	// 创建最终结果数组
+	const finalResults: Sentence[] = []
+
+	for (const [text, words] of sentenceMap.entries()) {
+		// 按时间排序单词
+		const sortedWords = words.sort((a, b) => a.start - b.start)
+
+		if (sortedWords.length > 0) {
+			finalResults.push({
+				words: sortedWords,
+				text,
+				start: sortedWords[0].start,
+				end: sortedWords[sortedWords.length - 1].end,
+			})
+		}
+	}
+
+	// 按开始时间排序句子
+	return finalResults.sort((a, b) => a.start - b.start)
 }
