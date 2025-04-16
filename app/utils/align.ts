@@ -535,7 +535,7 @@ export async function alignWordsAndSentencesByAI(words: WordWithTime[], sentence
 
 	// 构造 prompt，要求 AI 返回 {"indices": ...} 结构，并严格约束输出格式
 	const systemPrompt =
-		'You are an alignment assistant. Given a list of words and a list of sentences (the sentences are split from the concatenation of all words), align the words to the sentences. For each sentence, return an array of the indices (0-based) of the words that belong to it. Only return a JSON object with an "indices" key, e.g. {"indices": [[0,1,2],[3,4,5]]}. Do not return any explanation, markdown, code block, or extra text. The output must be strictly valid JSON.'
+		'You are a precise alignment assistant. Given a list of words and a list of sentences (the sentences are split from the concatenation of all words, in order), strictly align the words to the sentences as follows:\n\n- For each sentence, return an array of the indices (0-based) of the words that belong to it. If a sentence has no corresponding words, return an empty array for that sentence.\n- Each sentence must be assigned a consecutive (contiguous) segment of words, in order, or an empty array.\n- Each word must belong to exactly one sentence, and all words must be assigned.\n- The number of arrays in "indices" must exactly equal the number of sentences.\n- The union of all indices must cover all word indices from 0 to N-1, with no gaps and no overlaps.\n- Only return a JSON object with an "indices" key, e.g. {"indices": [[0,1,2],[],[3,4,5]]}. Do not return any explanation, markdown, code block, or extra text. The output must be strictly valid JSON.'
 
 	// 组装输入
 	const prompt = `words: ${JSON.stringify(wordList)}\nsentences: ${JSON.stringify(sentences)}`
@@ -592,233 +592,85 @@ export async function alignWordsAndSentencesByAIBatched(
 	sentences: string[],
 	options: {
 		batchSize?: number
-		model?: AiModel
-		overlap?: number
-		maxTokensPerBatch?: number
 	} = {},
 ): Promise<Sentence[]> {
 	if (!words.length || !sentences.length) return []
 
 	const {
-		batchSize = 50, // 减小默认批处理大小至50
-		overlap = 10, // 批次之间的重叠单词数，提高连续性
-		maxTokensPerBatch = 4000, // 减小每批次最大token数至4000
+		batchSize = 10, // 每批句子数
 	} = options
 
-	// 如果数据量小，直接使用原始函数处理
-	if (words.length <= 30 && sentences.length <= 10) {
-		return alignWordsAndSentencesByAI(words, sentences)
-	}
-
-	// 估算token数量（粗略估算：每个单词算4个token，每个句子算20个token）
-	const estimateTokens = (wordCount: number, sentenceCount: number) => {
-		return wordCount * 4 + sentenceCount * 20 + 300 // 额外300用于系统提示和其他开销
-	}
-
-	// 按句子长度动态调整批次大小
-	const avgWordsPerSentence = words.length / sentences.length
-	let dynamicBatchSize = Math.min(batchSize, 50) // 确保批次大小不超过50
-
-	// 如果句子平均长度过长，进一步减小批次大小
-	if (avgWordsPerSentence > 10) {
-		dynamicBatchSize = Math.min(dynamicBatchSize, Math.floor(maxTokensPerBatch / (avgWordsPerSentence * 5 + 30)))
-	}
-
-	// 结果集
-	const allResults: Sentence[] = []
-
-	// 创建单词批次，基于动态批次大小
-	for (let wordStartIdx = 0; wordStartIdx < words.length; wordStartIdx += dynamicBatchSize - overlap) {
-		const wordEndIdx = Math.min(wordStartIdx + dynamicBatchSize, words.length)
-		const wordBatch = words.slice(wordStartIdx, wordEndIdx)
-
-		// 估算当前批次的单词所属句子范围
-		const sentenceRatio = sentences.length / words.length
-		const estimatedSentenceStartIdx = Math.max(0, Math.floor(wordStartIdx * sentenceRatio) - 1)
-		const estimatedSentenceEndIdx = Math.min(sentences.length, Math.ceil(wordEndIdx * sentenceRatio) + 1)
-
-		// 获取当前批次的句子，但限制句子数量不超过10个
-		let sentenceBatch = sentences.slice(estimatedSentenceStartIdx, estimatedSentenceEndIdx)
-
-		// 如果句子太多，只取最可能匹配的句子
-		if (sentenceBatch.length > 10) {
-			const middleIndex = Math.floor(sentenceBatch.length / 2)
-			const halfLength = 5 // 取中间的10个句子
-			sentenceBatch = sentenceBatch.slice(Math.max(0, middleIndex - halfLength), Math.min(sentenceBatch.length, middleIndex + halfLength))
+	// 内部AI对齐函数，固定使用deepSeek
+	async function alignWordsAndSentencesByAI_local(words: WordWithTime[], sentences: string[]): Promise<Sentence[]> {
+		const systemPrompt =
+			'You are a precise alignment assistant. Given a list of words and a list of sentences (the sentences are split from the concatenation of all words, in order), strictly align the words to the sentences as follows:\n\n- For each sentence, return an array of the indices (0-based) of the words that belong to it. If a sentence has no corresponding words, return an empty array for that sentence.\n- Each sentence must be assigned a consecutive (contiguous) segment of words, in order, or an empty array.\n- Each word must belong to exactly one sentence, and all words must be assigned.\n- The number of arrays in "indices" must exactly equal the number of sentences.\n- The union of all indices must cover all word indices from 0 to N-1, with no gaps and no overlaps.\n- Only return a JSON object with an "indices" key, e.g. {"indices": [[0,1,2],[],[3,4,5]]}. Do not return any explanation, markdown, code block, or extra text. The output must be strictly valid JSON.'
+		const wordList = words.map((w) => w.word)
+		const prompt = `words: ${JSON.stringify(wordList)}\nsentences: ${JSON.stringify(sentences)}`
+		const textResult = await r1.generateText({ system: systemPrompt, prompt })
+		let result: { indices: number[][] }
+		let jsonText = textResult.trim()
+		if (jsonText.startsWith('```json')) {
+			jsonText = jsonText
+				.replace(/^```json/, '')
+				.replace(/```$/, '')
+				.trim()
+		} else if (jsonText.startsWith('```')) {
+			jsonText = jsonText.replace(/^```/, '').replace(/```$/, '').trim()
 		}
-
-		// 检查当前批次的token估算
-		const estimatedTokens = estimateTokens(wordBatch.length, sentenceBatch.length)
-
-		// 如果估算的token还是超出限制，进一步减小单词批次
-		if (estimatedTokens > maxTokensPerBatch) {
-			// 递归处理较小的子批次
-			const subBatchSize = Math.floor(wordBatch.length / 2)
-
-			// 处理第一部分
-			const firstHalfWords = wordBatch.slice(0, subBatchSize)
-			try {
-				const firstHalfResults = await processBatch(firstHalfWords, sentenceBatch, wordStartIdx, estimatedSentenceStartIdx)
-				allResults.push(...firstHalfResults)
-			} catch (error) {
-				console.error(`Error processing first half batch: ${error}`)
-				// 继续处理，不中断整个过程
-			}
-
-			// 处理第二部分
-			const secondHalfWords = wordBatch.slice(subBatchSize)
-			try {
-				const secondHalfResults = await processBatch(secondHalfWords, sentenceBatch, wordStartIdx + subBatchSize, estimatedSentenceStartIdx)
-				allResults.push(...secondHalfResults)
-			} catch (error) {
-				console.error(`Error processing second half batch: ${error}`)
-				// 继续处理，不中断整个过程
-			}
-		} else {
-			// 直接处理批次，带错误处理
-			try {
-				const batchResults = await processBatch(wordBatch, sentenceBatch, wordStartIdx, estimatedSentenceStartIdx)
-				allResults.push(...batchResults)
-			} catch (error) {
-				console.error(`Error processing batch: ${error}`)
-
-				// 失败时尝试减半处理
-				if (wordBatch.length > 10) {
-					const halfSize = Math.floor(wordBatch.length / 2)
-
-					try {
-						// 处理前半部分
-						const firstHalfWords = wordBatch.slice(0, halfSize)
-						const firstHalfResults = await processBatch(firstHalfWords, sentenceBatch, wordStartIdx, estimatedSentenceStartIdx)
-						allResults.push(...firstHalfResults)
-
-						// 处理后半部分
-						const secondHalfWords = wordBatch.slice(halfSize)
-						const secondHalfResults = await processBatch(secondHalfWords, sentenceBatch, wordStartIdx + halfSize, estimatedSentenceStartIdx)
-						allResults.push(...secondHalfResults)
-					} catch (retryError) {
-						console.error(`Error in retry processing: ${retryError}`)
-						// 失败了就继续，不中断整个过程
-					}
-				}
-			}
+		try {
+			result = JSON.parse(jsonText)
+		} catch (e) {
+			console.error('Failed to parse AI response:', jsonText)
+			throw new Error(`Failed to parse AI response as JSON: ${jsonText}`)
 		}
-	}
-
-	// 处理单批次的辅助函数
-	async function processBatch(wordBatch: WordWithTime[], sentenceBatch: string[], wordOffset: number, sentenceOffset: number): Promise<Sentence[]> {
-		if (wordBatch.length === 0 || sentenceBatch.length === 0) {
-			return []
-		}
-
-		// 使用AI对齐当前批次 - 添加重试逻辑
-		let retryCount = 0
-		const maxRetries = 2
-		let batchResults: Sentence[] = []
-
-		while (retryCount <= maxRetries) {
-			try {
-				// 如果是重试，且数据量大，减少处理量
-				if (retryCount > 0 && wordBatch.length > 10) {
-					// 只处理一部分单词
-					const reducedWordBatch = wordBatch.slice(0, Math.floor(wordBatch.length * 0.7))
-					batchResults = await alignWordsAndSentencesByAI(reducedWordBatch, sentenceBatch)
-				} else {
-					batchResults = await alignWordsAndSentencesByAI(wordBatch, sentenceBatch)
-				}
-				break // 成功就跳出循环
-			} catch (error) {
-				retryCount++
-				console.error(`Batch processing failed, retry ${retryCount}/${maxRetries}: ${error}`)
-
-				if (retryCount === maxRetries) {
-					// 最后一次尝试，使用超小批次
-					if (wordBatch.length > 5 && sentenceBatch.length > 1) {
-						const tinyWordBatch = wordBatch.slice(0, 5)
-						const tinySentenceBatch = sentenceBatch.slice(0, 1)
-						try {
-							batchResults = await alignWordsAndSentencesByAI(tinyWordBatch, tinySentenceBatch)
-							break
-						} catch (finalError) {
-							console.error(`Final tiny batch also failed: ${finalError}`)
-							throw finalError
-						}
-					} else {
-						throw error // 重试失败且已经足够小，抛出错误
-					}
-				}
-			}
-		}
-
-		// 处理结果，转换回原始索引
-		return batchResults.map((result) => {
-			// 使用绝对索引查找对应的句子文本
-			const sentenceIndex = sentenceOffset + sentenceBatch.indexOf(result.text)
-			const originalSentence = sentences[sentenceIndex]
-
-			// 创建新的结果对象
-			return {
-				words: result.words,
-				text: originalSentence || result.text, // 使用原始句子，如果找不到则使用批次中的句子
-				start: result.start,
-				end: result.end,
-			}
-		})
-	}
-
-	// 合并结果并按词索引去重
-	// 由于批次处理可能导致同一个单词被分配到多个句子，我们需要去重
-	const wordMap = new Map<string, Sentence>()
-
-	// 基于单词的唯一标识(使用时间戳创建唯一标识)创建映射
-	for (const result of allResults) {
-		for (const word of result.words) {
-			const wordKey = `${word.start}-${word.end}-${word.word}`
-			if (!wordMap.has(wordKey)) {
-				wordMap.set(wordKey, result)
-			}
-		}
-	}
-
-	// 重构句子结果，确保每个句子只包含唯一单词
-	const sentenceMap = new Map<string, WordWithTime[]>()
-
-	for (const [wordKey, sentence] of wordMap.entries()) {
-		// 从wordKey中提取单词信息
-		const [startStr, endStr, ...wordParts] = wordKey.split('-')
-		const word = wordParts.join('-') // 重新组合可能包含"-"的单词
-		const start = Number.parseFloat(startStr)
-		const end = Number.parseFloat(endStr)
-
-		const wordInfo: WordWithTime = { word, start, end }
-
-		if (!sentenceMap.has(sentence.text)) {
-			sentenceMap.set(sentence.text, [])
-		}
-
-		const wordsArray = sentenceMap.get(sentence.text)
-		if (wordsArray) {
-			wordsArray.push(wordInfo)
-		}
-	}
-
-	// 创建最终结果数组
-	const finalResults: Sentence[] = []
-
-	for (const [text, words] of sentenceMap.entries()) {
-		// 按时间排序单词
-		const sortedWords = words.sort((a, b) => a.start - b.start)
-
-		if (sortedWords.length > 0) {
-			finalResults.push({
-				words: sortedWords,
-				text,
-				start: sortedWords[0].start,
-				end: sortedWords[sortedWords.length - 1].end,
+		const output: Sentence[] = []
+		for (let i = 0; i < sentences.length; i++) {
+			const idxArr = result.indices[i] || []
+			if (idxArr.length === 0) continue
+			const sentenceWords = idxArr.map((idx) => words[idx]).filter(Boolean)
+			if (sentenceWords.length === 0) continue
+			output.push({
+				words: sentenceWords,
+				text: sentences[i],
+				start: sentenceWords[0].start,
+				end: sentenceWords[sentenceWords.length - 1].end,
 			})
 		}
+		return output
 	}
 
-	// 按开始时间排序句子
-	return finalResults.sort((a, b) => a.start - b.start)
+	// 分批处理（每批传递所有单词）
+	const results: Sentence[] = []
+	for (let i = 0; i < sentences.length; i += batchSize) {
+		const batchSentStart = i
+		const batchSentEnd = Math.min(sentences.length, i + batchSize)
+		const batchSentences = sentences.slice(batchSentStart, batchSentEnd)
+		console.log(`\n[align-batch] Batch sentences [${batchSentStart}, ${batchSentEnd})`)
+		console.log('[align-batch] Sentences:', batchSentences)
+		console.log('[align-batch] Words:', words.map((w) => w.word).join(' '))
+		// 用AI对齐（传递所有单词+当前批次句子）
+		const batchAligned = await alignWordsAndSentencesByAI_local(words, batchSentences)
+		console.log('[align-batch] AI aligned count:', batchAligned.length)
+		for (const s of batchAligned) {
+			const globalWords = s.words.map((w) => {
+				return words.find((orig) => orig.start === w.start && orig.end === w.end && orig.word === w.word) || w
+			})
+			results.push({ ...s, words: globalWords })
+		}
+	}
+
+	// 合并结果，去重（按句子内容和起止时间）
+	const seen = new Set<string>()
+	const merged: Sentence[] = []
+	for (const s of results) {
+		const key = `${s.text}__${s.start}__${s.end}`
+		if (!seen.has(key)) {
+			merged.push(s)
+			seen.add(key)
+		}
+	}
+	// 按时间排序
+	merged.sort((a, b) => a.start - b.start)
+	console.log('\n[align-batch] Final merged sentence count:', merged.length)
+	return merged
 }
