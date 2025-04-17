@@ -1,7 +1,7 @@
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { alignWordsAndSentencesByAI } from '../align'
+import { alignWordsAndSentencesByAI, alignWordsAndSentencesByAIBatched } from '../align'
 
 const getWords = async () => {
 	const currentDir = import.meta.dirname
@@ -73,7 +73,7 @@ const sentences = [
 describe('alignWordsAndSentencesByAI', () => {
 	test('should align all sentences in batch mode', { timeout: 1000 * 60 * 10 }, async () => {
 		const { words } = await getWords()
-		const result = await alignWordsAndSentencesByAI(words, sentences)
+		const result = await alignWordsAndSentencesByAIBatched(words, sentences)
 		expect(result).toMatchInlineSnapshot(`
 			[
 			  {

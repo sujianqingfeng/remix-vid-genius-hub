@@ -535,13 +535,13 @@ export async function alignWordsAndSentencesByAI(words: WordWithTime[], sentence
 
 	// 构造 prompt，要求 AI 返回 {"indices": ...} 结构，并严格约束输出格式
 	const systemPrompt =
-		'You are an alignment assistant. Given a list of words and a list of sentences (the sentences are split from the concatenation of all words), align the words to the sentences. For each sentence, return an array of the indices (0-based) of the words that belong to it. Only return a JSON object with an "indices" key, e.g. {"indices": [[0,1,2],[3,4,5]]}. Do not return any explanation, markdown, code block, or extra text. The output must be strictly valid JSON.'
+		'You are a precise alignment assistant. Given a list of words and a list of sentences (the sentences are split from the concatenation of all words, in order), strictly align the words to the sentences as follows:\n\n- For each sentence, return an array of the indices (0-based) of the words that belong to it. If a sentence has no corresponding words, return an empty array for that sentence.\n- Each sentence must be assigned a consecutive (contiguous) segment of words, in order, or an empty array.\n- Each word must belong to exactly one sentence, and all words must be assigned.\n- The number of arrays in "indices" must exactly equal the number of sentences.\n- The union of all indices must cover all word indices from 0 to N-1, with no gaps and no overlaps.\n- Only return a JSON object with an "indices" key, e.g. {"indices": [[0,1,2],[],[3,4,5]]}. Do not return any explanation, markdown, code block, or extra text. The output must be strictly valid JSON.'
 
 	// 组装输入
 	const prompt = `words: ${JSON.stringify(wordList)}\nsentences: ${JSON.stringify(sentences)}`
 
 	// 请求 AI，使用 generateText
-	const textResult = await gemini.generateText({
+	const textResult = await chatGPT.generateText({
 		system: systemPrompt,
 		prompt,
 	})
@@ -578,4 +578,99 @@ export async function alignWordsAndSentencesByAI(words: WordWithTime[], sentence
 		})
 	}
 	return output
+}
+
+/**
+ * 分批处理 words 和 sentences，避免超出 token 限制
+ * @param words 所有单词
+ * @param sentences 所有句子
+ * @param options 配置选项
+ * @returns 对齐后的句子数组
+ */
+export async function alignWordsAndSentencesByAIBatched(
+	words: WordWithTime[],
+	sentences: string[],
+	options: {
+		batchSize?: number
+	} = {},
+): Promise<Sentence[]> {
+	if (!words.length || !sentences.length) return []
+
+	const {
+		batchSize = 10, // 每批句子数
+	} = options
+
+	// 内部AI对齐函数，固定使用deepSeek
+	async function alignWordsAndSentencesByAI_local(words: WordWithTime[], sentences: string[]): Promise<Sentence[]> {
+		const systemPrompt =
+			'You are a precise alignment assistant. Given a list of words and a list of sentences (the sentences are split from the concatenation of all words, in order), strictly align the words to the sentences as follows:\n\n- For each sentence, return an array of the indices (0-based) of the words that belong to it. If a sentence has no corresponding words, return an empty array for that sentence.\n- Each sentence must be assigned a consecutive (contiguous) segment of words, in order, or an empty array.\n- Each word must belong to exactly one sentence, and all words must be assigned.\n- The number of arrays in "indices" must exactly equal the number of sentences.\n- The union of all indices must cover all word indices from 0 to N-1, with no gaps and no overlaps.\n- Only return a JSON object with an "indices" key, e.g. {"indices": [[0,1,2],[],[3,4,5]]}. Do not return any explanation, markdown, code block, or extra text. The output must be strictly valid JSON.'
+		const wordList = words.map((w) => w.word)
+		const prompt = `words: ${JSON.stringify(wordList)}\nsentences: ${JSON.stringify(sentences)}`
+		const textResult = await r1.generateText({ system: systemPrompt, prompt })
+		let result: { indices: number[][] }
+		let jsonText = textResult.trim()
+		if (jsonText.startsWith('```json')) {
+			jsonText = jsonText
+				.replace(/^```json/, '')
+				.replace(/```$/, '')
+				.trim()
+		} else if (jsonText.startsWith('```')) {
+			jsonText = jsonText.replace(/^```/, '').replace(/```$/, '').trim()
+		}
+		try {
+			result = JSON.parse(jsonText)
+		} catch (e) {
+			console.error('Failed to parse AI response:', jsonText)
+			throw new Error(`Failed to parse AI response as JSON: ${jsonText}`)
+		}
+		const output: Sentence[] = []
+		for (let i = 0; i < sentences.length; i++) {
+			const idxArr = result.indices[i] || []
+			if (idxArr.length === 0) continue
+			const sentenceWords = idxArr.map((idx) => words[idx]).filter(Boolean)
+			if (sentenceWords.length === 0) continue
+			output.push({
+				words: sentenceWords,
+				text: sentences[i],
+				start: sentenceWords[0].start,
+				end: sentenceWords[sentenceWords.length - 1].end,
+			})
+		}
+		return output
+	}
+
+	// 分批处理（每批传递所有单词）
+	const results: Sentence[] = []
+	for (let i = 0; i < sentences.length; i += batchSize) {
+		const batchSentStart = i
+		const batchSentEnd = Math.min(sentences.length, i + batchSize)
+		const batchSentences = sentences.slice(batchSentStart, batchSentEnd)
+		console.log(`\n[align-batch] Batch sentences [${batchSentStart}, ${batchSentEnd})`)
+		console.log('[align-batch] Sentences:', batchSentences)
+		console.log('[align-batch] Words:', words.map((w) => w.word).join(' '))
+		// 用AI对齐（传递所有单词+当前批次句子）
+		const batchAligned = await alignWordsAndSentencesByAI_local(words, batchSentences)
+		console.log('[align-batch] AI aligned count:', batchAligned.length)
+		for (const s of batchAligned) {
+			const globalWords = s.words.map((w) => {
+				return words.find((orig) => orig.start === w.start && orig.end === w.end && orig.word === w.word) || w
+			})
+			results.push({ ...s, words: globalWords })
+		}
+	}
+
+	// 合并结果，去重（按句子内容和起止时间）
+	const seen = new Set<string>()
+	const merged: Sentence[] = []
+	for (const s of results) {
+		const key = `${s.text}__${s.start}__${s.end}`
+		if (!seen.has(key)) {
+			merged.push(s)
+			seen.add(key)
+		}
+	}
+	// 按时间排序
+	merged.sort((a, b) => a.start - b.start)
+	console.log('\n[align-batch] Final merged sentence count:', merged.length)
+	return merged
 }

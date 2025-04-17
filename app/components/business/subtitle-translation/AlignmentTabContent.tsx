@@ -1,5 +1,6 @@
 import { useFetcher } from '@remix-run/react'
 import { AlignLeft, ArrowRight, Text } from 'lucide-react'
+import { useState } from 'react'
 import AiModelSelect from '~/components/AiModelSelect'
 import LoadingButtonWithState from '~/components/LoadingButtonWithState'
 import { Badge } from '~/components/ui/badge'
@@ -18,6 +19,8 @@ interface AlignmentTabContentProps {
 
 export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContentProps) {
 	const alignmentFetcher = useFetcher()
+	const [splitSentencesMethod, setSplitSentencesMethod] = useState<'code' | 'ai'>('ai')
+	const showAiModelSelect = splitSentencesMethod === 'ai'
 
 	// Calculate total word count from sentences
 	const totalWords =
@@ -91,25 +94,42 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 				<alignmentFetcher.Form method="post" action="alignment" className="flex flex-col gap-5">
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
-							<label htmlFor="alignmentMethod" className="block text-sm font-medium mb-2">
-								Select Alignment Method
+							<label htmlFor="splitSentencesMethod" className="block text-sm font-medium mb-2">
+								Select Sentence Split Method
 							</label>
-							<Select name="alignmentMethod" defaultValue="ai">
+							<Select name="splitSentencesMethod" defaultValue="ai" onValueChange={(value) => setSplitSentencesMethod(value as 'code' | 'ai')}>
 								<SelectTrigger>
-									<SelectValue placeholder="Select Alignment Method" />
+									<SelectValue placeholder="Select Sentence Split Method" />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="ai">AI</SelectItem>
 									<SelectItem value="code">Code</SelectItem>
+									<SelectItem value="ai">AI</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
 						<div>
-							<label htmlFor="model" className="block text-sm font-medium mb-2">
-								Select AI Model
+							<label htmlFor="alignmentMethod" className="block text-sm font-medium mb-2">
+								Select Alignment Method
 							</label>
-							<AiModelSelect name="model" defaultValue="deepseek" />
+							<Select name="alignmentMethod" defaultValue="code">
+								<SelectTrigger>
+									<SelectValue placeholder="Select Alignment Method" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="code">Code</SelectItem>
+									<SelectItem value="ai">AI</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
+						{showAiModelSelect && (
+							<div>
+								<label htmlFor="model" className="block text-sm font-medium mb-2">
+									Select AI Model
+								</label>
+								<AiModelSelect name="model" defaultValue="deepseek" />
+								<p className="text-xs text-muted-foreground mt-1">Used when AI methods are selected</p>
+							</div>
+						)}
 					</div>
 
 					<LoadingButtonWithState type="submit" className="mt-2 w-full sm:w-auto" state={alignmentFetcher.state} idleText="Align Text" loadingText="Aligning..." />

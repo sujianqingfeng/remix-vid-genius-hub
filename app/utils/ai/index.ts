@@ -6,7 +6,7 @@ import { createVolcanoEngineDeepseekV3 } from './volcengine'
 
 const chatGPT = createChatGPT({ apiKey: process.env.OPEN_AI_API_KEY || '' })
 const deepSeek = createDeepSeek({ apiKey: process.env.DEEP_SEEK_API_KEY || '' })
-const r1 = createR1({ apiKey: process.env.R1_API_KEY || '' })
+const r1 = createR1({ apiKey: process.env.SILICON_FLOW_API_KEY || '' })
 const volcanoEngineDeepseekV3 = createVolcanoEngineDeepseekV3({ apiKey: process.env.DOU_BAO_API_KEY || '' })
 const gemini = createGemini({ apiKey: process.env.OPEN_AI_API_KEY || '' })
 
