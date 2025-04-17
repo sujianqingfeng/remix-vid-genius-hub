@@ -4,7 +4,7 @@ import invariant from 'tiny-invariant'
 import { db, schema } from '~/lib/drizzle'
 import type { Sentence } from '~/types'
 import type { AiModel } from '~/utils/ai'
-import { alignWordsAndSentences, alignWordsAndSentencesByAI, splitTextToSentences, splitTextToSentencesWithAI } from '~/utils/align'
+import { alignWordsAndSentences, alignWordsAndSentencesByAI, buildAlignWordsAndSentencesPrompt, splitTextToSentences, splitTextToSentencesWithAI } from '~/utils/align'
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { id } = params

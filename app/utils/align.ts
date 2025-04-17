@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { Sentence, WordWithTime } from '~/types'
-import { aiGenerateText, chatGPT, deepSeek, gemini, r1, volcanoEngineDeepseekV3 } from './ai'
+import { chatGPT, deepSeek, gemini, r1, volcanoEngineDeepseekV3 } from './ai'
 import type { AiModel } from './ai'
 
 type SplitTextToSentencesOptions = {
@@ -521,32 +521,17 @@ Validation steps (must be executed):
 	return result.sentences
 }
 
-/**
- * 使用 Gemini AI 对齐 words 和 sentences，返回 Sentence[]
- * @param words WordWithTime[]
- * @param sentences string[]
- * @returns Promise<Sentence[]>
- */
-export async function alignWordsAndSentencesByAI(words: WordWithTime[], sentences: string[]): Promise<Sentence[]> {
-	if (!words.length || !sentences.length) return []
-
-	// 只传递 word 字符串，减少 token
+// 提取：生成对齐提示词
+export function buildAlignWordsAndSentencesPrompt(words: WordWithTime[], sentences: string[]): { systemPrompt: string; prompt: string } {
 	const wordList = words.map((w) => w.word)
-
-	// 构造 prompt，要求 AI 返回 {"indices": ...} 结构，并严格约束输出格式
 	const systemPrompt =
 		'You are a precise alignment assistant. Given a list of words and a list of sentences (the sentences are split from the concatenation of all words, in order), strictly align the words to the sentences as follows:\n\n- For each sentence, return an array of the indices (0-based) of the words that belong to it. If a sentence has no corresponding words, return an empty array for that sentence.\n- Each sentence must be assigned a consecutive (contiguous) segment of words, in order, or an empty array.\n- Each word must belong to exactly one sentence, and all words must be assigned.\n- The number of arrays in "indices" must exactly equal the number of sentences.\n- The union of all indices must cover all word indices from 0 to N-1, with no gaps and no overlaps.\n- Only return a JSON object with an "indices" key, e.g. {"indices": [[0,1,2],[],[3,4,5]]}. Do not return any explanation, markdown, code block, or extra text. The output must be strictly valid JSON.'
-
-	// 组装输入
 	const prompt = `words: ${JSON.stringify(wordList)}\nsentences: ${JSON.stringify(sentences)}`
+	return { systemPrompt, prompt }
+}
 
-	// 请求 AI，使用 generateText
-	const textResult = await chatGPT.generateText({
-		system: systemPrompt,
-		prompt,
-	})
-
-	// 解析 AI 返回的 JSON，自动去除 markdown 代码块包裹
+// 提取：解析 AI 返回的 JSON 结果
+export function parseAlignWordsAndSentencesResult(textResult: string, words: WordWithTime[], sentences: string[]): Sentence[] {
 	let result: { indices: number[][] }
 	let jsonText = textResult.trim()
 	if (jsonText.startsWith('```json')) {
@@ -562,8 +547,6 @@ export async function alignWordsAndSentencesByAI(words: WordWithTime[], sentence
 	} catch (e) {
 		throw new Error(`Failed to parse Gemini response as JSON: ${jsonText}`)
 	}
-
-	// 组装 Sentence[]
 	const output: Sentence[] = []
 	for (let i = 0; i < sentences.length; i++) {
 		const idxArr = result.indices[i] || []
@@ -578,6 +561,19 @@ export async function alignWordsAndSentencesByAI(words: WordWithTime[], sentence
 		})
 	}
 	return output
+}
+
+export async function alignWordsAndSentencesByAI(words: WordWithTime[], sentences: string[]): Promise<Sentence[]> {
+	if (!words.length || !sentences.length) return []
+
+	const { systemPrompt, prompt } = buildAlignWordsAndSentencesPrompt(words, sentences)
+
+	const textResult = await chatGPT.generateText({
+		system: systemPrompt,
+		prompt,
+	})
+
+	return parseAlignWordsAndSentencesResult(textResult, words, sentences)
 }
 
 /**

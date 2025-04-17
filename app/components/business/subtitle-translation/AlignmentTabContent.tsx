@@ -1,6 +1,6 @@
 import { useFetcher } from '@remix-run/react'
-import { AlignLeft, ArrowRight, Text } from 'lucide-react'
-import { useState } from 'react'
+import { AlignLeft, ArrowRight, Copy, Text } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import AiModelSelect from '~/components/AiModelSelect'
 import LoadingButtonWithState from '~/components/LoadingButtonWithState'
 import { Badge } from '~/components/ui/badge'
@@ -19,8 +19,13 @@ interface AlignmentTabContentProps {
 
 export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContentProps) {
 	const alignmentFetcher = useFetcher()
+	const alignmentPromptFetcher = useFetcher<{ prompt?: { systemPrompt: string; prompt: string } }>()
+	const promptProcessFetcher = useFetcher<{ result?: string }>()
 	const [splitSentencesMethod, setSplitSentencesMethod] = useState<'code' | 'ai'>('ai')
 	const showAiModelSelect = splitSentencesMethod === 'ai'
+
+	const [copied, setCopied] = useState(false)
+	const [copyError, setCopyError] = useState<string | null>(null)
 
 	// Calculate total word count from sentences
 	const totalWords =
@@ -29,6 +34,21 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 			const wordCount = subtitle.text ? subtitle.text.split(/\s+/).filter(Boolean).length : 0
 			return acc + wordCount
 		}, 0) || 0
+
+	// 自动填充 textarea
+	useEffect(() => {
+		if (alignmentPromptFetcher.data?.prompt) {
+			const text = `System Prompt:\n${alignmentPromptFetcher.data.prompt.systemPrompt}\n\nPrompt:\n${alignmentPromptFetcher.data.prompt.prompt}`
+			setPromptText(text)
+			navigator.clipboard
+				.writeText(text)
+				.then(() => {
+					setCopied(true)
+					setTimeout(() => setCopied(false), 2000)
+				})
+				.catch(() => setCopyError('Failed to copy prompt'))
+		}
+	}, [alignmentPromptFetcher.data])
 
 	return (
 		<div className="focus:outline-none">
@@ -134,6 +154,35 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 
 					<LoadingButtonWithState type="submit" className="mt-2 w-full sm:w-auto" state={alignmentFetcher.state} idleText="Align Text" loadingText="Aligning..." />
 				</alignmentFetcher.Form>
+				{/* 复制对齐提示词按钮，独立区域 */}
+				<alignmentPromptFetcher.Form method="post" action="alignment-prompt" className="mt-2 w-full sm:w-auto">
+					<button
+						type="submit"
+						className="flex items-center gap-2 px-4 py-2 rounded-md border border-primary bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+						disabled={alignmentPromptFetcher.state === 'submitting'}
+					>
+						<Copy className="w-4 h-4" />
+						{alignmentPromptFetcher.state === 'submitting' ? 'Copying...' : copied ? 'Copied!' : 'Copy Alignment Prompt'}
+					</button>
+					{copyError && <div className="text-red-500 text-xs mt-1">{copyError}</div>}
+				</alignmentPromptFetcher.Form>
+
+				{/* 新增：textarea 和处理表单 */}
+				<div className="mt-4">
+					<promptProcessFetcher.Form method="post" action="alignment-prompt-process" className="mt-2 flex flex-col gap-2">
+						<label htmlFor="prompt-textarea" className="block text-sm font-medium mb-2">
+							Prompt Text
+						</label>
+						<textarea id="prompt-textarea" name="promptText" className="w-full min-h-[120px] p-2 border rounded-md bg-muted/20" placeholder="Prompt will appear here..." />
+						<button
+							type="submit"
+							className="px-4 py-2 rounded-md border border-primary bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+							disabled={promptProcessFetcher.state === 'submitting'}
+						>
+							Process Prompt
+						</button>
+					</promptProcessFetcher.Form>
+				</div>
 			</div>
 		</div>
 	)
