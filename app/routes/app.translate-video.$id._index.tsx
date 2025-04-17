@@ -62,6 +62,7 @@ export default function TranslateVideoPage() {
 	const downloadVideoFetcher = useFetcher()
 	const renderFetcher = useFetcher()
 	const remoteRenderFetcher = useFetcher()
+	const downloadAudioFetcher = useFetcher()
 
 	const onCopy = async (text?: string | null) => {
 		if (!text) {
@@ -139,12 +140,15 @@ export default function TranslateVideoPage() {
 									Media Controls
 								</h3>
 								<div className="flex flex-wrap gap-4">
-									<Link to="download-audio" target="_blank" rel="noopener noreferrer">
-										<Button variant="outline" className="gap-2 transition-colors hover:bg-primary/10 hover:text-primary hover:border-primary">
-											<FileAudio size={16} />
-											Download Audio
-										</Button>
-									</Link>
+									<downloadAudioFetcher.Form method="post" action="download-audio">
+										<LoadingButtonWithState
+											state={downloadAudioFetcher.state}
+											idleText="Download Audio"
+											className="gap-2 transition-colors hover:bg-primary/10 hover:text-primary hover:border-primary"
+											variant="outline"
+											icon={<FileAudio size={16} />}
+										/>
+									</downloadAudioFetcher.Form>
 
 									{translateVideo.source === 'download' && !playFile && (
 										<downloadVideoFetcher.Form action="/app/downloads/download-video" method="post">

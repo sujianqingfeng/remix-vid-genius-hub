@@ -90,3 +90,13 @@ export function generateScreenshotCommand(videoPath: string, timestamp: number) 
 		'2', // High quality
 	]
 }
+
+/**
+ * Convert audio file to standardized WAV format (16kHz, mono, PCM)
+ * @param inputPath - Path to the input audio file
+ * @param outputPath - Path to save the converted audio file
+ * @returns Command to execute for the conversion
+ */
+export function convertToStandardAudioFormat(inputPath: string, outputPath: string): string {
+	return `ffmpeg -i "${inputPath}" -ar 16000 -ac 1 -c:a pcm_s16le "${outputPath}"`
+}

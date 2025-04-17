@@ -2,8 +2,17 @@ import type { ActionFunctionArgs } from '@remix-run/node'
 import { eq } from 'drizzle-orm'
 import invariant from 'tiny-invariant'
 import { db, schema } from '~/lib/drizzle'
-import type { Transcript } from '~/types'
+import type { Transcript, WordWithTime } from '~/types'
 import { trimPunctuation } from '~/utils/transcript'
+
+// Define types for clarity
+type SubtitleChunk = {
+	text: string
+	textInterpretation: string
+	start: number
+	end: number
+	words: WordWithTime[]
+}
 
 type OptimizeSentencesOptions = {
 	sentences: Transcript[]
@@ -11,206 +20,169 @@ type OptimizeSentencesOptions = {
 	chineseMaxLength?: number
 }
 
-// 优化展示，将长句子分割成多个句子
-// text 为英文字段
-// textInterpretation 为中文字段
-function optimizeSentences({ sentences, englishMaxLength = 100, chineseMaxLength = 35 }: OptimizeSentencesOptions) {
-	const optimizedSentences: Transcript[] = []
+// --- Constants for splitting ---
+const ENGLISH_SENTENCE_BREAKS = /(?<=[.!?])\s+/
+const ENGLISH_CLAUSE_BREAKS = /(?<=[,.!?;:])\s+/
+const ENGLISH_WORD_BREAKS = /\s+/
+const CHINESE_BREAKS = /(?<=[。！？；，：])\s*/
+const MAX_ENGLISH_WORDS = 15 // Maximum English words per chunk
+const MAX_CHINESE_CHARS = 25 // Maximum Chinese chars per chunk
+
+// --- Main Optimization Function (Simplified) ---
+
+function optimizeSentences({ sentences, englishMaxLength = 70, chineseMaxLength = 35 }: OptimizeSentencesOptions): SubtitleChunk[] {
+	const optimizedSentences: SubtitleChunk[] = []
 
 	for (const sentence of sentences) {
 		const { text, textInterpretation, words, start, end } = sentence
 
-		// If the sentence is already short enough, add it directly
-		if ((!text || text.length <= englishMaxLength) && (!textInterpretation || textInterpretation.length <= chineseMaxLength)) {
-			optimizedSentences.push(sentence)
+		// Skip empty sentences
+		if (!text && !textInterpretation) continue
+
+		// Determine if splitting is needed
+		const englishWords = text ? text.split(ENGLISH_WORD_BREAKS).filter(Boolean) : []
+		const needsEnglishSplit = text && (text.length > englishMaxLength || englishWords.length > MAX_ENGLISH_WORDS)
+
+		const needsChineseSplit = textInterpretation && (textInterpretation.length > chineseMaxLength || textInterpretation.length > MAX_CHINESE_CHARS)
+
+		// If neither needs splitting, add directly
+		if (!needsEnglishSplit && !needsChineseSplit) {
+			optimizedSentences.push({
+				...sentence,
+				text: text ? trimPunctuation(text) : '',
+				textInterpretation: textInterpretation ? trimPunctuation(textInterpretation) : '',
+			})
 			continue
 		}
 
-		// Split long sentences
-		if (text && text.length > englishMaxLength) {
-			// Split English text
-			const chunks = splitTextIntoChunks(text, englishMaxLength)
+		// Simple approach: determine number of chunks based on length and duration
+		const durationInSeconds = end - start
 
-			// If there's Chinese text, split it proportionally
-			const chineseChunks = textInterpretation ? splitTextProportionally(textInterpretation, chunks.length) : Array(chunks.length).fill('')
+		// Base number of chunks on content length
+		const englishChunks = needsEnglishSplit ? Math.ceil(Math.max(text.length / englishMaxLength, englishWords.length / MAX_ENGLISH_WORDS)) : 1
+		const chineseChunks = needsChineseSplit ? Math.ceil(Math.max(textInterpretation.length / chineseMaxLength, textInterpretation.length / MAX_CHINESE_CHARS)) : 1
 
-			// Calculate time distribution
-			const totalDuration = end - start
-			const timePerChunk = totalDuration / chunks.length
+		// Target number of chunks - balance between content needs and reasonable reading time
+		let targetChunks = Math.max(englishChunks, chineseChunks)
 
-			// Create new transcript entries for each chunk
-			chunks.forEach((chunk, index) => {
-				const chunkStart = start + timePerChunk * index
-				const chunkEnd = chunkStart + timePerChunk
+		// Ensure reasonable display time: aim for at least 1.8 seconds per chunk, but also consider limitations
+		const maxChunksByDuration = Math.max(1, Math.round(durationInSeconds / 1.8))
+		targetChunks = Math.min(targetChunks, maxChunksByDuration)
 
-				// Find words that belong to this time range
-				const chunkWords = words.filter((word) => word.start >= chunkStart && word.end <= chunkEnd)
+		// Simple splitting of English text
+		let englishParts: string[] = []
+		if (text) {
+			// Try natural breaks first
+			englishParts = text.split(ENGLISH_SENTENCE_BREAKS).filter(Boolean)
 
-				// If no words match exactly, use approximation
-				const approximateWords = chunkWords.length > 0 ? chunkWords : approximateWordsForChunk(words, chunk, index, chunks.length, start, end)
+			// If too few parts, try clause breaks
+			if (englishParts.length < targetChunks) {
+				englishParts = text.split(ENGLISH_CLAUSE_BREAKS).filter(Boolean)
+			}
 
-				optimizedSentences.push({
-					text: chunk,
-					textInterpretation: chineseChunks[index],
-					start: chunkStart,
-					end: chunkEnd,
-					words: approximateWords,
-				})
-			})
-		} else if (textInterpretation && textInterpretation.length > chineseMaxLength) {
-			// Only Chinese text is too long
-			const chineseChunks = splitTextIntoChunks(textInterpretation, chineseMaxLength)
+			// If still too few or too many parts, do an even split
+			if (englishParts.length !== targetChunks) {
+				englishParts = splitTextEvenly(text, targetChunks, true)
+			}
+		}
 
-			// Split English text proportionally if it exists
-			const englishChunks = text ? splitTextProportionally(text, chineseChunks.length) : Array(chineseChunks.length).fill('')
+		// Simple splitting of Chinese text
+		let chineseParts: string[] = []
+		if (textInterpretation) {
+			// Try natural breaks first
+			chineseParts = textInterpretation.split(CHINESE_BREAKS).filter(Boolean)
 
-			// Calculate time distribution
-			const totalDuration = end - start
-			const timePerChunk = totalDuration / chineseChunks.length
+			// If too few or too many parts, do an even split
+			if (chineseParts.length !== targetChunks) {
+				chineseParts = splitTextEvenly(textInterpretation, targetChunks, false)
+			}
+		}
 
-			// Create new transcript entries for each chunk
-			chineseChunks.forEach((chunk, index) => {
-				const chunkStart = start + timePerChunk * index
-				const chunkEnd = chunkStart + timePerChunk
+		// Ensure both arrays have the same length
+		while (englishParts.length < targetChunks) englishParts.push('')
+		while (chineseParts.length < targetChunks) chineseParts.push('')
 
-				// Find words that belong to this time range
-				const chunkWords = words.filter((word) => word.start >= chunkStart && word.end <= chunkEnd)
+		// Even time distribution
+		const timePerChunk = durationInSeconds / targetChunks
 
-				// If no words match exactly, use approximation
-				const approximateWords = chunkWords.length > 0 ? chunkWords : approximateWordsForChunk(words, englishChunks[index], index, chineseChunks.length, start, end)
+		// Create subtitles with even timing
+		for (let i = 0; i < targetChunks; i++) {
+			const chunkStart = start + i * timePerChunk
+			const chunkEnd = i === targetChunks - 1 ? end : chunkStart + timePerChunk
 
-				optimizedSentences.push({
-					text: englishChunks[index],
-					textInterpretation: chunk,
-					start: chunkStart,
-					end: chunkEnd,
-					words: approximateWords,
-				})
+			// Get words in this time range
+			const chunkWords = words ? getWordsInTimeRange(words, chunkStart, chunkEnd) : []
+
+			optimizedSentences.push({
+				text: trimPunctuation(englishParts[i] || ''),
+				textInterpretation: trimPunctuation(chineseParts[i] || ''),
+				start: chunkStart,
+				end: chunkEnd,
+				words: chunkWords,
 			})
 		}
 	}
 
-	const trimmedSentences = optimizedSentences.map(({ text, textInterpretation, ...rest }) => {
-		return {
-			...rest,
-			text: text ? trimPunctuation(text) : text,
-			textInterpretation: textInterpretation ? trimPunctuation(textInterpretation) : textInterpretation,
-		}
-	})
-
-	return trimmedSentences
+	return optimizedSentences
 }
 
-// Helper function to split text into chunks of maximum length
-function splitTextIntoChunks(text: string, maxLength: number): string[] {
-	const chunks: string[] = []
-
-	// Try to split at sentence boundaries (periods, question marks, exclamation points)
-	const sentences = text.split(/(?<=[.!?])\s+/)
-
-	let currentChunk = ''
-
-	for (const sentence of sentences) {
-		// If adding this sentence would exceed max length, save current chunk and start a new one
-		if (currentChunk.length + sentence.length > maxLength && currentChunk.length > 0) {
-			chunks.push(currentChunk)
-			currentChunk = sentence
-		}
-		// If the sentence itself is longer than maxLength, split it by words
-		else if (sentence.length > maxLength) {
-			if (currentChunk.length > 0) {
-				chunks.push(currentChunk)
-				currentChunk = ''
-			}
-
-			const words = sentence.split(/\s+/)
-			let wordChunk = ''
-
-			for (const word of words) {
-				if (wordChunk.length + word.length + 1 > maxLength && wordChunk.length > 0) {
-					chunks.push(wordChunk)
-					wordChunk = word
-				} else {
-					wordChunk = wordChunk.length === 0 ? word : `${wordChunk} ${word}`
-				}
-			}
-
-			if (wordChunk.length > 0) {
-				currentChunk = wordChunk
-			}
-		}
-		// Otherwise, add to current chunk
-		else {
-			currentChunk = currentChunk.length === 0 ? sentence : `${currentChunk} ${sentence}`
-		}
-	}
-
-	// Add the last chunk if there's anything left
-	if (currentChunk.length > 0) {
-		chunks.push(currentChunk)
-	}
-
-	return chunks
-}
-
-// Helper function to split text proportionally to match the number of chunks in another language
-function splitTextProportionally(text: string, numChunks: number): string[] {
+/**
+ * Simple function to split text into evenly sized chunks
+ */
+function splitTextEvenly(text: string, numChunks: number, isEnglish: boolean): string[] {
 	if (numChunks <= 1) return [text]
+	if (!text) return Array(numChunks).fill('')
 
-	const chunks: string[] = []
-	const chunkSize = Math.ceil(text.length / numChunks)
+	const result: string[] = []
 
-	// For Chinese text, we can split by characters since each character is a unit
-	for (let i = 0; i < numChunks; i++) {
-		const start = i * chunkSize
-		const end = Math.min(start + chunkSize, text.length)
-		chunks.push(text.substring(start, end))
+	if (isEnglish) {
+		// For English, split by words for more natural chunks
+		const words = text.split(ENGLISH_WORD_BREAKS).filter(Boolean)
+		const wordsPerChunk = Math.ceil(words.length / numChunks)
+
+		for (let i = 0; i < numChunks; i++) {
+			const startIdx = i * wordsPerChunk
+			const endIdx = Math.min(startIdx + wordsPerChunk, words.length)
+
+			if (startIdx < words.length) {
+				result.push(words.slice(startIdx, endIdx).join(' '))
+			} else {
+				result.push('')
+			}
+		}
+	} else {
+		// For Chinese, split by character count
+		const charsPerChunk = Math.ceil(text.length / numChunks)
+
+		for (let i = 0; i < numChunks; i++) {
+			const startIdx = i * charsPerChunk
+			const endIdx = Math.min(startIdx + charsPerChunk, text.length)
+
+			if (startIdx < text.length) {
+				result.push(text.substring(startIdx, endIdx))
+			} else {
+				result.push('')
+			}
+		}
 	}
 
-	return chunks
+	return result
 }
 
-// Helper function to approximate which words belong to a chunk when time ranges don't match exactly
-function approximateWordsForChunk(
-	allWords: { word: string; start: number; end: number }[],
-	chunkText: string,
-	chunkIndex: number,
-	totalChunks: number,
-	sentenceStart: number,
-	sentenceEnd: number,
-): { word: string; start: number; end: number }[] {
-	// If there are no words or empty chunk, return empty array
-	if (allWords.length === 0 || !chunkText) return []
+/**
+ * Simple function to get words that fall within a time range
+ */
+function getWordsInTimeRange(words: WordWithTime[], startTime: number, endTime: number): WordWithTime[] {
+	if (!words || words.length === 0) return []
 
-	// Calculate approximate word range based on chunk position
-	const wordsPerChunk = Math.ceil(allWords.length / totalChunks)
-	const startIdx = chunkIndex * wordsPerChunk
-	const endIdx = Math.min(startIdx + wordsPerChunk, allWords.length)
+	const Epsilon = 0.01 // Small tolerance for floating point comparison
 
-	// Get the words for this chunk
-	const chunkWords = allWords.slice(startIdx, endIdx)
-
-	// If we have words, adjust their timing to fit within the chunk's time range
-	if (chunkWords.length > 0) {
-		const chunkDuration = (sentenceEnd - sentenceStart) / totalChunks
-		const chunkStart = sentenceStart + chunkIndex * chunkDuration
-		const chunkEnd = chunkStart + chunkDuration
-
-		// Adjust word timings to fit within chunk boundaries
-		return chunkWords.map((word, idx) => {
-			const wordDuration = word.end - word.start
-			const wordPosition = idx / chunkWords.length
-			const adjustedStart = chunkStart + wordPosition * (chunkDuration - wordDuration)
-
-			return {
-				word: word.word,
-				start: adjustedStart,
-				end: adjustedStart + wordDuration,
-			}
-		})
-	}
-
-	return []
+	return words.filter(
+		(word) =>
+			(word.start >= startTime - Epsilon && word.start < endTime - Epsilon) || // Word starts in range
+			(word.end > startTime + Epsilon && word.end <= endTime + Epsilon) || // Word ends in range
+			(word.start < startTime && word.end > endTime), // Word spans entire range
+	)
 }
 
 export const action = async ({ params }: ActionFunctionArgs) => {
@@ -221,13 +193,22 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 
 	const subtitleTranslation = await db.query.subtitleTranslations.findFirst({
 		where,
+		columns: {
+			id: true,
+			sentences: true,
+		},
 	})
 	invariant(subtitleTranslation, 'subtitleTranslation not found')
 
 	const { sentences } = subtitleTranslation
-	invariant(sentences, 'sentences not found')
+	invariant(sentences, 'sentences is not an array or is missing')
 
-	const optimizedSentences = optimizeSentences({ sentences })
+	// Explicitly pass max lengths
+	const optimizedSentences = optimizeSentences({
+		sentences,
+		englishMaxLength: 70,
+		chineseMaxLength: 35,
+	})
 
 	await db
 		.update(schema.subtitleTranslations)
