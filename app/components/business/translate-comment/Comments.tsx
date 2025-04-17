@@ -1,8 +1,9 @@
 import { useFetcher } from '@remix-run/react'
-import { Check, Languages, Pencil, Split, Trash, X } from 'lucide-react'
+import { AlertTriangle, Check, HelpCircle, Languages, Pencil, Split, Trash, X } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '~/components/ui/button'
 import { Textarea } from '~/components/ui/textarea'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip'
 import type { Comment } from '~/types'
 
 export default function Comments({ comments }: { comments: Comment[] }) {
@@ -38,7 +39,7 @@ export default function Comments({ comments }: { comments: Comment[] }) {
 		<div className="flex flex-col gap-4">
 			{comments.map((comment, index) => (
 				// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-				<div key={index} className="rounded-lg bg-card p-4 shadow-sm transition-all hover:shadow-md">
+				<div key={index} className={`rounded-lg bg-card p-4 shadow-sm transition-all hover:shadow-md ${comment.sensitive ? 'border-l-4 border-amber-500' : ''}`}>
 					<div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
 						<div className="flex items-center gap-2 min-w-0 flex-shrink">
 							<span className="font-medium text-primary truncate">
@@ -46,7 +47,29 @@ export default function Comments({ comments }: { comments: Comment[] }) {
 								{comment.author}
 							</span>
 							<span className="text-sm text-muted-foreground flex-shrink-0">·</span>
-							<span className="text-sm text-muted-foreground flex-shrink-0">{comment.publishedTime}</span>
+							<span className="text-sm text-muted-foreground flex-shrink-0">{(comment as any).publishedTime}</span>
+							{comment.sensitive && (
+								<div className="flex items-center gap-1">
+									<span className="inline-flex items-center gap-1 text-amber-500 text-xs px-2 py-1 bg-amber-100 rounded-full">
+										<AlertTriangle size={12} />
+										Sensitive
+									</span>
+									{comment.sensitiveReason && (
+										<TooltipProvider>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<Button variant="ghost" size="icon" className="h-6 w-6 text-amber-500">
+														<HelpCircle size={14} />
+													</Button>
+												</TooltipTrigger>
+												<TooltipContent className="max-w-xs">
+													<p className="text-xs">{comment.sensitiveReason}</p>
+												</TooltipContent>
+											</Tooltip>
+										</TooltipProvider>
+									)}
+								</div>
+							)}
 						</div>
 
 						<div className="flex gap-1 ml-auto flex-shrink-0">

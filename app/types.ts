@@ -60,6 +60,8 @@ export interface Comment {
 	media?: CommentMedia[]
 	bookmarkCount?: number
 	replyCount?: number
+	sensitive?: boolean
+	sensitiveReason?: string
 }
 
 export interface CommentData {
