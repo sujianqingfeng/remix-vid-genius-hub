@@ -5,8 +5,6 @@ import type { z } from 'zod'
 
 const API_BASE_URL = 'https://api.chatanywhere.tech'
 
-const model = 'gpt-4.1-mini'
-
 function createChatGPT({ apiKey }: { apiKey: string }) {
 	const openai = createOpenAI({
 		baseURL: API_BASE_URL,
@@ -18,10 +16,12 @@ function createChatGPT({ apiKey }: { apiKey: string }) {
 			system,
 			prompt,
 			maxTokens,
+			model = 'gpt-4.1-mini',
 		}: {
 			system: string
 			prompt: string
 			maxTokens?: number
+			model?: string
 		}) => {
 			const { text } = await aiGenerateText({
 				model: openai(model),
@@ -38,6 +38,7 @@ function createChatGPT({ apiKey }: { apiKey: string }) {
 			temperature,
 			topP,
 			maxTokens,
+			model = 'gpt-4.1-mini',
 		}: {
 			system: string
 			prompt: string
@@ -45,6 +46,7 @@ function createChatGPT({ apiKey }: { apiKey: string }) {
 			temperature?: number
 			topP?: number
 			maxTokens?: number
+			model?: string
 		}) => {
 			const { object } = await generateObject({
 				model: openai(model),
