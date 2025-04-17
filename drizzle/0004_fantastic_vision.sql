@@ -1,0 +1,1 @@
+ALTER TABLE `subtitle_translations` ADD `split_sentences` text DEFAULT '[]';

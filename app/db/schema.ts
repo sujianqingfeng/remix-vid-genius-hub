@@ -118,6 +118,7 @@ export const subtitleTranslations = sqliteTable(
 		title: text('title').default(''),
 		audioFilePath: text('audio_file_path'),
 		withTimeWords: text('with_time_words', { mode: 'json' }).$type<WordWithTime[]>().default([]),
+		splitSentences: text('split_sentences', { mode: 'json' }).$type<string[]>().default([]),
 		sentences: text('sentences', { mode: 'json' }).$type<Transcript[]>().default([]),
 		optimizedSentences: text('optimized_sentences', { mode: 'json' }).$type<Transcript[]>().default([]),
 		translateVideoId: text('translate_video_id'),

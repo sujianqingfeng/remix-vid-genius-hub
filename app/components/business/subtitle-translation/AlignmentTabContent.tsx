@@ -13,16 +13,21 @@ import { formatSubTitleTime } from '~/utils/format'
 interface AlignmentTabContentProps {
 	subtitleTranslation: {
 		withTimeWords?: WordWithTime[] | null
+		splitSentences?: string[] | null
 		sentences?: Transcript[] | null
 	}
 }
 
 export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContentProps) {
+	const splitFetcher = useFetcher()
 	const alignmentFetcher = useFetcher()
 	const alignmentPromptFetcher = useFetcher<{ prompt?: { systemPrompt: string; prompt: string } }>()
 	const promptProcessFetcher = useFetcher<{ result?: string }>()
+
 	const [splitSentencesMethod, setSplitSentencesMethod] = useState<'code' | 'ai'>('ai')
-	const showAiModelSelect = splitSentencesMethod === 'ai'
+	const [alignmentMethod, setAlignmentMethod] = useState<'code' | 'ai'>('code')
+	const [promptText, setPromptText] = useState('')
+	const showAiModelSelect = splitSentencesMethod === 'ai' || alignmentMethod === 'ai'
 
 	const [copied, setCopied] = useState(false)
 	const [copyError, setCopyError] = useState<string | null>(null)
@@ -35,11 +40,14 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 			return acc + wordCount
 		}, 0) || 0
 
-	// 自动填充 textarea
+	// Calculate total split sentence count
+	const splitSentenceCount = subtitleTranslation.splitSentences?.length || 0
+
+	// Handle prompt copy and clipboard operations
 	useEffect(() => {
 		if (alignmentPromptFetcher.data?.prompt) {
 			const text = `System Prompt:\n${alignmentPromptFetcher.data.prompt.systemPrompt}\n\nPrompt:\n${alignmentPromptFetcher.data.prompt.prompt}`
-			setPromptText(text)
+			// Don't auto-fill the text area anymore
 			navigator.clipboard
 				.writeText(text)
 				.then(() => {
@@ -78,6 +86,32 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 				</Card>
 			)}
 
+			{/* Display split sentences if available */}
+			{subtitleTranslation.splitSentences?.length ? (
+				<Card className="mb-6 bg-muted/30 border-0 shadow-sm">
+					<CardHeader className="pb-2">
+						<CardTitle className="text-base flex items-center justify-between">
+							<span>Split Sentences</span>
+							<Badge variant="secondary" className="ml-2">
+								{splitSentenceCount} sentences
+							</Badge>
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="rounded-md bg-muted/20 p-3 max-h-80 overflow-y-auto">
+							<div className="space-y-3">
+								{subtitleTranslation.splitSentences.map((sentence, index) => (
+									<div key={`sentence-${index}-${sentence.substring(0, 20)}`} className="bg-card p-3 rounded-md shadow-sm hover:shadow-md transition-shadow">
+										<p className="text-sm md:text-base">{sentence}</p>
+									</div>
+								))}
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+			) : null}
+
+			{/* Display aligned subtitles if available */}
 			{subtitleTranslation.sentences?.length ? (
 				<Card className="mb-6 bg-muted/30 border-0 shadow-sm">
 					<CardHeader className="pb-2">
@@ -110,8 +144,8 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 			<Separator className="my-6" />
 
 			<div className="bg-card rounded-lg p-4 md:p-6 shadow-sm">
-				<h3 className="text-lg font-medium mb-4">Align Text</h3>
-				<alignmentFetcher.Form method="post" action="alignment" className="flex flex-col gap-5">
+				<h3 className="text-lg font-medium mb-4">Split Text into Sentences</h3>
+				<splitFetcher.Form method="post" action="split" className="flex flex-col gap-5">
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
 							<label htmlFor="splitSentencesMethod" className="block text-sm font-medium mb-2">
@@ -120,20 +154,6 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 							<Select name="splitSentencesMethod" defaultValue="ai" onValueChange={(value) => setSplitSentencesMethod(value as 'code' | 'ai')}>
 								<SelectTrigger>
 									<SelectValue placeholder="Select Sentence Split Method" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="code">Code</SelectItem>
-									<SelectItem value="ai">AI</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-						<div>
-							<label htmlFor="alignmentMethod" className="block text-sm font-medium mb-2">
-								Select Alignment Method
-							</label>
-							<Select name="alignmentMethod" defaultValue="code">
-								<SelectTrigger>
-									<SelectValue placeholder="Select Alignment Method" />
 								</SelectTrigger>
 								<SelectContent>
 									<SelectItem value="code">Code</SelectItem>
@@ -152,36 +172,90 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 						)}
 					</div>
 
-					<LoadingButtonWithState type="submit" className="mt-2 w-full sm:w-auto" state={alignmentFetcher.state} idleText="Align Text" loadingText="Aligning..." />
-				</alignmentFetcher.Form>
-				{/* 复制对齐提示词按钮，独立区域 */}
-				<alignmentPromptFetcher.Form method="post" action="alignment-prompt" className="mt-2 w-full sm:w-auto">
-					<button
-						type="submit"
-						className="flex items-center gap-2 px-4 py-2 rounded-md border border-primary bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
-						disabled={alignmentPromptFetcher.state === 'submitting'}
-					>
-						<Copy className="w-4 h-4" />
-						{alignmentPromptFetcher.state === 'submitting' ? 'Copying...' : copied ? 'Copied!' : 'Copy Alignment Prompt'}
-					</button>
-					{copyError && <div className="text-red-500 text-xs mt-1">{copyError}</div>}
-				</alignmentPromptFetcher.Form>
+					<LoadingButtonWithState type="submit" className="mt-2 w-full sm:w-auto" state={splitFetcher.state} idleText="Split Text" loadingText="Splitting..." />
+				</splitFetcher.Form>
 
-				{/* 新增：textarea 和处理表单 */}
-				<div className="mt-4">
-					<promptProcessFetcher.Form method="post" action="alignment-prompt-process" className="mt-2 flex flex-col gap-2">
-						<label htmlFor="prompt-textarea" className="block text-sm font-medium mb-2">
-							Prompt Text
-						</label>
-						<textarea id="prompt-textarea" name="promptText" className="w-full min-h-[120px] p-2 border rounded-md bg-muted/20" placeholder="Prompt will appear here..." />
+				<div className="mt-8 pt-8 border-t">
+					<h3 className="text-lg font-medium mb-4">Align Text with Timing</h3>
+					<alignmentFetcher.Form method="post" action="align" className="flex flex-col gap-5">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div>
+								<label htmlFor="alignmentMethod" className="block text-sm font-medium mb-2">
+									Select Alignment Method
+								</label>
+								<Select name="alignmentMethod" defaultValue="code" onValueChange={(value) => setAlignmentMethod(value as 'code' | 'ai')}>
+									<SelectTrigger>
+										<SelectValue placeholder="Select Alignment Method" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="code">Code</SelectItem>
+										<SelectItem value="ai">AI</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+							{alignmentMethod === 'ai' && (
+								<div>
+									<label htmlFor="alignModel" className="block text-sm font-medium mb-2">
+										Select AI Model
+									</label>
+									<AiModelSelect name="alignModel" defaultValue="deepseek" />
+									<p className="text-xs text-muted-foreground mt-1">Used for AI alignment</p>
+								</div>
+							)}
+						</div>
+
+						<LoadingButtonWithState
+							type="submit"
+							className="mt-2 w-full sm:w-auto"
+							state={alignmentFetcher.state}
+							idleText="Align Text"
+							loadingText="Aligning..."
+							disabled={!subtitleTranslation.splitSentences?.length}
+						/>
+						{!subtitleTranslation.splitSentences?.length && <p className="text-xs text-amber-500 mt-1">Please split the text into sentences first</p>}
+					</alignmentFetcher.Form>
+				</div>
+
+				{/* 复制对齐提示词按钮，独立区域 */}
+				<div className="mt-8 pt-8 border-t">
+					<h3 className="text-lg font-medium mb-4">AI Prompt Tools</h3>
+					<alignmentPromptFetcher.Form method="post" action="alignment-prompt" className="mt-2 w-full sm:w-auto">
 						<button
 							type="submit"
-							className="px-4 py-2 rounded-md border border-primary bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
-							disabled={promptProcessFetcher.state === 'submitting'}
+							className="flex items-center gap-2 px-4 py-2 rounded-md border border-primary bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+							disabled={alignmentPromptFetcher.state === 'submitting' || !subtitleTranslation.splitSentences?.length}
 						>
-							Process Prompt
+							<Copy className="w-4 h-4" />
+							{alignmentPromptFetcher.state === 'submitting' ? 'Copying...' : copied ? 'Copied!' : 'Copy Alignment Prompt'}
 						</button>
-					</promptProcessFetcher.Form>
+						{copyError && <div className="text-red-500 text-xs mt-1">{copyError}</div>}
+						{!subtitleTranslation.splitSentences?.length && <p className="text-xs text-amber-500 mt-1">Please split the text into sentences first</p>}
+					</alignmentPromptFetcher.Form>
+
+					{/* textarea 和处理表单 */}
+					<div className="mt-4">
+						<promptProcessFetcher.Form method="post" action="alignment-prompt-process" className="mt-2 flex flex-col gap-2">
+							<label htmlFor="prompt-textarea" className="block text-sm font-medium mb-2">
+								AI Generated Result
+							</label>
+							<textarea
+								id="prompt-textarea"
+								name="promptText"
+								className="w-full min-h-[120px] p-2 border rounded-md bg-muted/20"
+								placeholder="Paste AI-generated results here..."
+								value={promptText}
+								onChange={(e) => setPromptText(e.target.value)}
+							/>
+							<p className="text-xs text-muted-foreground mt-1">After using an external AI tool with the copied prompt, paste the generated result here for processing</p>
+							<button
+								type="submit"
+								className="px-4 py-2 rounded-md border border-primary bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+								disabled={promptProcessFetcher.state === 'submitting' || !promptText.trim()}
+							>
+								Process AI Result
+							</button>
+						</promptProcessFetcher.Form>
+					</div>
 				</div>
 			</div>
 		</div>
