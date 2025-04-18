@@ -1,29 +1,19 @@
 import { NavLink, Outlet } from '@remix-run/react'
 import {
-	BookOpen,
 	ChevronLeft,
 	ChevronRight,
-	Download,
 	Download as DownloadIcon,
-	FileCheck,
 	FileText,
 	FileVideo,
-	Globe2,
 	GraduationCap,
 	Image,
-	Languages,
-	Layout,
 	ListTodo,
 	type LucideIcon,
-	MessageCircle,
 	MessageCircleMore,
-	MessageSquare,
 	MessagesSquare,
-	SquareChartGantt,
 	Subtitles,
 	Twitter,
 	Type,
-	X,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -42,12 +32,6 @@ const menuItems: MenuItem[] = [
 		text: 'Downloads',
 	},
 	{
-		to: '/app/translate-comment',
-		title: 'Comment Translation',
-		icon: MessagesSquare,
-		text: 'Comment Translation',
-	},
-	{
 		to: '/app/translate-video',
 		title: 'Video Translation',
 		icon: FileVideo,
@@ -58,6 +42,12 @@ const menuItems: MenuItem[] = [
 		title: 'Subtitle Translations',
 		icon: Subtitles,
 		text: 'Subtitle Translations',
+	},
+	{
+		to: '/app/translate-comment',
+		title: 'Comment Translation',
+		icon: MessagesSquare,
+		text: 'Comment Translation',
 	},
 	{
 		to: '/app/general-comment',

@@ -4,7 +4,7 @@ import { Link, useFetcher, useLoaderData } from '@remix-run/react'
 import { Player } from '@remotion/player'
 import { format } from 'date-fns'
 import getVideoId from 'get-video-id'
-import { ArrowDownToLine, Copy, Download, ExternalLink, FileDown, FileText, Globe, Info, Languages, Play, Refresh, RotateCw, Save, ShieldAlert, Trash, Video } from 'lucide-react'
+import { ArrowDownToLine, Copy, Download, ExternalLink, FileDown, FileText, Globe, Info, Languages, Play, RefreshCw, RotateCw, Save, ShieldAlert, Trash, Video } from 'lucide-react'
 import invariant from 'tiny-invariant'
 import AiModelSelect from '~/components/AiModelSelect'
 import BackPrevious from '~/components/BackPrevious'
@@ -200,22 +200,26 @@ export default function TranslateCommentPage() {
 
 									<Input className="flex-1" name="translatedTitle" defaultValue={translateComment.translatedTitle || ''} placeholder="Translated Title" />
 
-									<LoadingButtonWithState
-										state={updateFetcher.state}
-										idleText={
+									<Button type="submit" disabled={updateFetcher.state !== 'idle'} className="flex items-center gap-1.5">
+										{updateFetcher.state !== 'idle' ? (
+											<>
+												<RefreshCw size={14} className="mr-1.5 animate-spin" />
+												Updating...
+											</>
+										) : (
 											<>
 												<Save size={14} className="mr-1.5" />
 												Update
 											</>
-										}
-									/>
+										)}
+									</Button>
 								</div>
 							</updateFetcher.Form>
 						</CardContent>
 
 						{/* Action Controls */}
 						<CardFooter className="flex-col gap-6 pt-0">
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
 								{/* Download Group */}
 								<div className="bg-muted/5 p-3 rounded-lg space-y-3 border border-muted/10 hover:border-muted/20 transition-colors">
 									<h3 className="text-xs uppercase font-medium text-muted-foreground tracking-wide">Download</h3>
@@ -253,35 +257,6 @@ export default function TranslateCommentPage() {
 												/>
 											</downloadVideoFetcher.Form>
 										)}
-
-										{!commentsCount && (
-											<downloadCommentsFetcher.Form action="download-comments" method="post" className="flex gap-2">
-												<Select name="pageCount" defaultValue="3">
-													<SelectTrigger className="w-20 h-8">
-														<SelectValue placeholder="Pages" />
-													</SelectTrigger>
-													<SelectContent>
-														{Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
-															<SelectItem key={num} value={num.toString()}>
-																{num} {num === 1 ? 'page' : 'pages'}
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-												<LoadingButtonWithState
-													variant="outline"
-													size="sm"
-													state={downloadCommentsFetcher.state}
-													idleText={
-														<>
-															<FileText size={14} className="mr-1.5" />
-															Comments
-														</>
-													}
-													className="transition-all hover:shadow-sm"
-												/>
-											</downloadCommentsFetcher.Form>
-										)}
 									</div>
 								</div>
 
@@ -292,35 +267,49 @@ export default function TranslateCommentPage() {
 										<translateFetcher.Form action="translate" method="post">
 											<div className="flex gap-2">
 												<AiModelSelect name="aiModel" defaultValue="deepseek" />
-												<LoadingButtonWithState
+												<Button
+													type="submit"
 													variant="outline"
 													size="sm"
-													state={translateFetcher.state}
-													idleText={
+													disabled={translateFetcher.state !== 'idle'}
+													className="transition-all hover:shadow-sm flex items-center gap-1.5"
+												>
+													{translateFetcher.state !== 'idle' ? (
+														<>
+															<RefreshCw size={14} className="mr-1.5 animate-spin" />
+															Loading...
+														</>
+													) : (
 														<>
 															<Languages size={14} className="mr-1.5" />
 															Translate
 														</>
-													}
-													className="transition-all hover:shadow-sm"
-												/>
+													)}
+												</Button>
 											</div>
 										</translateFetcher.Form>
 
 										{commentsCount > 0 && (
 											<sensitiveCheckFetcher.Form method="post" action="check-sensitive">
-												<LoadingButtonWithState
+												<Button
+													type="submit"
 													variant="outline"
 													size="sm"
-													state={sensitiveCheckFetcher.state}
-													className="flex items-center gap-1 transition-all hover:shadow-sm"
-													idleText={
+													disabled={sensitiveCheckFetcher.state !== 'idle'}
+													className="transition-all hover:shadow-sm flex items-center gap-1.5"
+												>
+													{sensitiveCheckFetcher.state !== 'idle' ? (
+														<>
+															<RefreshCw size={14} className="mr-1.5 animate-spin" />
+															Loading...
+														</>
+													) : (
 														<>
 															<ShieldAlert size={14} className="mr-1.5" />
 															Check Sensitive
 														</>
-													}
-												/>
+													)}
+												</Button>
 											</sensitiveCheckFetcher.Form>
 										)}
 									</div>
@@ -328,37 +317,51 @@ export default function TranslateCommentPage() {
 
 								{/* Render Group */}
 								{download.author && download.filePath && (
-									<div className="bg-muted/5 p-3 rounded-lg space-y-3 border border-muted/10 hover:border-muted/20 transition-colors sm:col-span-2">
+									<div className="bg-muted/5 p-3 rounded-lg space-y-3 border border-muted/10 hover:border-muted/20 transition-colors md:col-span-2">
 										<h3 className="text-xs uppercase font-medium text-muted-foreground tracking-wide">Render & Output</h3>
 										<div className="flex flex-wrap gap-2">
 											<renderFetcher.Form action="render" method="post">
-												<LoadingButtonWithState
+												<Button
+													type="submit"
 													variant="outline"
 													size="sm"
-													state={renderFetcher.state}
-													idleText={
+													disabled={renderFetcher.state !== 'idle'}
+													className="transition-all hover:shadow-sm flex items-center gap-1.5"
+												>
+													{renderFetcher.state !== 'idle' ? (
+														<>
+															<RefreshCw size={14} className="mr-1.5 animate-spin" />
+															Loading...
+														</>
+													) : (
 														<>
 															<RotateCw size={14} className="mr-1.5" />
 															Local Render
 														</>
-													}
-													className="transition-all hover:shadow-sm"
-												/>
+													)}
+												</Button>
 											</renderFetcher.Form>
 
 											<remoteRenderFetcher.Form action="remote-render" method="post">
-												<LoadingButtonWithState
+												<Button
+													type="submit"
 													variant="outline"
 													size="sm"
-													state={remoteRenderFetcher.state}
-													idleText={
+													disabled={remoteRenderFetcher.state !== 'idle'}
+													className="transition-all hover:shadow-sm flex items-center gap-1.5"
+												>
+													{remoteRenderFetcher.state !== 'idle' ? (
+														<>
+															<RefreshCw size={14} className="mr-1.5 animate-spin" />
+															Loading...
+														</>
+													) : (
 														<>
 															<Globe size={14} className="mr-1.5" />
 															Remote Render
 														</>
-													}
-													className="transition-all hover:shadow-sm"
-												/>
+													)}
+												</Button>
 											</remoteRenderFetcher.Form>
 										</div>
 									</div>
@@ -413,17 +416,19 @@ export default function TranslateCommentPage() {
 												))}
 											</SelectContent>
 										</Select>
-										<LoadingButtonWithState
-											variant="secondary"
-											state={downloadCommentsFetcher.state}
-											idleText={
+										<Button type="submit" variant="secondary" disabled={downloadCommentsFetcher.state !== 'idle'} className="shadow-sm hover:shadow flex items-center gap-1.5">
+											{downloadCommentsFetcher.state !== 'idle' ? (
+												<>
+													<RefreshCw size={14} className="mr-1.5 animate-spin" />
+													Loading...
+												</>
+											) : (
 												<>
 													<Download size={14} className="mr-1.5" />
 													Download
 												</>
-											}
-											className="shadow-sm hover:shadow"
-										/>
+											)}
+										</Button>
 									</downloadCommentsFetcher.Form>
 								)}
 							</div>

@@ -1,4 +1,3 @@
-import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { ActionFunctionArgs } from '@remix-run/node'
 import { eq } from 'drizzle-orm'

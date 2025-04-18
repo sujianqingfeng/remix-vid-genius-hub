@@ -3,5 +3,30 @@ description: remix
 globs: *.tsx,*.ts
 alwaysApply: false
 ---
-- 项目使用 remix 开发，使用最新的Api，不要使用过时的 api
-- 如果需要一个action，需要提取成一个新的action文件
+# Remix Framework Guidelines
+
+## Core Principles
+- Project is built with Remix - always use the latest APIs and patterns
+- Avoid deprecated or legacy Remix APIs
+
+## File Structure & Organization
+- Use the app directory structure following Remix conventions
+- Route files should be placed in `app/routes` following the routing pattern
+- Shared components should be in `app/components`
+- Utility functions belong in `app/utils`
+
+## Actions & Loaders
+- Extract actions into separate files for better maintainability
+- Name action files with the pattern `{feature}.server.ts`
+- Use typed responses for all loaders and actions
+- Implement proper error handling in all actions and loaders
+
+## Forms & Data Handling
+- Use Remix Form components for data mutations
+- Implement proper client-side validation with server-side validation as backup
+- Use optimistic UI updates where appropriate
+
+## Performance
+- Properly split code using Remix's built-in code splitting
+- Implement proper caching strategies
+- Use resource routes for API-like functionality

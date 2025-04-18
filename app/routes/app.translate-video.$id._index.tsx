@@ -140,16 +140,6 @@ export default function TranslateVideoPage() {
 									Media Controls
 								</h3>
 								<div className="flex flex-wrap gap-4">
-									<downloadAudioFetcher.Form method="post" action="download-audio">
-										<LoadingButtonWithState
-											state={downloadAudioFetcher.state}
-											idleText="Download Audio"
-											className="gap-2 transition-colors hover:bg-primary/10 hover:text-primary hover:border-primary"
-											variant="outline"
-											icon={<FileAudio size={16} />}
-										/>
-									</downloadAudioFetcher.Form>
-
 									{translateVideo.source === 'download' && !playFile && (
 										<downloadVideoFetcher.Form action="/app/downloads/download-video" method="post">
 											{/* biome-ignore lint/style/noNonNullAssertion: <explanation> */}
@@ -163,6 +153,18 @@ export default function TranslateVideoPage() {
 												icon={<FileVideo size={16} />}
 											/>
 										</downloadVideoFetcher.Form>
+									)}
+
+									{!translateVideo.audioFilePath && (
+										<downloadAudioFetcher.Form method="post" action="download-audio">
+											<LoadingButtonWithState
+												state={downloadAudioFetcher.state}
+												idleText="Download Audio"
+												className="gap-2 transition-colors hover:bg-primary/10 hover:text-primary hover:border-primary"
+												variant="outline"
+												icon={<FileAudio size={16} />}
+											/>
+										</downloadAudioFetcher.Form>
 									)}
 
 									{translateVideo.audioFilePath && (
