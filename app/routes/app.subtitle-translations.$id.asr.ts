@@ -80,6 +80,8 @@ cp '${originalAudioPath}' '${wslAudioPath}'
 # Run whisper
 '${path.posix.join(wslProjectPath, 'build/bin/whisper-cli')}' \\
     -m '${path.posix.join(wslProjectPath, model === 'whisper-large' ? 'models/ggml-large-v3-turbo-q8_0.bin' : 'models/ggml-medium.bin')}' \\
+    -p 2 \\
+    -t 8 \\
     -f '${wslAudioPath}' \\
     -ml 1 \\
     -oj
@@ -128,7 +130,7 @@ chmod +x '${wslScriptPath}'`,
 		modelPath = model === 'whisper-large' ? path.join(whisperProjectPath, 'models/ggml-large-v3-turbo-q8_0.bin') : path.join(whisperProjectPath, 'models/ggml-medium.bin')
 		audioPath = subtitleTranslation.audioFilePath
 		spawnCommand = executablePath
-		spawnArgs = ['-m', modelPath, '-f', audioPath, '-ml', '1', '-oj']
+		spawnArgs = ['-p', '4', '-t', '8', '-m', modelPath, '-f', audioPath, '-ml', '1', '-oj']
 	}
 
 	try {
