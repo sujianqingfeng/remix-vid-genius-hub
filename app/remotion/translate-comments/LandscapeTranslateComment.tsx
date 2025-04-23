@@ -38,7 +38,7 @@ export default function LandscapeTranslateComment({ comments, title, playFile, v
 				</AbsoluteFill>
 
 				<AbsoluteFill>
-					<div className="absolute bottom-0 left-0 px-16 pb-8 h-[42%] w-full flex flex-col bg-gradient-to-t from-white/95 to-slate-50/90 backdrop-blur-sm border-t border-slate-200">
+					<div className="absolute bottom-0 left-0 px-16 pb-8 h-[42%] w-full flex flex-col">
 						<div className="text-xl leading-[20px] flex items-center gap-3 mb-4 text-slate-700 mt-6">
 							<div className="font-medium">
 								{currentComment?.author} ({currentComment?.publishedTime})
