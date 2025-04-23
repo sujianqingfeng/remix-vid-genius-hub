@@ -1,9 +1,7 @@
 {
 	"name": "remix-vid-genius-hub",
 	"private": true,
-	"sideEffects": [
-		"*.css"
-	],
+	"sideEffects": ["*.css"],
 	"type": "module",
 	"scripts": {
 		"build": "remix vite:build",
@@ -40,10 +38,10 @@
 		"@remix-run/node": "^2.16.2",
 		"@remix-run/react": "^2.16.2",
 		"@remix-run/serve": "^2.16.2",
-		"@remotion/bundler": "^4.0.286",
-		"@remotion/cli": "^4.0.286",
-		"@remotion/google-fonts": "^4.0.286",
-		"@remotion/media-parser": "^4.0.286",
+		"@remotion/bundler": "^4.0.289",
+		"@remotion/cli": "^4.0.289",
+		"@remotion/google-fonts": "^4.0.289",
+		"@remotion/media-parser": "^4.0.289",
 		"@tobyg74/tiktok-api-dl": "^1.2.3",
 		"ai": "^4.3.4",
 		"archiver": "^7.0.1",
@@ -60,7 +58,7 @@
 		"node-edge-tts": "^1.2.7",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
-		"remotion": "^4.0.286",
+		"remotion": "^4.0.289",
 		"tailwind-merge": "^2.5.5",
 		"tiny-invariant": "^1.3.3",
 		"undici": "^7.1.0",
@@ -70,8 +68,8 @@
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@remix-run/dev": "^2.16.2",
-		"@remotion/studio": "^4.0.286",
-		"@remotion/tailwind": "^4.0.286",
+		"@remotion/studio": "^4.0.289",
+		"@remotion/tailwind": "^4.0.289",
 		"@types/archiver": "^6.0.3",
 		"@types/react": "^18.3.12",
 		"@types/react-dom": "^18.3.1",
