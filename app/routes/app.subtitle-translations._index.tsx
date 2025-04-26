@@ -72,25 +72,11 @@ export default function SubtitleTranslationsPages() {
 									<Button variant="outline" size="sm" asChild>
 										<Link to={`/app/subtitle-translations/${translation.id}`}>View</Link>
 									</Button>
-									<AlertDialog>
-										<AlertDialogTrigger asChild>
-											<Button variant="destructive" size="sm">
-												Delete
-											</Button>
-										</AlertDialogTrigger>
-										<AlertDialogContent>
-											<AlertDialogHeader>
-												<AlertDialogTitle>Are you sure?</AlertDialogTitle>
-												<AlertDialogDescription>This action cannot be undone. This will permanently delete the translation and all its data.</AlertDialogDescription>
-											</AlertDialogHeader>
-											<AlertDialogFooter>
-												<AlertDialogCancel>Cancel</AlertDialogCancel>
-												<deleteFetcher.Form method="post" action={`/app/subtitle-translations/${translation.id}/delete`}>
-													<AlertDialogAction type="submit">Delete</AlertDialogAction>
-												</deleteFetcher.Form>
-											</AlertDialogFooter>
-										</AlertDialogContent>
-									</AlertDialog>
+									<deleteFetcher.Form method="post" action={`/app/subtitle-translations/${translation.id}/delete`} style={{ display: 'inline' }}>
+										<Button variant="destructive" size="sm" type="submit">
+											Delete
+										</Button>
+									</deleteFetcher.Form>
 								</TableCell>
 							</TableRow>
 						))
