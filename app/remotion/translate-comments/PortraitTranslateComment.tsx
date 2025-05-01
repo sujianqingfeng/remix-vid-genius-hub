@@ -31,9 +31,11 @@ export default function PortraitTranslateComment({ comments, title, playFile, vi
 					<div className="absolute top-0 left-[45%] w-[55%] flex flex-col p-8">
 						<div className="text-[#ee3f4d]">
 							<div className="space-y-4">
-								<div className="flex items-center gap-3 text-3xl font-medium bg-red-50 px-4 py-2 rounded-lg w-fit">
-									<span>播放量：{viewCountText}</span>
-								</div>
+								{viewCountText && (
+									<div className="flex items-center gap-3 text-3xl font-medium bg-red-50 px-4 py-2 rounded-lg w-fit">
+										<span>播放量：{viewCountText}</span>
+									</div>
+								)}
 
 								<h1 className="text-5xl font-bold leading-[1.4] tracking-tight">{title}</h1>
 							</div>
