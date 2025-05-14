@@ -1,6 +1,7 @@
 import createChatGPT from './chatgpt'
 import createDeepSeek from './deep-seek'
 import createGemini from './gemini'
+import createQWen from './qwen'
 import createR1 from './r1'
 import { createVolcanoEngineDeepseekV3 } from './volcengine'
 
@@ -9,8 +10,8 @@ const deepSeek = createDeepSeek({ apiKey: process.env.DEEP_SEEK_API_KEY || '' })
 const r1 = createR1({ apiKey: process.env.SILICON_FLOW_API_KEY || '' })
 const volcanoEngineDeepseekV3 = createVolcanoEngineDeepseekV3({ apiKey: process.env.DOU_BAO_API_KEY || '' })
 const gemini = createGemini({ apiKey: process.env.OPEN_AI_API_KEY || '' })
-
-export type AiModel = 'deepseek' | 'openai' | 'r1' | 'volcanoEngineDeepseekV3' | 'gemini'
+const qwen = createQWen({ apiKey: process.env.QWEN_API_KEY || '' })
+export type AiModel = 'deepseek' | 'openai' | 'r1' | 'volcanoEngineDeepseekV3' | 'gemini' | 'qwen'
 
 type AiGenerateTextOptions = {
 	systemPrompt: string
@@ -18,7 +19,7 @@ type AiGenerateTextOptions = {
 	model: AiModel
 	maxTokens?: number
 }
-export async function aiGenerateText({ systemPrompt, prompt, model, maxTokens = 2000 }: AiGenerateTextOptions): Promise<string> {
+export async function aiGenerateText({ systemPrompt, prompt, model, maxTokens }: AiGenerateTextOptions): Promise<string> {
 	const options = {
 		system: systemPrompt,
 		prompt: prompt,
@@ -41,10 +42,13 @@ export async function aiGenerateText({ systemPrompt, prompt, model, maxTokens = 
 		case 'gemini': {
 			return gemini.generateText(options)
 		}
+		case 'qwen': {
+			return qwen.generateText(options)
+		}
 		default: {
 			throw new Error(`Unsupported model: ${model}`)
 		}
 	}
 }
 
-export { deepSeek, chatGPT, r1, volcanoEngineDeepseekV3, gemini }
+export { deepSeek, chatGPT, r1, volcanoEngineDeepseekV3, gemini, qwen }

@@ -2,8 +2,8 @@ import type { ActionFunctionArgs } from '@remix-run/node'
 import { eq } from 'drizzle-orm'
 import invariant from 'tiny-invariant'
 import { db, schema } from '~/lib/drizzle'
-import type { Sentence } from '~/types'
-import type { AiModel } from '~/utils/ai'
+import type { Sentence, WordWithTime } from '~/types'
+import { type AiModel, aiGenerateText } from '~/utils/ai'
 import { alignWordsAndSentences, alignWordsAndSentencesByAI, buildAlignWordsAndSentencesPrompt, splitTextToSentences, splitTextToSentencesWithAI } from '~/utils/align'
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -35,7 +35,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	}, '')
 
 	if (splitSentencesMethod === 'ai') {
-		sentences = await splitTextToSentencesWithAI(text, model)
+		sentences = await splitSentence(text, model)
 		console.log('🚀 ~ action ~ sentences:', sentences)
 		console.log(`AI split text into ${sentences.length} sentences using model: ${model}`)
 	} else {
@@ -47,7 +47,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		subtitles = await alignWordsAndSentencesByAI(withTimeWords, sentences)
 		console.log(`AI aligned ${subtitles.length} sentences`)
 	} else {
-		subtitles = alignWordsAndSentences(withTimeWords, sentences)
+		subtitles = await alignWordsToSentences(withTimeWords, sentences)
 		console.log(`Code aligned ${subtitles.length} sentences`)
 	}
 

@@ -83,7 +83,7 @@ export default function Cover({ coverDurationInSeconds, title, author, isSplit =
 							<div className="absolute -bottom-2 -right-2 w-6 h-6 border-b-4 border-r-4 border-slate-300/70 rounded-br-xl" style={{ opacity: authorOpacity }} />
 
 							{/* Title 字体优化 */}
-							<div className="text-[2.5rem] sm:text-[4rem] md:text-[5rem] font-extrabold leading-[1.3] text-rose-400 ">{processedTitle}</div>
+							<div className="text-[2.5rem] sm:text-[4rem] md:text-[5rem] font-extrabold leading-[1.3] text-rose-500 ">{processedTitle}</div>
 
 							{/* Accent line 优化 */}
 							<div
