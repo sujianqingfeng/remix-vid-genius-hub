@@ -19,6 +19,7 @@ export default function AiModelSelect({ name, defaultValue, onValueChange }: AiM
 				<SelectItem value="volcanoEngineDeepseekV3">VolcanoEngine DeepSeek</SelectItem>
 				<SelectItem value="openai">OpenAI</SelectItem>
 				<SelectItem value="gemini">Gemini</SelectItem>
+				<SelectItem value="qwen">Qwen</SelectItem>
 			</SelectContent>
 		</Select>
 	)

@@ -177,7 +177,7 @@ export function AlignmentTabContent({ subtitleTranslation }: AlignmentTabContent
 									<label htmlFor="model" className="block text-sm font-medium">
 										AI Model
 									</label>
-									<AiModelSelect name="model" defaultValue="deepseek" />
+									<AiModelSelect name="model" defaultValue="qwen" />
 									<p className="text-xs text-muted-foreground mt-1">Used when AI methods are selected</p>
 								</div>
 							)}

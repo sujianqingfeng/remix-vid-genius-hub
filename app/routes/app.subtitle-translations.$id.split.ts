@@ -3,14 +3,14 @@ import { eq } from 'drizzle-orm'
 import invariant from 'tiny-invariant'
 import { db, schema } from '~/lib/drizzle'
 import { type AiModel, aiGenerateText } from '~/utils/ai'
-import { splitTextToSentences, splitTextToSentencesWithAI } from '~/utils/align'
+import { splitTextToSentences } from '~/utils/align'
 
 /**
  * 使用 AI 将文本分割为适合字幕的短句
  * @param words 词数组
  * @param model AI模型名
  */
-async function splitSentence(text: string, model: string): Promise<string[]> {
+async function splitSentence(text: string, model: AiModel): Promise<string[]> {
 	console.log('🚀 ~ splitSentence ~ text:', text)
 	const systemPrompt = `【任务】将文本分割成适合字幕显示的短句。
 
@@ -38,7 +38,7 @@ async function splitSentence(text: string, model: string): Promise<string[]> {
 	const textResult = await aiGenerateText({
 		systemPrompt: systemPrompt,
 		prompt: userPrompt,
-		model: 'qwen',
+		model,
 	})
 
 	if (!textResult) {
@@ -85,7 +85,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		console.log(`Code split text into ${sentences.length} sentences`)
 	}
 
-	// Store the split sentences in the database for later alignment
 	await db
 		.update(schema.subtitleTranslations)
 		.set({

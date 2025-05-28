@@ -5,7 +5,7 @@ import type { z } from 'zod'
 
 const API_BASE_URL = 'https://api.chatanywhere.tech'
 
-const model = 'gemini-2.5-pro-exp-03-25'
+const model = 'gemini-2.5-flash-preview-04-17'
 
 function createGemini({ apiKey }: { apiKey: string }) {
 	const openai = createOpenAI({
