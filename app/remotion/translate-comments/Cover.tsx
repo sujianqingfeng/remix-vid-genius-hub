@@ -103,13 +103,13 @@ export default function Cover({ coverDurationInSeconds, title, author, isSplit =
 
 					{/* Main title */}
 					<div
-						className="text-center mb-12"
+						className="text-center mb-12 mx-32"
 						style={{
 							opacity: titleOpacity,
 							transform: `scale(${titleScale})`,
 						}}
 					>
-						<h1 className="text-6xl sm:text-7xl md:text-8xl font-black text-rose-500 mb-6 leading-tight tracking-tight">{processedTitle}</h1>
+						<h1 className="text-6xl sm:text-7xl md:text-8xl font-black text-rose-500 mb-6 leading-normal tracking-tight">{processedTitle}</h1>
 					</div>
 
 					{/* Subtitle section */}
