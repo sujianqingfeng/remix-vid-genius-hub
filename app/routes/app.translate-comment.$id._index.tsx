@@ -4,7 +4,28 @@ import { Link, useFetcher, useLoaderData } from '@remix-run/react'
 import { Player } from '@remotion/player'
 import { format } from 'date-fns'
 import getVideoId from 'get-video-id'
-import { ArrowDownToLine, Copy, Download, ExternalLink, FileDown, FileText, Globe, Info, Languages, Play, RefreshCw, RotateCw, Save, ShieldAlert, Trash, Video } from 'lucide-react'
+import {
+	ArrowDownToLine,
+	Calendar,
+	Clock,
+	Copy,
+	Download,
+	ExternalLink,
+	Eye,
+	FileDown,
+	FileText,
+	Globe,
+	Info,
+	Languages,
+	Play,
+	RefreshCw,
+	RotateCw,
+	Save,
+	ShieldAlert,
+	Trash,
+	User,
+	Video,
+} from 'lucide-react'
 import invariant from 'tiny-invariant'
 import AiModelSelect from '~/components/AiModelSelect'
 import BackPrevious from '~/components/BackPrevious'
@@ -12,7 +33,7 @@ import LoadingButtonWithState from '~/components/LoadingButtonWithState'
 import Comments from '~/components/business/translate-comment/Comments'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Separator } from '~/components/ui/separator'
@@ -93,348 +114,451 @@ export default function TranslateCommentPage() {
 	}
 
 	return (
-		<div className="h-[calc(100vh-2rem)] overflow-hidden bg-gradient-to-br from-background via-background to-muted/20 px-6 py-5">
-			<div className="flex items-center justify-between mb-5">
-				<div className="flex items-center gap-3">
-					<BackPrevious />
-					<h1 className="text-xl font-semibold text-foreground/90">Translate Comment</h1>
-					{translateComment.mode && (
-						<Badge variant="outline" className="ml-2 capitalize">
-							{translateComment.mode}
-						</Badge>
-					)}
+		<div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30">
+			{/* Header */}
+			<div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200/50 dark:border-slate-700/50">
+				<div className="container mx-auto px-6 py-4">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-4">
+							<BackPrevious />
+							<div className="flex items-center gap-3">
+								<div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+									<Languages className="w-4 h-4 text-white" />
+								</div>
+								<div>
+									<h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Translate Comment</h1>
+									<p className="text-sm text-slate-500 dark:text-slate-400">Video Comment Translation Studio</p>
+								</div>
+							</div>
+							{translateComment.mode && (
+								<Badge variant="outline" className="capitalize bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
+									{translateComment.mode}
+								</Badge>
+							)}
+						</div>
+						{translateComment.outputFilePath && (
+							<Link to="local-download" target="_blank" rel="noopener noreferrer">
+								<Button className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg">
+									<ArrowDownToLine size={16} className="mr-2" />
+									Download Output
+								</Button>
+							</Link>
+						)}
+					</div>
 				</div>
-				{translateComment.outputFilePath && (
-					<Link to="local-download" target="_blank" rel="noopener noreferrer">
-						<Button variant="outline" size="sm" className="flex items-center gap-1 border-primary/20 text-primary hover:text-primary hover:bg-primary/10">
-							<ArrowDownToLine size={14} className="mr-1" />
-							Download Output
-						</Button>
-					</Link>
-				)}
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-[1fr,420px] gap-6 h-[calc(100vh-8rem)]">
-				{/* Left Column */}
-				<div className="space-y-6 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-muted-foreground/10 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/20">
-					{/* Video Player */}
-					<Card className="border-muted/30 shadow-sm">
-						<div className="relative group">
-							<Player
-								component={getRemotionTemplateComponent(translateComment.mode)}
-								inputProps={{
-									comments: render.remotionVideoComments,
-									title: translateComment.translatedTitle || '',
-									playFile,
-									viewCountText: download.viewCountText || '',
-									coverDurationInSeconds: translateComment.coverDurationInSeconds,
-									author: download.author || '',
-								}}
-								durationInFrames={render.totalDurationInFrames}
-								compositionWidth={render.compositionWidth}
-								compositionHeight={render.compositionHeight}
-								fps={translateComment.fps}
-								style={{
-									width: '100%',
-									height: 'auto',
-									aspectRatio: `${render.compositionWidth} / ${render.compositionHeight}`,
-								}}
-								controls
-								acknowledgeRemotionLicense
-							/>
-						</div>
-
-						{download.title && (
-							<CardFooter className="py-3 px-4 bg-muted/5">
-								<p className="text-sm text-muted-foreground truncate">{download.title}</p>
-							</CardFooter>
-						)}
-					</Card>
-
-					{/* Video Info Card */}
-					<Card className="border-muted/30 shadow-sm">
-						<CardHeader className="pb-2">
-							<h3 className="text-base font-medium">Video Information</h3>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							{/* Copyable Sections */}
-							<div className="space-y-2">
-								<button
-									type="button"
-									className="flex items-start gap-3 group cursor-pointer w-full text-left hover:bg-accent/60 p-2.5 rounded-md transition-colors"
-									onClick={() => onCopy(publishTitle)}
-									onKeyDown={(e) => e.key === 'Enter' && onCopy(publishTitle)}
-								>
-									<Copy size={16} className="opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 text-primary" />
-									<p className="text-sm font-medium">{publishTitle}</p>
-								</button>
-
-								<button
-									type="button"
-									className="flex items-start gap-3 group cursor-pointer w-full text-left hover:bg-accent/60 p-2.5 rounded-md transition-colors"
-									onClick={() => onCopy(desc)}
-									onKeyDown={(e) => e.key === 'Enter' && onCopy(desc)}
-								>
-									<Copy size={16} className="opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 text-primary" />
-									<p className="text-sm text-muted-foreground whitespace-pre-line">{desc}</p>
-								</button>
+			<div className="container mx-auto px-6 py-8">
+				<div className="grid grid-cols-1 xl:grid-cols-[1fr,420px] gap-8">
+					{/* Left Column */}
+					<div className="space-y-8">
+						{/* Video Player */}
+						<Card className="overflow-hidden border-0 shadow-xl bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm">
+							<div className="relative group">
+								<div className="bg-gradient-to-b from-slate-900/5 to-transparent absolute inset-0 z-10 pointer-events-none rounded-t-lg" />
+								<Player
+									component={getRemotionTemplateComponent(translateComment.mode)}
+									inputProps={{
+										comments: render.remotionVideoComments,
+										title: translateComment.translatedTitle || '',
+										playFile,
+										viewCountText: download.viewCountText || '',
+										coverDurationInSeconds: translateComment.coverDurationInSeconds,
+										author: download.author || '',
+									}}
+									durationInFrames={render.totalDurationInFrames}
+									compositionWidth={render.compositionWidth}
+									compositionHeight={render.compositionHeight}
+									fps={translateComment.fps}
+									style={{
+										width: '100%',
+										height: 'auto',
+										aspectRatio: `${render.compositionWidth} / ${render.compositionHeight}`,
+									}}
+									controls
+									acknowledgeRemotionLicense
+								/>
 							</div>
 
-							<Separator />
-
-							{/* Mode & Title Update */}
-							<updateFetcher.Form method="post" action="update" className="p-2 rounded-lg">
-								<div className="flex gap-3 items-center">
-									<Select name="mode" defaultValue={translateComment.mode}>
-										<SelectTrigger className="w-[120px]">
-											<SelectValue placeholder="Select mode" />
-										</SelectTrigger>
-										<SelectContent>
-											{commentModeOptions.map((item) => (
-												<SelectItem key={item.value} value={item.value}>
-													{item.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-
-									<Input className="flex-1" name="translatedTitle" defaultValue={translateComment.translatedTitle || ''} placeholder="Translated Title" />
-
-									<Button type="submit" disabled={updateFetcher.state !== 'idle'} className="flex items-center gap-1.5">
-										{updateFetcher.state !== 'idle' ? (
-											<>
-												<RefreshCw size={14} className="mr-1.5 animate-spin" />
-												Updating...
-											</>
-										) : (
-											<>
-												<Save size={14} className="mr-1.5" />
-												Update
-											</>
+							{download.title && (
+								<CardFooter className="bg-gradient-to-r from-slate-50 to-blue-50/50 dark:from-slate-800 dark:to-blue-900/20 border-t border-slate-200/50 dark:border-slate-700/50">
+									<div className="flex items-center gap-3 w-full">
+										<Video className="w-5 h-5 text-slate-500" />
+										<p className="text-sm text-slate-700 dark:text-slate-300 truncate flex-1 font-medium">{download.title}</p>
+										{download.viewCountText && (
+											<div className="flex items-center gap-1 text-xs text-slate-500">
+												<Eye className="w-3 h-3" />
+												{download.viewCountText}
+											</div>
 										)}
-									</Button>
+									</div>
+								</CardFooter>
+							)}
+						</Card>
+
+						{/* Video Information */}
+						<Card className="border-0 shadow-lg bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm">
+							<CardHeader className="pb-4">
+								<CardTitle className="flex items-center gap-2 text-lg">
+									<Info className="w-5 h-5 text-blue-600" />
+									Video Information
+								</CardTitle>
+							</CardHeader>
+							<CardContent className="space-y-6">
+								{/* Video Stats */}
+								<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+									<div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 p-3 rounded-lg border border-blue-100 dark:border-blue-800/50">
+										<div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 text-xs font-medium mb-1">
+											<User className="w-3 h-3" />
+											AUTHOR
+										</div>
+										<p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{download.author || 'Unknown'}</p>
+									</div>
+									<div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50 p-3 rounded-lg border border-emerald-100 dark:border-emerald-800/50">
+										<div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-xs font-medium mb-1">
+											<FileText className="w-3 h-3" />
+											COMMENTS
+										</div>
+										<p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{commentsCount}</p>
+									</div>
+									<div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/50 dark:to-orange-950/50 p-3 rounded-lg border border-amber-100 dark:border-amber-800/50">
+										<div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 text-xs font-medium mb-1">
+											<Clock className="w-3 h-3" />
+											FPS
+										</div>
+										<p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{translateComment.fps}</p>
+									</div>
+									<div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50 p-3 rounded-lg border border-purple-100 dark:border-purple-800/50">
+										<div className="flex items-center gap-2 text-purple-700 dark:text-purple-300 text-xs font-medium mb-1">
+											<Calendar className="w-3 h-3" />
+											UPDATED
+										</div>
+										<p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{currentTime}</p>
+									</div>
 								</div>
-							</updateFetcher.Form>
-						</CardContent>
+
+								{/* Copyable Content */}
+								<div className="space-y-3">
+									<div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Publish Content</div>
+									<button
+										type="button"
+										className="group relative w-full text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all duration-200"
+										onClick={() => onCopy(publishTitle)}
+									>
+										<div className="flex items-start gap-3">
+											<Copy className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors mt-0.5 flex-shrink-0" />
+											<div className="flex-1 min-w-0">
+												<p className="text-sm font-medium text-slate-900 dark:text-slate-100 break-words">{publishTitle}</p>
+												<p className="text-xs text-slate-500 mt-1">Click to copy title</p>
+											</div>
+										</div>
+									</button>
+
+									<button
+										type="button"
+										className="group relative w-full text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all duration-200"
+										onClick={() => onCopy(desc)}
+									>
+										<div className="flex items-start gap-3">
+											<Copy className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors mt-0.5 flex-shrink-0" />
+											<div className="flex-1 min-w-0">
+												<p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line break-words">{desc}</p>
+												<p className="text-xs text-slate-500 mt-2">Click to copy description</p>
+											</div>
+										</div>
+									</button>
+								</div>
+
+								<Separator className="bg-slate-200 dark:bg-slate-700" />
+
+								{/* Settings Update */}
+								<updateFetcher.Form
+									method="post"
+									action="update"
+									className="p-4 bg-gradient-to-r from-slate-50 to-blue-50/50 dark:from-slate-800/50 dark:to-blue-900/20 rounded-lg border border-slate-200/50 dark:border-slate-700/50"
+								>
+									<div className="flex gap-3 items-end">
+										<div className="flex-shrink-0">
+											<label htmlFor="mode-select" className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 block">
+												MODE
+											</label>
+											<Select name="mode" defaultValue={translateComment.mode}>
+												<SelectTrigger id="mode-select" className="w-[140px] bg-white dark:bg-slate-900">
+													<SelectValue placeholder="Select mode" />
+												</SelectTrigger>
+												<SelectContent>
+													{commentModeOptions.map((item) => (
+														<SelectItem key={item.value} value={item.value}>
+															{item.label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										</div>
+
+										<div className="flex-1">
+											<label htmlFor="translated-title" className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2 block">
+												TRANSLATED TITLE
+											</label>
+											<Input
+												id="translated-title"
+												name="translatedTitle"
+												defaultValue={translateComment.translatedTitle || ''}
+												placeholder="Enter translated title..."
+												className="bg-white dark:bg-slate-900"
+											/>
+										</div>
+
+										<Button type="submit" disabled={updateFetcher.state !== 'idle'} className="bg-blue-600 hover:bg-blue-700 text-white">
+											{updateFetcher.state !== 'idle' ? (
+												<>
+													<RefreshCw size={16} className="mr-2 animate-spin" />
+													Updating...
+												</>
+											) : (
+												<>
+													<Save size={16} className="mr-2" />
+													Update
+												</>
+											)}
+										</Button>
+									</div>
+								</updateFetcher.Form>
+							</CardContent>
+						</Card>
 
 						{/* Action Controls */}
-						<CardFooter className="flex-col gap-6 pt-0">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-								{/* Download Group */}
-								<div className="bg-muted/5 p-3 rounded-lg space-y-3 border border-muted/10 hover:border-muted/20 transition-colors">
-									<h3 className="text-xs uppercase font-medium text-muted-foreground tracking-wide">Download</h3>
-									<div className="flex flex-wrap gap-2">
-										<downloadInfoFetcher.Form action="/app/downloads/download-info" method="post">
+						<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+							{/* Download Actions */}
+							<Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/50">
+								<CardHeader className="pb-3">
+									<CardTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-base">
+										<Download className="w-5 h-5" />
+										Download
+									</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-3">
+									<downloadInfoFetcher.Form action="/app/downloads/download-info" method="post">
+										<input name="id" value={dId} hidden readOnly />
+										<LoadingButtonWithState
+											variant="outline"
+											size="sm"
+											state={downloadInfoFetcher.state}
+											idleText="Info"
+											icon={<Info size={14} />}
+											className="w-full bg-white/50 hover:bg-white dark:bg-slate-800/50 dark:hover:bg-slate-800"
+										/>
+									</downloadInfoFetcher.Form>
+
+									{download.author && !download.filePath && (
+										<downloadVideoFetcher.Form action="/app/downloads/download-video" method="post">
 											<input name="id" value={dId} hidden readOnly />
 											<LoadingButtonWithState
 												variant="outline"
 												size="sm"
-												state={downloadInfoFetcher.state}
-												idleText={
-													<>
-														<Info size={14} className="mr-1.5" />
-														Info
-													</>
-												}
-												className="transition-all hover:shadow-sm"
+												state={downloadVideoFetcher.state}
+												idleText="Video"
+												icon={<Video size={14} />}
+												className="w-full bg-white/50 hover:bg-white dark:bg-slate-800/50 dark:hover:bg-slate-800"
 											/>
-										</downloadInfoFetcher.Form>
+										</downloadVideoFetcher.Form>
+									)}
+								</CardContent>
+							</Card>
 
-										{download.author && !download.filePath && (
-											<downloadVideoFetcher.Form action="/app/downloads/download-video" method="post">
-												<input name="id" value={dId} hidden readOnly />
-												<LoadingButtonWithState
-													variant="outline"
-													size="sm"
-													state={downloadVideoFetcher.state}
-													idleText={
-														<>
-															<Video size={14} className="mr-1.5" />
-															Video
-														</>
-													}
-													className="transition-all hover:shadow-sm"
-												/>
-											</downloadVideoFetcher.Form>
-										)}
-									</div>
-								</div>
-
-								{/* Translation & Check Group */}
-								<div className="bg-muted/5 p-3 rounded-lg space-y-3 border border-muted/10 hover:border-muted/20 transition-colors">
-									<h3 className="text-xs uppercase font-medium text-muted-foreground tracking-wide">Translation</h3>
-									<div className="flex flex-wrap gap-2">
-										<translateFetcher.Form action="translate" method="post">
-											<div className="flex gap-2">
-												<AiModelSelect name="aiModel" defaultValue="deepseek" />
-												<Button
-													type="submit"
-													variant="outline"
-													size="sm"
-													disabled={translateFetcher.state !== 'idle'}
-													className="transition-all hover:shadow-sm flex items-center gap-1.5"
-												>
-													{translateFetcher.state !== 'idle' ? (
-														<>
-															<RefreshCw size={14} className="mr-1.5 animate-spin" />
-															Loading...
-														</>
-													) : (
-														<>
-															<Languages size={14} className="mr-1.5" />
-															Translate
-														</>
-													)}
-												</Button>
-											</div>
-										</translateFetcher.Form>
-
-										{commentsCount > 0 && (
-											<sensitiveCheckFetcher.Form method="post" action="check-sensitive">
-												<Button
-													type="submit"
-													variant="outline"
-													size="sm"
-													disabled={sensitiveCheckFetcher.state !== 'idle'}
-													className="transition-all hover:shadow-sm flex items-center gap-1.5"
-												>
-													{sensitiveCheckFetcher.state !== 'idle' ? (
-														<>
-															<RefreshCw size={14} className="mr-1.5 animate-spin" />
-															Loading...
-														</>
-													) : (
-														<>
-															<ShieldAlert size={14} className="mr-1.5" />
-															Check Sensitive
-														</>
-													)}
-												</Button>
-											</sensitiveCheckFetcher.Form>
-										)}
-									</div>
-								</div>
-
-								{/* Render Group */}
-								{download.author && download.filePath && (
-									<div className="bg-muted/5 p-3 rounded-lg space-y-3 border border-muted/10 hover:border-muted/20 transition-colors md:col-span-2">
-										<h3 className="text-xs uppercase font-medium text-muted-foreground tracking-wide">Render & Output</h3>
-										<div className="flex flex-wrap gap-2">
-											<renderFetcher.Form action="render" method="post">
-												<Button
-													type="submit"
-													variant="outline"
-													size="sm"
-													disabled={renderFetcher.state !== 'idle'}
-													className="transition-all hover:shadow-sm flex items-center gap-1.5"
-												>
-													{renderFetcher.state !== 'idle' ? (
-														<>
-															<RefreshCw size={14} className="mr-1.5 animate-spin" />
-															Loading...
-														</>
-													) : (
-														<>
-															<RotateCw size={14} className="mr-1.5" />
-															Local Render
-														</>
-													)}
-												</Button>
-											</renderFetcher.Form>
-
-											<remoteRenderFetcher.Form action="remote-render" method="post">
-												<Button
-													type="submit"
-													variant="outline"
-													size="sm"
-													disabled={remoteRenderFetcher.state !== 'idle'}
-													className="transition-all hover:shadow-sm flex items-center gap-1.5"
-												>
-													{remoteRenderFetcher.state !== 'idle' ? (
-														<>
-															<RefreshCw size={14} className="mr-1.5 animate-spin" />
-															Loading...
-														</>
-													) : (
-														<>
-															<Globe size={14} className="mr-1.5" />
-															Remote Render
-														</>
-													)}
-												</Button>
-											</remoteRenderFetcher.Form>
-										</div>
-									</div>
-								)}
-							</div>
-						</CardFooter>
-					</Card>
-				</div>
-
-				{/* Right Column - Comments */}
-				<Card className="border-muted/30 h-full overflow-hidden flex flex-col shadow-sm">
-					<CardHeader className="px-5 py-4 border-b bg-muted/5 flex flex-row items-center justify-between space-y-0">
-						<div className="flex items-center gap-2">
-							<h3 className="font-medium text-lg">Comments</h3>
-							{commentsCount > 0 && (
-								<Badge variant="secondary" className="text-xs px-2.5 py-0.5">
-									{commentsCount}
-								</Badge>
-							)}
-						</div>
-						{commentsCount > 0 && (
-							<deleteFetcher.Form action="delete-comment" method="post">
-								<Button variant="ghost" size="sm" className="hover:bg-destructive/10 hover:text-destructive text-destructive/80 h-8">
-									<Trash size={14} className="mr-1.5" />
-									Delete All
-								</Button>
-							</deleteFetcher.Form>
-						)}
-					</CardHeader>
-					<div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/10 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/20">
-						{commentsCount > 0 ? (
-							<div className="p-5">
-								<Comments comments={translateComment.comments ?? []} />
-							</div>
-						) : (
-							<div className="flex flex-col gap-4 items-center justify-center h-full text-center p-5">
-								<div className="bg-muted/10 w-16 h-16 rounded-full flex items-center justify-center mb-2">
-									<FileText className="w-8 h-8 text-muted-foreground/50" />
-								</div>
-								<p className="text-muted-foreground">No comments available</p>
-								{download.author && (
-									<downloadCommentsFetcher.Form action="download-comments" method="post" className="flex gap-2 mt-2">
-										<Select name="pageCount" defaultValue="3">
-											<SelectTrigger className="w-24">
-												<SelectValue placeholder="Pages" />
-											</SelectTrigger>
-											<SelectContent>
-												{Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
-													<SelectItem key={num} value={num.toString()}>
-														{num} {num === 1 ? 'page' : 'pages'}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-										<Button type="submit" variant="secondary" disabled={downloadCommentsFetcher.state !== 'idle'} className="shadow-sm hover:shadow flex items-center gap-1.5">
-											{downloadCommentsFetcher.state !== 'idle' ? (
+							{/* Translation Actions */}
+							<Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50">
+								<CardHeader className="pb-3">
+									<CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-300 text-base">
+										<Languages className="w-5 h-5" />
+										Translation
+									</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-3">
+									<translateFetcher.Form action="translate" method="post" className="space-y-3">
+										<AiModelSelect name="aiModel" defaultValue="deepseek" />
+										<Button
+											type="submit"
+											variant="outline"
+											size="sm"
+											disabled={translateFetcher.state !== 'idle'}
+											className="w-full bg-white/50 hover:bg-white dark:bg-slate-800/50 dark:hover:bg-slate-800"
+										>
+											{translateFetcher.state !== 'idle' ? (
 												<>
-													<RefreshCw size={14} className="mr-1.5 animate-spin" />
+													<RefreshCw size={14} className="mr-2 animate-spin" />
 													Loading...
 												</>
 											) : (
 												<>
-													<Download size={14} className="mr-1.5" />
-													Download
+													<Languages size={14} className="mr-2" />
+													Translate
 												</>
 											)}
 										</Button>
-									</downloadCommentsFetcher.Form>
+									</translateFetcher.Form>
+
+									{commentsCount > 0 && (
+										<sensitiveCheckFetcher.Form method="post" action="check-sensitive">
+											<Button
+												type="submit"
+												variant="outline"
+												size="sm"
+												disabled={sensitiveCheckFetcher.state !== 'idle'}
+												className="w-full bg-white/50 hover:bg-white dark:bg-slate-800/50 dark:hover:bg-slate-800"
+											>
+												{sensitiveCheckFetcher.state !== 'idle' ? (
+													<>
+														<RefreshCw size={14} className="mr-2 animate-spin" />
+														Loading...
+													</>
+												) : (
+													<>
+														<ShieldAlert size={14} className="mr-2" />
+														Check Sensitive
+													</>
+												)}
+											</Button>
+										</sensitiveCheckFetcher.Form>
+									)}
+								</CardContent>
+							</Card>
+
+							{/* Render Actions */}
+							{download.author && download.filePath && (
+								<Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/50 dark:to-pink-950/50">
+									<CardHeader className="pb-3">
+										<CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300 text-base">
+											<RotateCw className="w-5 h-5" />
+											Render
+										</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-3">
+										<renderFetcher.Form action="render" method="post">
+											<Button
+												type="submit"
+												variant="outline"
+												size="sm"
+												disabled={renderFetcher.state !== 'idle'}
+												className="w-full bg-white/50 hover:bg-white dark:bg-slate-800/50 dark:hover:bg-slate-800"
+											>
+												{renderFetcher.state !== 'idle' ? (
+													<>
+														<RefreshCw size={14} className="mr-2 animate-spin" />
+														Loading...
+													</>
+												) : (
+													<>
+														<RotateCw size={14} className="mr-2" />
+														Local Render
+													</>
+												)}
+											</Button>
+										</renderFetcher.Form>
+
+										<remoteRenderFetcher.Form action="remote-render" method="post">
+											<Button
+												type="submit"
+												variant="outline"
+												size="sm"
+												disabled={remoteRenderFetcher.state !== 'idle'}
+												className="w-full bg-white/50 hover:bg-white dark:bg-slate-800/50 dark:hover:bg-slate-800"
+											>
+												{remoteRenderFetcher.state !== 'idle' ? (
+													<>
+														<RefreshCw size={14} className="mr-2 animate-spin" />
+														Loading...
+													</>
+												) : (
+													<>
+														<Globe size={14} className="mr-2" />
+														Remote Render
+													</>
+												)}
+											</Button>
+										</remoteRenderFetcher.Form>
+									</CardContent>
+								</Card>
+							)}
+						</div>
+					</div>
+
+					{/* Right Column - Comments */}
+					<Card className="border-0 shadow-xl bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm h-[calc(100vh-12rem)] flex flex-col">
+						<CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/50 dark:from-slate-800/50 dark:to-blue-900/20 border-b border-slate-200/50 dark:border-slate-700/50 flex flex-row items-center justify-between space-y-0 py-4">
+							<div className="flex items-center gap-3">
+								<div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+									<FileText className="w-4 h-4 text-white" />
+								</div>
+								<div>
+									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Comments</h3>
+									{commentsCount > 0 && <p className="text-xs text-slate-500 dark:text-slate-400">{commentsCount} comments available</p>}
+								</div>
+								{commentsCount > 0 && (
+									<Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+										{commentsCount}
+									</Badge>
 								)}
 							</div>
-						)}
-					</div>
-				</Card>
+							{commentsCount > 0 && (
+								<deleteFetcher.Form action="delete-comment" method="post">
+									<Button variant="ghost" size="sm" className="hover:bg-red-50 hover:text-red-600 text-red-500 dark:hover:bg-red-950 dark:hover:text-red-400">
+										<Trash size={14} className="mr-2" />
+										Delete All
+									</Button>
+								</deleteFetcher.Form>
+							)}
+						</CardHeader>
+						<div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
+							{commentsCount > 0 ? (
+								<div className="p-6">
+									<Comments comments={translateComment.comments ?? []} />
+								</div>
+							) : (
+								<div className="flex flex-col items-center justify-center h-full text-center p-8">
+									<div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 rounded-full flex items-center justify-center mb-4">
+										<FileText className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+									</div>
+									<h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">No Comments Yet</h3>
+									<p className="text-slate-500 dark:text-slate-400 mb-6 max-w-sm">Download comments from the video to start the translation process.</p>
+									{download.author && (
+										<downloadCommentsFetcher.Form action="download-comments" method="post" className="flex flex-col gap-3 w-full max-w-sm">
+											<Select name="pageCount" defaultValue="3">
+												<SelectTrigger className="bg-white dark:bg-slate-900">
+													<SelectValue placeholder="Select pages" />
+												</SelectTrigger>
+												<SelectContent>
+													{Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+														<SelectItem key={num} value={num.toString()}>
+															{num} {num === 1 ? 'page' : 'pages'}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+											<Button
+												type="submit"
+												disabled={downloadCommentsFetcher.state !== 'idle'}
+												className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+											>
+												{downloadCommentsFetcher.state !== 'idle' ? (
+													<>
+														<RefreshCw size={16} className="mr-2 animate-spin" />
+														Loading...
+													</>
+												) : (
+													<>
+														<Download size={16} className="mr-2" />
+														Download Comments
+													</>
+												)}
+											</Button>
+										</downloadCommentsFetcher.Form>
+									)}
+								</div>
+							)}
+						</div>
+					</Card>
+				</div>
 			</div>
 		</div>
 	)
