@@ -14,89 +14,130 @@ export default function Cover({ coverDurationInSeconds, title, author, isSplit =
 	const processedTitle = title?.endsWith('。') ? title.slice(0, -1) : title
 
 	const CoverContent = () => {
-		// Faster and simpler animations with better performance
-		const textOpacity = interpolate(frame, [0, 15], [0, 1], {
+		// Staggered animations for better visual hierarchy
+		const titleOpacity = interpolate(frame, [15, 35], [0, 1], {
 			extrapolateRight: 'clamp',
 		})
 
-		const titleY = interpolate(frame, [5, 20], [15, 0], {
-			extrapolateRight: 'clamp',
-		})
-
-		const authorOpacity = interpolate(frame, [12, 25], [0, 1], {
-			extrapolateRight: 'clamp',
-		})
-
-		// Faster spring animation
-		const accentScale = spring({
-			frame: frame - 15, // Start earlier
-			from: 0,
+		const titleScale = spring({
+			frame: frame - 10,
+			from: 0.8,
 			to: 1,
 			fps,
 			config: {
-				damping: 15,
-				stiffness: 150, // Higher stiffness for faster motion
-				mass: 0.5, // Lower mass for faster motion
+				damping: 20,
+				stiffness: 120,
+				mass: 0.8,
 			},
 		})
 
-		// Faster background fade
-		const bgOpacity = interpolate(frame, [0, 15], [0, 0.7], {
+		const subtitleOpacity = interpolate(frame, [25, 45], [0, 1], {
 			extrapolateRight: 'clamp',
 		})
 
-		return (
-			<AbsoluteFill className="bg-gradient-to-br from-slate-50 to-slate-200 overflow-hidden relative">
-				{/* 背景装饰：更丰富的渐变和模糊光斑 */}
-				<div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(circle,rgba(0,0,0,0.12)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-				<div className="absolute -right-40 top-0 w-[32rem] h-[32rem] rounded-full bg-gradient-to-br from-slate-300/20 to-slate-200/10 blur-3xl" style={{ opacity: bgOpacity }} />
-				<div className="absolute -left-40 bottom-0 w-[32rem] h-[32rem] rounded-full bg-gradient-to-tr from-slate-300/20 to-slate-200/10 blur-3xl" style={{ opacity: bgOpacity }} />
-				<div className="absolute left-1/2 top-1/3 -translate-x-1/2 -z-10 w-[60vw] h-[20vh] bg-gradient-to-r from-slate-200/30 via-white/0 to-slate-200/30 blur-2xl rounded-full" />
+		const authorOpacity = interpolate(frame, [35, 55], [0, 1], {
+			extrapolateRight: 'clamp',
+		})
 
-				<div className="w-full h-full flex flex-col justify-center items-center p-4 sm:p-8 md:p-12">
-					<div className="relative w-full max-w-5xl flex flex-col items-center">
-						{/* Header 区域优化 */}
-						<div style={{ opacity: textOpacity }} className="mb-10 flex flex-col items-center">
-							{author && (
-								<div className="text-gray-500 text-base sm:text-lg tracking-widest uppercase font-semibold mb-2 drop-shadow-sm bg-white/40 px-3 py-1 rounded-full border border-gray-200/60 backdrop-blur-md">
-									@{author}
-								</div>
-							)}
-							<div className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-gray-900 drop-shadow-lg flex items-center gap-4">
-								<span className="h-8 w-1 bg-slate-300 rounded-full" />
-								<span className="text-slate-700">外网真实评论</span>
-								<span className="h-8 w-1 bg-slate-300 rounded-full" />
-							</div>
+		const decorativeOpacity = interpolate(frame, [45, 65], [0, 1], {
+			extrapolateRight: 'clamp',
+		})
+
+		// Floating animation for decorative elements
+		const floatY = interpolate(frame, [0, 120], [0, -20], {
+			extrapolateRight: 'extend',
+		})
+
+		const floatY2 = interpolate(frame, [0, 100], [0, 15], {
+			extrapolateRight: 'extend',
+		})
+
+		// Background gradient animation
+		const bgGradientOffset = interpolate(frame, [0, 300], [0, 100], {
+			extrapolateRight: 'extend',
+		})
+
+		return (
+			<AbsoluteFill className="relative overflow-hidden">
+				{/* Animated gradient background - matching the main video style */}
+				<div
+					className="absolute inset-0 bg-gradient-to-br from-rose-50 via-slate-50 to-rose-100"
+					style={{
+						backgroundPosition: `${bgGradientOffset}% 50%`,
+						backgroundSize: '200% 200%',
+					}}
+				/>
+
+				{/* Subtle overlay for depth */}
+				<div className="absolute inset-0 bg-white/30" />
+
+				{/* Geometric decorative elements */}
+				<div
+					className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-rose-100/40 backdrop-blur-xl"
+					style={{
+						opacity: decorativeOpacity,
+						transform: `translateY(${floatY}px)`,
+					}}
+				/>
+				<div
+					className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-tr from-slate-100/50 to-transparent backdrop-blur-xl"
+					style={{
+						opacity: decorativeOpacity,
+						transform: `translateY(${floatY2}px)`,
+					}}
+				/>
+
+				{/* Grid pattern overlay */}
+				<div className="absolute inset-0 opacity-[0.02]">
+					<div className="w-full h-full bg-[linear-gradient(rgba(156,163,175,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(156,163,175,0.1)_1px,transparent_1px)] bg-[size:60px_60px]" />
+				</div>
+
+				{/* Main content container */}
+				<div className="w-full h-full flex flex-col justify-center items-center p-8 relative z-10">
+					{/* Author badge */}
+					{author && (
+						<div className="mb-8 px-6 py-3 rounded-xl bg-rose-100 border border-rose-200/50 shadow-sm" style={{ opacity: authorOpacity }}>
+							<span className="text-rose-600 text-lg font-medium tracking-wider">@{author}</span>
+						</div>
+					)}
+
+					{/* Main title */}
+					<div
+						className="text-center mb-12"
+						style={{
+							opacity: titleOpacity,
+							transform: `scale(${titleScale})`,
+						}}
+					>
+						<h1 className="text-6xl sm:text-7xl md:text-8xl font-black text-rose-500 mb-6 leading-tight tracking-tight">{processedTitle}</h1>
+					</div>
+
+					{/* Subtitle section */}
+					<div className="text-center max-w-4xl" style={{ opacity: subtitleOpacity }}>
+						<div className="flex items-center justify-center gap-6 mb-8">
+							<div className="h-1 w-16 bg-gradient-to-r from-transparent via-slate-400/60 to-transparent rounded-full" />
+							<h2 className="text-2xl sm:text-3xl font-bold text-slate-700 tracking-wide">外网真实评论</h2>
+							<div className="h-1 w-16 bg-gradient-to-r from-transparent via-slate-400/60 to-transparent rounded-full" />
 						</div>
 
-						{/* Title 卡片优化，增加玻璃拟态和阴影 */}
-						<div
-							className="mt-6 text-center relative px-6 py-10 sm:px-10 sm:py-14 rounded-2xl bg-white/60 backdrop-blur-xl shadow-2xl border border-white/80"
-							style={{
-								opacity: textOpacity,
-								transform: `translateY(${titleY}px)`,
-								boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
-							}}
-						>
-							{/* 角标装饰优化 */}
-							<div className="absolute -top-2 -left-2 w-6 h-6 border-t-4 border-l-4 border-slate-300/70 rounded-tl-xl" style={{ opacity: authorOpacity }} />
-							<div className="absolute -bottom-2 -right-2 w-6 h-6 border-b-4 border-r-4 border-slate-300/70 rounded-br-xl" style={{ opacity: authorOpacity }} />
+						<p className="text-xl text-slate-600 font-light tracking-wide leading-relaxed">Authentic Global Perspectives</p>
+					</div>
 
-							{/* Title 字体优化 */}
-							<div className="text-[2.5rem] sm:text-[4rem] md:text-[5rem] font-extrabold leading-[1.3] text-rose-500 ">{processedTitle}</div>
-
-							{/* Accent line 优化 */}
-							<div
-								className="h-2 bg-slate-400 mx-auto mt-8 rounded-full shadow-sm"
-								style={{
-									width: '120px',
-									opacity: authorOpacity,
-									transform: `scaleX(${accentScale})`,
-								}}
-							/>
+					{/* Decorative bottom elements */}
+					<div className="absolute bottom-12 left-1/2 transform -translate-x-1/2" style={{ opacity: decorativeOpacity }}>
+						<div className="flex items-center gap-3">
+							<div className="w-2 h-2 rounded-full bg-rose-300" />
+							<div className="w-3 h-3 rounded-full bg-rose-400" />
+							<div className="w-2 h-2 rounded-full bg-rose-300" />
 						</div>
 					</div>
 				</div>
+
+				{/* Subtle light effects */}
+				<div
+					className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full h-1/3 bg-gradient-to-b from-white/40 to-transparent"
+					style={{ opacity: decorativeOpacity * 0.3 }}
+				/>
 			</AbsoluteFill>
 		)
 	}
