@@ -1,10 +1,11 @@
 import { Form, Link, useLoaderData } from '@remix-run/react'
-import { AlertTriangle, CheckCircle, Clock, Download, RotateCcw, Search } from 'lucide-react'
+import { format } from 'date-fns'
+import { AlertTriangle, Calendar, CheckCircle, Clock, Download, FileVideo, Pause, Play, RotateCcw, Search, Zap } from 'lucide-react'
+import { PageHeader } from '~/components/PageHeader'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Progress } from '~/components/ui/progress'
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
 import { db } from '~/lib/drizzle'
 import { taskStatus } from '~/utils/remote-render'
 
@@ -28,138 +29,206 @@ export const loader = async () => {
 	}
 }
 
-export default function DownloadsPages() {
+export default function TasksPage() {
 	const { tasks } = useLoaderData<typeof loader>()
+
+	const completedTasks = tasks.filter((task) => task.status === 'completed').length
+	const processingTasks = tasks.filter((task) => task.status === 'processing').length
+	const queuedTasks = tasks.filter((task) => task.status === 'queued').length
+	const failedTasks = tasks.filter((task) => task.status === 'error').length
 
 	// Render status badge
 	const renderStatusBadge = (status: string) => {
 		switch (status) {
 			case 'completed':
 				return (
-					<Badge className="bg-green-100 text-green-800 flex items-center gap-1">
-						<CheckCircle className="h-3 w-3" /> Completed
+					<Badge className="bg-green-100 text-green-800 border-green-200">
+						<CheckCircle className="h-3 w-3 mr-1" /> Completed
 					</Badge>
 				)
 			case 'processing':
 				return (
-					<Badge variant="secondary" className="flex items-center gap-1">
-						<RotateCcw className="h-3 w-3 animate-spin" /> Processing
+					<Badge className="bg-orange-100 text-orange-800 border-orange-200">
+						<Play className="h-3 w-3 mr-1" /> Processing
 					</Badge>
 				)
 			case 'queued':
 				return (
-					<Badge variant="outline" className="flex items-center gap-1">
-						<Clock className="h-3 w-3" /> Queued
+					<Badge className="bg-blue-100 text-blue-800 border-blue-200">
+						<Clock className="h-3 w-3 mr-1" /> Queued
 					</Badge>
 				)
 			case 'error':
 				return (
-					<Badge variant="destructive" className="flex items-center gap-1">
-						<AlertTriangle className="h-3 w-3" /> Failed
+					<Badge className="bg-red-100 text-red-800 border-red-200">
+						<AlertTriangle className="h-3 w-3 mr-1" /> Failed
 					</Badge>
 				)
 			default:
 				return (
-					<Badge variant="outline" className="flex items-center gap-1">
-						{status || 'Unknown'}
+					<Badge variant="outline">
+						<Pause className="h-3 w-3 mr-1" /> {status || 'Unknown'}
 					</Badge>
 				)
 		}
 	}
 
-	// Render empty state
-	const renderEmptyState = () => (
-		<div className="flex flex-col items-center justify-center py-16 text-center">
-			<Search className="h-16 w-16 text-muted-foreground/60 mb-4" />
-			<h3 className="text-lg font-medium">No Tasks Available</h3>
-			<p className="text-muted-foreground mt-1 mb-4">Tasks will appear here when you create videos</p>
-		</div>
-	)
-
 	// Format date display
 	const formatDate = (timestamp: Date | number | string) => {
 		const date = timestamp instanceof Date ? timestamp : new Date(timestamp)
-		return date.toLocaleString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-		})
+		return format(date, 'MMM dd, yyyy HH:mm')
 	}
 
 	return (
-		<div className="container mx-auto px-4 py-8 max-w-7xl">
-			<div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Task Management</h1>
-					<p className="text-muted-foreground mt-1">View and manage your video rendering tasks</p>
-				</div>
-				<Button variant="outline" size="sm" className="gap-1 mt-4 md:mt-0">
-					<RotateCcw className="h-4 w-4" /> Refresh
+		<div className="space-y-8">
+			{/* Header Section */}
+			<PageHeader title="Task Management" description="Monitor and manage your video rendering and processing tasks">
+				<Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+					<RotateCcw className="h-4 w-4 mr-2" />
+					Refresh
 				</Button>
+			</PageHeader>
+
+			{/* Stats Cards */}
+			<div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+				<Card className="border-0 shadow-soft bg-gradient-to-br from-blue-50 to-blue-100/50">
+					<CardContent className="p-6">
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-sm font-medium text-blue-600">Total Tasks</p>
+								<p className="text-3xl font-bold text-blue-900">{tasks.length}</p>
+							</div>
+							<div className="h-12 w-12 rounded-xl bg-blue-500 flex items-center justify-center">
+								<FileVideo className="h-6 w-6 text-white" />
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card className="border-0 shadow-soft bg-gradient-to-br from-green-50 to-green-100/50">
+					<CardContent className="p-6">
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-sm font-medium text-green-600">Completed</p>
+								<p className="text-3xl font-bold text-green-900">{completedTasks}</p>
+							</div>
+							<div className="h-12 w-12 rounded-xl bg-green-500 flex items-center justify-center">
+								<CheckCircle className="h-6 w-6 text-white" />
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card className="border-0 shadow-soft bg-gradient-to-br from-orange-50 to-orange-100/50">
+					<CardContent className="p-6">
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-sm font-medium text-orange-600">Processing</p>
+								<p className="text-3xl font-bold text-orange-900">{processingTasks}</p>
+							</div>
+							<div className="h-12 w-12 rounded-xl bg-orange-500 flex items-center justify-center">
+								<Zap className="h-6 w-6 text-white" />
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card className="border-0 shadow-soft bg-gradient-to-br from-red-50 to-red-100/50">
+					<CardContent className="p-6">
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-sm font-medium text-red-600">Failed</p>
+								<p className="text-3xl font-bold text-red-900">{failedTasks}</p>
+							</div>
+							<div className="h-12 w-12 rounded-xl bg-red-500 flex items-center justify-center">
+								<AlertTriangle className="h-6 w-6 text-white" />
+							</div>
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 
-			<Card className="shadow-md">
-				<CardHeader className="pb-2">
-					<CardTitle className="text-xl">Task List</CardTitle>
-					<CardDescription>Monitor status and progress of all rendering tasks</CardDescription>
-				</CardHeader>
-				<CardContent>
-					{tasks.length === 0 ? (
-						renderEmptyState()
-					) : (
-						<div className="overflow-x-auto">
-							<Table>
-								<TableCaption>Showing all {tasks.length} tasks</TableCaption>
-								<TableHeader>
-									<TableRow>
-										<TableHead className="w-[120px]">Type</TableHead>
-										<TableHead className="w-[200px]">Description</TableHead>
-										<TableHead className="w-[120px]">Status</TableHead>
-										<TableHead className="w-[180px]">Progress</TableHead>
-										<TableHead className="w-[180px]">Created</TableHead>
-										<TableHead className="text-right w-[120px]">Actions</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{tasks.map((task) => (
-										<TableRow key={task.id}>
-											<TableCell className="font-medium">
-												<div className="truncate max-w-[120px]">{task.type}</div>
-											</TableCell>
-											<TableCell>
-												<div className="truncate max-w-[200px]">{task.desc}</div>
-											</TableCell>
-											<TableCell>{renderStatusBadge(task.status)}</TableCell>
-											<TableCell>
-												<div className="flex items-center gap-2">
-													<Progress value={Number(task.progress) || 0} className="h-2 w-[100px]" />
-													<span className="text-xs text-muted-foreground">{task.progress || 0}%</span>
-												</div>
-											</TableCell>
-											<TableCell>
-												<time className="text-sm text-muted-foreground">{formatDate(task.createdAt)}</time>
-											</TableCell>
-											<TableCell className="text-right">
-												<div className="flex justify-end items-center gap-2">
-													{task.status === 'completed' && (
-														<Link to={`/app/tasks/download/${task.id}`} target="_blank" rel="noopener noreferrer">
-															<Button variant="outline" size="sm" className="gap-1 whitespace-nowrap">
-																<Download className="h-4 w-4" /> Download
-															</Button>
-														</Link>
-													)}
-												</div>
-											</TableCell>
-										</TableRow>
-									))}
-								</TableBody>
-							</Table>
+			{/* Tasks Grid */}
+			{tasks.length === 0 ? (
+				<Card className="border-0 shadow-soft">
+					<CardContent className="p-12">
+						<div className="text-center">
+							<div className="h-24 w-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+								<Search className="h-12 w-12 text-blue-400" />
+							</div>
+							<h3 className="text-xl font-semibold text-gray-900 mb-2">No tasks available</h3>
+							<p className="text-gray-600 mb-6 max-w-md mx-auto">Tasks will appear here when you create videos, translations, or other processing jobs.</p>
 						</div>
-					)}
-				</CardContent>
-			</Card>
+					</CardContent>
+				</Card>
+			) : (
+				<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+					{tasks.map((task) => (
+						<Card key={task.id} className="group border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 bg-white/80 backdrop-blur-sm">
+							<CardHeader className="pb-3">
+								<div className="flex items-start justify-between">{renderStatusBadge(task.status)}</div>
+								<CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2 leading-tight">
+									{task.type.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+								</CardTitle>
+								<CardDescription className="text-sm text-gray-600 line-clamp-2">{task.desc || 'Processing task'}</CardDescription>
+							</CardHeader>
+
+							<CardContent className="pt-0">
+								<div className="space-y-4">
+									{/* Progress */}
+									<div className="space-y-2">
+										<div className="flex items-center justify-between text-sm">
+											<span className="text-gray-600">Progress</span>
+											<span className="font-medium text-gray-900">{task.progress || 0}%</span>
+										</div>
+										<Progress value={Number(task.progress) || 0} className="h-2" />
+									</div>
+
+									{/* Job ID */}
+									<div className="p-3 bg-gray-50 rounded-lg">
+										<p className="text-xs text-gray-500 mb-1">Job ID</p>
+										<p className="text-sm text-gray-700 truncate font-mono">{task.jobId}</p>
+									</div>
+
+									{/* Date */}
+									<div className="flex items-center text-xs text-gray-500">
+										<Calendar className="h-3 w-3 mr-1" />
+										{formatDate(task.createdAt)}
+									</div>
+
+									{/* Actions */}
+									<div className="flex gap-2 pt-2">
+										{task.status === 'completed' && (
+											<Link to={`/app/tasks/download/${task.id}`} target="_blank" rel="noopener noreferrer" className="flex-1">
+												<Button variant="outline" size="sm" className="w-full h-8 text-xs border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300">
+													<Download className="h-3 w-3 mr-1" />
+													Download
+												</Button>
+											</Link>
+										)}
+										{task.status === 'processing' && (
+											<div className="flex-1">
+												<Button variant="outline" size="sm" disabled className="w-full h-8 text-xs">
+													<RotateCcw className="h-3 w-3 mr-1 animate-spin" />
+													Processing...
+												</Button>
+											</div>
+										)}
+										{task.status === 'error' && (
+											<div className="flex-1">
+												<Button variant="outline" size="sm" className="w-full h-8 text-xs border-red-200 text-red-600 hover:bg-red-50">
+													<AlertTriangle className="h-3 w-3 mr-1" />
+													Retry
+												</Button>
+											</div>
+										)}
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+					))}
+				</div>
+			)}
 		</div>
 	)
 }
