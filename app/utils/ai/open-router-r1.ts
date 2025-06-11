@@ -4,7 +4,7 @@ import { type CoreMessage, generateText as aiGenerateText, generateObject } from
 import type { z } from 'zod'
 
 const API_BASE_URL = 'https://openrouter.ai/api/v1'
-const model = 'deepseek/deepseek-r1:free'
+const model = 'deepseek/deepseek-r1-0528:free'
 
 function createOpenRouterR1({ apiKey }: { apiKey: string }) {
 	const openai = createOpenAI({
@@ -24,6 +24,7 @@ function createOpenRouterR1({ apiKey }: { apiKey: string }) {
 			maxTokens?: number
 			messages?: Array<CoreMessage>
 		}) => {
+			console.log('🚀 ~ createOpenRouterR1 ~ prompt:', prompt)
 			const { text } = await aiGenerateText({
 				model: openai(model),
 				system,
