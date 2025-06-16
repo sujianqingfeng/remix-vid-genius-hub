@@ -55,7 +55,7 @@ export default function DialoguePage() {
 
 			<div className="flex-1 grid grid-cols-1 lg:grid-cols-7 gap-4 px-4 pb-4 min-h-0">
 				<div className="lg:col-span-5 flex flex-col gap-4 min-h-0">
-					<div className="bg-white rounded-lg shadow-md p-5 flex-none">
+					<div className="bg-card rounded-lg shadow-soft p-5 flex-none border-border/50">
 						<Player
 							component={Dialogue}
 							inputProps={{
@@ -74,23 +74,19 @@ export default function DialoguePage() {
 						/>
 					</div>
 
-					<div className="bg-white rounded-lg shadow-md p-5 flex-none">
+					<div className="bg-card rounded-lg shadow-soft p-5 flex-none border-border/50">
 						<div className="flex flex-wrap gap-4 items-center">
 							<generateAudioFetcher.Form method="post" action="generate-audio">
-								<LoadingButtonWithState
-									state={generateAudioFetcher.state}
-									idleText="Generate Audio"
-									className="bg-blue-600 hover:bg-blue-700 text-white font-medium min-w-[140px]"
-								/>
+								<LoadingButtonWithState state={generateAudioFetcher.state} idleText="Generate Audio" className="shadow-soft font-medium min-w-[140px]" />
 							</generateAudioFetcher.Form>
 
 							<renderFetcher.Form method="post" action="render">
-								<LoadingButtonWithState state={renderFetcher.state} idleText="Render Video" className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium min-w-[140px]" />
+								<LoadingButtonWithState state={renderFetcher.state} idleText="Render Video" className="shadow-soft font-medium min-w-[140px]" />
 							</renderFetcher.Form>
 
 							{dialogue.outputFilePath && (
 								<Link to="local-download" target="_blank" rel="noopener noreferrer">
-									<Button className="bg-green-600 hover:bg-green-700 text-white font-medium min-w-[140px]">Download Video</Button>
+									<Button className="bg-success hover:bg-success/90 text-success-foreground font-medium min-w-[140px] shadow-soft">Download Video</Button>
 								</Link>
 							)}
 						</div>
@@ -98,8 +94,8 @@ export default function DialoguePage() {
 				</div>
 
 				<div className="lg:col-span-2 flex flex-col min-h-0">
-					<div className="bg-white rounded-lg shadow-md p-5 flex flex-col flex-1 min-h-0">
-						<h2 className="text-lg font-semibold mb-4 flex-none">Dialogues</h2>
+					<div className="bg-card rounded-lg shadow-soft p-5 flex flex-col flex-1 min-h-0 border-border/50">
+						<h2 className="text-lg font-semibold mb-4 flex-none text-foreground">Dialogues</h2>
 						<div className="overflow-y-auto flex-1 -mx-5 px-5">
 							<Dialogues dialogues={dialogue.dialogues} />
 						</div>

@@ -62,7 +62,7 @@ export default function AppFillInBlankPage() {
 	const renderFetcher = useFetcher()
 
 	return (
-		<div className="min-h-screen bg-gray-50">
+		<div className="min-h-screen bg-background">
 			<div className="max-w-[1920px] mx-auto px-6 py-8">
 				<div className="mb-6">
 					<BackPrevious />
@@ -71,7 +71,7 @@ export default function AppFillInBlankPage() {
 				<div className="grid grid-cols-[1fr,400px] gap-8">
 					{/* Main Content - Video Player */}
 					<div className="space-y-6">
-						<div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+						<div className="bg-card rounded-2xl shadow-soft border-border/50 p-8">
 							<div className="aspect-video relative overflow-hidden rounded-xl">
 								<Player
 									component={FillInBlank}
@@ -95,23 +95,23 @@ export default function AppFillInBlankPage() {
 						{/* Action Buttons */}
 						<div className="flex items-center gap-4">
 							<renderFetcher.Form method="post" action="render">
-								<LoadingButtonWithState state={renderFetcher.state} idleText="Render Video" className="bg-indigo-600 hover:bg-indigo-700 text-white" />
+								<LoadingButtonWithState state={renderFetcher.state} idleText="Render Video" className="shadow-soft" />
 							</renderFetcher.Form>
 
 							{fillInBlank.outputFilePath && (
 								<Link to="local-download" target="_blank" rel="noopener noreferrer">
-									<Button className="bg-green-600 hover:bg-green-700 text-white">Download Video</Button>
+									<Button className="bg-success hover:bg-success/90 text-success-foreground shadow-soft">Download Video</Button>
 								</Link>
 							)}
 						</div>
 					</div>
 
 					{/* Sidebar - Sentences */}
-					<div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+					<div className="bg-card rounded-2xl shadow-soft border-border/50 p-6">
 						<div className="flex items-center justify-between mb-6">
-							<h2 className="text-lg font-semibold text-gray-900">Sentences</h2>
+							<h2 className="text-lg font-semibold text-foreground">Sentences</h2>
 							<generateAudioFetcher.Form method="post" action="generate-audio">
-								<LoadingButtonWithState state={generateAudioFetcher.state} idleText="Generate Audio" className="bg-blue-600 hover:bg-blue-700 text-white" />
+								<LoadingButtonWithState state={generateAudioFetcher.state} idleText="Generate Audio" className="shadow-soft" />
 							</generateAudioFetcher.Form>
 						</div>
 						<div className="overflow-y-auto max-h-[calc(100vh-200px)]">

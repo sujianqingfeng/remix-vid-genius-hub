@@ -153,26 +153,26 @@ export default function CoverGeneratorPage() {
 	return (
 		<div className="flex h-full min-h-screen">
 			{/* Left side - Input area */}
-			<div className="w-1/3 border-r p-6 flex flex-col">
-				<h2 className="text-2xl font-bold mb-6">Cover Generator</h2>
+			<div className="w-1/3 border-r border-border p-6 flex flex-col">
+				<h2 className="text-2xl font-bold text-foreground mb-6">Cover Generator</h2>
 				<fetcher.Form method="post" className="space-y-6 flex-1">
 					<div className="space-y-4">
 						<div>
-							<label htmlFor="title" className="block text-sm font-medium mb-1">
+							<label htmlFor="title" className="block text-sm font-medium text-foreground mb-1">
 								Title
 							</label>
 							<Input id="title" name="title" placeholder="Enter cover title" required />
 						</div>
 
 						<div>
-							<label htmlFor="description" className="block text-sm font-medium mb-1">
+							<label htmlFor="description" className="block text-sm font-medium text-foreground mb-1">
 								Description
 							</label>
 							<Textarea id="description" name="description" placeholder="Enter cover description" rows={4} />
 						</div>
 
 						<div>
-							<label htmlFor="aspectRatio" className="block text-sm font-medium mb-1">
+							<label htmlFor="aspectRatio" className="block text-sm font-medium text-foreground mb-1">
 								Aspect Ratio
 							</label>
 							<Select name="aspectRatio" defaultValue="16:9">
@@ -189,7 +189,7 @@ export default function CoverGeneratorPage() {
 						</div>
 
 						<div>
-							<label htmlFor="aiModel" className="block text-sm font-medium mb-1">
+							<label htmlFor="aiModel" className="block text-sm font-medium text-foreground mb-1">
 								AI Model
 							</label>
 							<AiModelSelect name="aiModel" defaultValue="deepseek" />
@@ -197,7 +197,7 @@ export default function CoverGeneratorPage() {
 					</div>
 
 					<div className="pt-4">
-						<LoadingButtonWithState className="w-full" state={fetcher.state} idleText="Generate Cover" loadingText="Generating..." />
+						<LoadingButtonWithState className="w-full shadow-soft" state={fetcher.state} idleText="Generate Cover" loadingText="Generating..." />
 					</div>
 				</fetcher.Form>
 			</div>
@@ -205,13 +205,20 @@ export default function CoverGeneratorPage() {
 			{/* Right side - Preview area */}
 			<div className="w-2/3 p-6 flex flex-col">
 				<div className="flex justify-between items-center mb-6">
-					<h2 className="text-2xl font-bold">Preview</h2>
+					<h2 className="text-2xl font-bold text-foreground">Preview</h2>
 					{generatedHtml && (
-						<LoadingButtonWithState onClick={handleDownload} variant="outline" state={isDownloading ? 'loading' : 'idle'} idleText="Download Image" loadingText="Converting..." />
+						<LoadingButtonWithState
+							onClick={handleDownload}
+							variant="outline"
+							className="shadow-soft"
+							state={isDownloading ? 'loading' : 'idle'}
+							idleText="Download Image"
+							loadingText="Converting..."
+						/>
 					)}
 				</div>
 
-				<div className="flex-1 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+				<div className="flex-1 border border-border rounded-lg overflow-hidden bg-muted/20 flex items-center justify-center">
 					{generatedHtml ? (
 						<div
 							ref={previewRef}
@@ -225,10 +232,10 @@ export default function CoverGeneratorPage() {
 											: 'w-full max-w-3xl aspect-[4/3]'
 							}`}
 						>
-							<iframe title="Cover Preview" srcDoc={generatedHtml} className="w-full h-full border" style={{ backgroundColor: 'white' }} />
+							<iframe title="Cover Preview" srcDoc={generatedHtml} className="w-full h-full border border-border" style={{ backgroundColor: 'white' }} />
 						</div>
 					) : (
-						<div className="text-gray-400 text-center">
+						<div className="text-muted-foreground text-center">
 							{isGenerating ? <p>Generating cover preview...</p> : <p>Fill out the form and click "Generate Cover" to see a preview</p>}
 						</div>
 					)}

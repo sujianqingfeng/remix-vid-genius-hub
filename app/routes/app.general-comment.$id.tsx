@@ -164,7 +164,7 @@ export default function AppGeneralCommentRender() {
 	const isRendering = renderFetcher.state !== 'idle'
 
 	return (
-		<div className="min-h-screen bg-gray-50 py-8">
+		<div className="min-h-screen bg-background py-8">
 			<div className="max-w-[1200px] mx-auto px-4 space-y-6">
 				<div className="flex items-center justify-between">
 					<div>
@@ -172,9 +172,9 @@ export default function AppGeneralCommentRender() {
 							<Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.history.back()}>
 								<ArrowLeft className="h-4 w-4" />
 							</Button>
-							<h1 className="text-2xl font-bold text-gray-900">Render Configuration</h1>
+							<h1 className="text-2xl font-bold text-foreground">Render Configuration</h1>
 						</div>
-						<p className="text-sm text-gray-600 ml-11">Configure and preview your video before rendering</p>
+						<p className="text-sm text-muted-foreground ml-11">Configure and preview your video before rendering</p>
 					</div>
 					<div className="flex items-center gap-2">
 						<Button variant="outline" size="sm" className="gap-2" onClick={() => window.location.reload()}>
@@ -210,7 +210,7 @@ export default function AppGeneralCommentRender() {
 						<VideoModeSelect mode={mode} onChange={setMode} disabled={isRendering} />
 					</CardHeader>
 					<CardContent>
-						<div className="bg-gray-900 rounded-lg overflow-hidden mx-auto">
+						<div className="bg-muted rounded-lg overflow-hidden mx-auto">
 							<div className={`mx-auto ${mode === 'landscape' ? 'aspect-video w-full' : 'aspect-[9/16] w-[360px]'}`}>
 								<Player
 									component={getVideoComponent(mode) as any}
@@ -372,7 +372,7 @@ export default function AppGeneralCommentRender() {
 									</div>
 								) : (
 									<div className="flex items-center gap-2">
-										<h3 className="font-medium text-gray-900">{typeInfo.title || 'Untitled'}</h3>
+										<h3 className="font-medium text-foreground">{typeInfo.title || 'Untitled'}</h3>
 										<div className="flex items-center gap-1">
 											<Button type="button" variant="ghost" size="sm" className="h-6 px-2" onClick={() => setIsEditingTitle(true)}>
 												<Edit3 className="h-3 w-3" />
@@ -385,7 +385,7 @@ export default function AppGeneralCommentRender() {
 										</div>
 									</div>
 								)}
-								<p className="text-sm text-gray-600">By {comment.author}</p>
+								<p className="text-sm text-muted-foreground">By {comment.author}</p>
 							</div>
 							<div>
 								<span
@@ -402,8 +402,8 @@ export default function AppGeneralCommentRender() {
 
 						{/* Content */}
 						<div className="space-y-4">
-							<div className="bg-gray-50 rounded-lg p-4">
-								<p className="text-sm text-gray-900 whitespace-pre-wrap">{typeInfo.content}</p>
+							<div className="bg-muted/50 rounded-lg p-4">
+								<p className="text-sm text-foreground whitespace-pre-wrap">{typeInfo.content}</p>
 							</div>
 							<div className="flex justify-end gap-2">
 								<translateFetcher.Form action="translate" method="post" className="flex gap-2">
@@ -420,7 +420,7 @@ export default function AppGeneralCommentRender() {
 								</translateFetcher.Form>
 							</div>
 							{typeInfo.contentZh && (
-								<div className="bg-gray-50 rounded-lg p-4">
+								<div className="bg-muted/50 rounded-lg p-4">
 									{isEditingContentTranslation ? (
 										<div className="space-y-2">
 											<Textarea
@@ -457,7 +457,7 @@ export default function AppGeneralCommentRender() {
 										</div>
 									) : (
 										<div className="flex items-start justify-between gap-2">
-											<p className="text-sm text-gray-600 whitespace-pre-wrap">{typeInfo.contentZh}</p>
+											<p className="text-sm text-muted-foreground whitespace-pre-wrap">{typeInfo.contentZh}</p>
 											<Button type="button" variant="ghost" size="sm" className="h-6 px-2 shrink-0" onClick={() => setIsEditingContentTranslation(true)}>
 												<Edit3 className="h-3 w-3" />
 											</Button>
@@ -468,7 +468,7 @@ export default function AppGeneralCommentRender() {
 
 							{/* Media Content */}
 							{typeInfo.video && (
-								<div className="aspect-video w-full max-w-2xl mx-auto bg-black rounded-lg overflow-hidden">
+								<div className="aspect-video w-full max-w-2xl mx-auto bg-muted rounded-lg overflow-hidden">
 									<video src={typeInfo.video.url} controls className="w-full h-full">
 										<track kind="captions" />
 									</video>
@@ -487,7 +487,7 @@ export default function AppGeneralCommentRender() {
 						{comment.comments && comment.comments.length > 0 && (
 							<div className="border-t pt-4">
 								<div className="flex items-center justify-between mb-4">
-									<h4 className="text-sm font-medium text-gray-900">Comments ({comment.comments.length})</h4>
+									<h4 className="text-sm font-medium text-foreground">Comments ({comment.comments.length})</h4>
 									<translateCommentsFetcher.Form action="translate-comments" method="post" className="flex gap-2">
 										<AiModelSelect name="model" defaultValue="r1" />
 										<LoadingButtonWithState
@@ -514,9 +514,9 @@ export default function AppGeneralCommentRender() {
 												<div className="flex-1">
 													<div className="flex items-center justify-between gap-2">
 														<div className="flex items-center gap-2">
-															<span className="font-medium text-sm text-gray-900">{c.author}</span>
-															<span className="text-xs text-gray-500">•</span>
-															<span className="text-xs text-gray-500">👍 {commentWithNumberLikes.likes}</span>
+															<span className="font-medium text-sm text-foreground">{c.author}</span>
+															<span className="text-xs text-muted-foreground">•</span>
+															<span className="text-xs text-muted-foreground">👍 {commentWithNumberLikes.likes}</span>
 														</div>
 														<div className="flex items-center gap-2">
 															<Button
@@ -543,7 +543,7 @@ export default function AppGeneralCommentRender() {
 															</Button>
 														</div>
 													</div>
-													<p className="text-sm text-gray-700 mt-1">{c.content}</p>
+													<p className="text-sm text-muted-foreground mt-1">{c.content}</p>
 													{editingCommentIndex === i ? (
 														<div className="mt-1 space-y-2">
 															<Textarea

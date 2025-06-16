@@ -42,25 +42,25 @@ export default function TasksPage() {
 		switch (status) {
 			case 'completed':
 				return (
-					<Badge className="bg-green-100 text-green-800 border-green-200">
+					<Badge className="bg-success/10 text-success border-success/20">
 						<CheckCircle className="h-3 w-3 mr-1" /> Completed
 					</Badge>
 				)
 			case 'processing':
 				return (
-					<Badge className="bg-orange-100 text-orange-800 border-orange-200">
+					<Badge className="bg-warning/10 text-warning border-warning/20">
 						<Play className="h-3 w-3 mr-1" /> Processing
 					</Badge>
 				)
 			case 'queued':
 				return (
-					<Badge className="bg-blue-100 text-blue-800 border-blue-200">
+					<Badge className="bg-primary/10 text-primary border-primary/20">
 						<Clock className="h-3 w-3 mr-1" /> Queued
 					</Badge>
 				)
 			case 'error':
 				return (
-					<Badge className="bg-red-100 text-red-800 border-red-200">
+					<Badge className="bg-destructive/10 text-destructive border-destructive/20">
 						<AlertTriangle className="h-3 w-3 mr-1" /> Failed
 					</Badge>
 				)
@@ -83,7 +83,7 @@ export default function TasksPage() {
 		<div className="space-y-8">
 			{/* Header Section */}
 			<PageHeader title="Task Management" description="Monitor and manage your video rendering and processing tasks">
-				<Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+				<Button variant="outline" className="shadow-soft">
 					<RotateCcw className="h-4 w-4 mr-2" />
 					Refresh
 				</Button>
@@ -91,57 +91,57 @@ export default function TasksPage() {
 
 			{/* Stats Cards */}
 			<div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-				<Card className="border-0 shadow-soft bg-gradient-to-br from-blue-50 to-blue-100/50">
+				<Card className="border-border/50 shadow-soft bg-card/50">
 					<CardContent className="p-6">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm font-medium text-blue-600">Total Tasks</p>
-								<p className="text-3xl font-bold text-blue-900">{tasks.length}</p>
+								<p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
+								<p className="text-3xl font-bold text-foreground">{tasks.length}</p>
 							</div>
-							<div className="h-12 w-12 rounded-xl bg-blue-500 flex items-center justify-center">
-								<FileVideo className="h-6 w-6 text-white" />
+							<div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+								<FileVideo className="h-6 w-6 text-primary" />
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="border-0 shadow-soft bg-gradient-to-br from-green-50 to-green-100/50">
+				<Card className="border-border/50 shadow-soft bg-card/50">
 					<CardContent className="p-6">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm font-medium text-green-600">Completed</p>
-								<p className="text-3xl font-bold text-green-900">{completedTasks}</p>
+								<p className="text-sm font-medium text-muted-foreground">Completed</p>
+								<p className="text-3xl font-bold text-foreground">{completedTasks}</p>
 							</div>
-							<div className="h-12 w-12 rounded-xl bg-green-500 flex items-center justify-center">
-								<CheckCircle className="h-6 w-6 text-white" />
+							<div className="h-12 w-12 rounded-lg bg-success/10 flex items-center justify-center">
+								<CheckCircle className="h-6 w-6 text-success" />
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="border-0 shadow-soft bg-gradient-to-br from-orange-50 to-orange-100/50">
+				<Card className="border-border/50 shadow-soft bg-card/50">
 					<CardContent className="p-6">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm font-medium text-orange-600">Processing</p>
-								<p className="text-3xl font-bold text-orange-900">{processingTasks}</p>
+								<p className="text-sm font-medium text-muted-foreground">Processing</p>
+								<p className="text-3xl font-bold text-foreground">{processingTasks}</p>
 							</div>
-							<div className="h-12 w-12 rounded-xl bg-orange-500 flex items-center justify-center">
-								<Zap className="h-6 w-6 text-white" />
+							<div className="h-12 w-12 rounded-lg bg-warning/10 flex items-center justify-center">
+								<Zap className="h-6 w-6 text-warning" />
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="border-0 shadow-soft bg-gradient-to-br from-red-50 to-red-100/50">
+				<Card className="border-border/50 shadow-soft bg-card/50">
 					<CardContent className="p-6">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm font-medium text-red-600">Failed</p>
-								<p className="text-3xl font-bold text-red-900">{failedTasks}</p>
+								<p className="text-sm font-medium text-muted-foreground">Failed</p>
+								<p className="text-3xl font-bold text-foreground">{failedTasks}</p>
 							</div>
-							<div className="h-12 w-12 rounded-xl bg-red-500 flex items-center justify-center">
-								<AlertTriangle className="h-6 w-6 text-white" />
+							<div className="h-12 w-12 rounded-lg bg-destructive/10 flex items-center justify-center">
+								<AlertTriangle className="h-6 w-6 text-destructive" />
 							</div>
 						</div>
 					</CardContent>
@@ -150,27 +150,27 @@ export default function TasksPage() {
 
 			{/* Tasks Grid */}
 			{tasks.length === 0 ? (
-				<Card className="border-0 shadow-soft">
+				<Card className="border-border/50 shadow-soft">
 					<CardContent className="p-12">
 						<div className="text-center">
-							<div className="h-24 w-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-								<Search className="h-12 w-12 text-blue-400" />
+							<div className="h-24 w-24 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+								<Search className="h-12 w-12 text-muted-foreground" />
 							</div>
-							<h3 className="text-xl font-semibold text-gray-900 mb-2">No tasks available</h3>
-							<p className="text-gray-600 mb-6 max-w-md mx-auto">Tasks will appear here when you create videos, translations, or other processing jobs.</p>
+							<h3 className="text-xl font-semibold text-foreground mb-2">No tasks available</h3>
+							<p className="text-muted-foreground mb-6 max-w-md mx-auto">Tasks will appear here when you create videos, translations, or other processing jobs.</p>
 						</div>
 					</CardContent>
 				</Card>
 			) : (
 				<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
 					{tasks.map((task) => (
-						<Card key={task.id} className="group border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 bg-white/80 backdrop-blur-sm">
+						<Card key={task.id} className="group border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 bg-card/50 backdrop-blur-sm">
 							<CardHeader className="pb-3">
 								<div className="flex items-start justify-between">{renderStatusBadge(task.status)}</div>
-								<CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2 leading-tight">
+								<CardTitle className="text-lg font-semibold text-foreground line-clamp-2 leading-tight">
 									{task.type.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
 								</CardTitle>
-								<CardDescription className="text-sm text-gray-600 line-clamp-2">{task.desc || 'Processing task'}</CardDescription>
+								<CardDescription className="text-sm text-muted-foreground line-clamp-2">{task.desc || 'Processing task'}</CardDescription>
 							</CardHeader>
 
 							<CardContent className="pt-0">
@@ -178,20 +178,20 @@ export default function TasksPage() {
 									{/* Progress */}
 									<div className="space-y-2">
 										<div className="flex items-center justify-between text-sm">
-											<span className="text-gray-600">Progress</span>
-											<span className="font-medium text-gray-900">{task.progress || 0}%</span>
+											<span className="text-muted-foreground">Progress</span>
+											<span className="font-medium text-foreground">{task.progress || 0}%</span>
 										</div>
 										<Progress value={Number(task.progress) || 0} className="h-2" />
 									</div>
 
 									{/* Job ID */}
-									<div className="p-3 bg-gray-50 rounded-lg">
-										<p className="text-xs text-gray-500 mb-1">Job ID</p>
-										<p className="text-sm text-gray-700 truncate font-mono">{task.jobId}</p>
+									<div className="p-3 bg-muted/50 rounded-lg">
+										<p className="text-xs text-muted-foreground mb-1">Job ID</p>
+										<p className="text-sm text-foreground truncate font-mono">{task.jobId}</p>
 									</div>
 
 									{/* Date */}
-									<div className="flex items-center text-xs text-gray-500">
+									<div className="flex items-center text-xs text-muted-foreground">
 										<Calendar className="h-3 w-3 mr-1" />
 										{formatDate(task.createdAt)}
 									</div>
@@ -200,7 +200,7 @@ export default function TasksPage() {
 									<div className="flex gap-2 pt-2">
 										{task.status === 'completed' && (
 											<Link to={`/app/tasks/download/${task.id}`} target="_blank" rel="noopener noreferrer" className="flex-1">
-												<Button variant="outline" size="sm" className="w-full h-8 text-xs border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300">
+												<Button variant="outline" size="sm" className="w-full h-8 text-xs shadow-soft">
 													<Download className="h-3 w-3 mr-1" />
 													Download
 												</Button>
@@ -216,7 +216,7 @@ export default function TasksPage() {
 										)}
 										{task.status === 'error' && (
 											<div className="flex-1">
-												<Button variant="outline" size="sm" className="w-full h-8 text-xs border-red-200 text-red-600 hover:bg-red-50">
+												<Button variant="outline" size="sm" className="w-full h-8 text-xs shadow-soft">
 													<AlertTriangle className="h-3 w-3 mr-1" />
 													Retry
 												</Button>

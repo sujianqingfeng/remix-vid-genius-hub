@@ -17,7 +17,6 @@ import {
 	Subtitles,
 	Twitter,
 	User,
-	Zap,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '~/components/ui/button'
@@ -109,30 +108,29 @@ export default function LayoutPage() {
 	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
 	return (
-		<div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+		<div className="flex h-screen bg-background">
 			{/* Sidebar */}
-			<div className={`${isSidebarCollapsed ? 'w-20' : 'w-80'} transition-all duration-300 ease-in-out relative z-10 flex flex-col`}>
-				{/* Sidebar Background with Glass Effect */}
-				<div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-r border-white/20 shadow-large" />
-
+			<div
+				className={`${isSidebarCollapsed ? 'w-16' : 'w-72'} transition-all duration-300 ease-in-out relative z-10 flex flex-col border-r border-border bg-card/50 backdrop-blur-sm`}
+			>
 				{/* Sidebar Content */}
-				<div className="relative z-10 flex flex-col h-full">
+				<div className="flex flex-col h-full">
 					{/* Header */}
-					<div className="h-20 border-b border-gray-200/50 flex items-center relative px-6">
+					<div className="h-16 border-b border-border flex items-center relative px-4">
 						{!isSidebarCollapsed ? (
 							<div className="flex items-center space-x-3">
-								<div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg">
-									<Sparkles className="h-6 w-6 text-white" />
+								<div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+									<Sparkles className="h-4 w-4 text-primary-foreground" />
 								</div>
 								<div>
-									<h1 className="text-lg font-bold text-gray-900">Video Genius Hub</h1>
-									<p className="text-xs text-gray-500">AI-Powered Content Tools</p>
+									<h1 className="text-sm font-semibold text-foreground">Video Genius Hub</h1>
+									<p className="text-xs text-muted-foreground">AI-Powered Content Tools</p>
 								</div>
 							</div>
 						) : (
 							<div className="w-full flex justify-center">
-								<div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg">
-									<Sparkles className="h-6 w-6 text-white" />
+								<div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+									<Sparkles className="h-4 w-4 text-primary-foreground" />
 								</div>
 							</div>
 						)}
@@ -142,17 +140,17 @@ export default function LayoutPage() {
 							variant="ghost"
 							size="sm"
 							onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-							className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-white border border-gray-200 shadow-md hover:shadow-lg transition-all duration-200 p-0"
+							className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-background border border-border shadow-sm hover:shadow-md transition-all duration-200 p-0"
 						>
 							{isSidebarCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
 						</Button>
 					</div>
 
 					{/* Navigation */}
-					<nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto custom-scrollbar">
+					<nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto custom-scrollbar">
 						{!isSidebarCollapsed && (
 							<div className="px-3 mb-4">
-								<p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Main Features</p>
+								<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Features</p>
 							</div>
 						)}
 
@@ -162,22 +160,17 @@ export default function LayoutPage() {
 								<NavLink
 									key={item.to}
 									className={({ isActive }) => `
-										group flex items-center rounded-xl transition-all duration-200 relative
-										${isActive ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100/80 hover:text-gray-900'}
-										${isSidebarCollapsed ? 'p-3 justify-center' : 'p-3'}
+										group flex items-center rounded-lg transition-all duration-200 relative
+										${isActive ? 'bg-primary/10 text-primary accent-border' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}
+										${isSidebarCollapsed ? 'p-2 justify-center' : 'p-2'}
 									`}
 									to={item.to}
 									title={item.title}
 								>
 									{({ isActive }) => (
 										<>
-											{/* Active Indicator */}
-											{isActive && !isSidebarCollapsed && (
-												<div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-r-full" />
-											)}
-
 											{/* Icon */}
-											<div className={`flex items-center justify-center ${isSidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'} ${isActive ? 'text-blue-600' : ''}`}>
+											<div className={`flex items-center justify-center ${isSidebarCollapsed ? 'w-5 h-5' : 'w-5 h-5 mr-3'}`}>
 												<Icon className="w-full h-full" />
 											</div>
 
@@ -186,16 +179,11 @@ export default function LayoutPage() {
 												<div className="flex-1 min-w-0">
 													<div className="flex items-center justify-between">
 														<span className="font-medium text-sm truncate">{item.text}</span>
-														{item.badge && (
-															<span className="ml-2 px-2 py-0.5 text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full">{item.badge}</span>
-														)}
+														{item.badge && <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-primary text-primary-foreground rounded-full">{item.badge}</span>}
 													</div>
-													{item.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{item.description}</p>}
+													{item.description && <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.description}</p>}
 												</div>
 											)}
-
-											{/* Hover Effect */}
-											<div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 										</>
 									)}
 								</NavLink>
@@ -205,32 +193,17 @@ export default function LayoutPage() {
 
 					{/* Bottom Section */}
 					{!isSidebarCollapsed && (
-						<div className="p-4 border-t border-gray-200/50 space-y-3">
+						<div className="p-3 border-t border-border space-y-3">
 							{/* Quick Actions */}
 							<div className="flex space-x-2">
-								<Button variant="ghost" size="sm" className="flex-1 h-9 text-xs">
-									<Settings className="h-4 w-4 mr-1" />
+								<Button variant="ghost" size="sm" className="flex-1 h-8 text-xs">
+									<Settings className="h-3 w-3 mr-1" />
 									Settings
 								</Button>
-								<Button variant="ghost" size="sm" className="flex-1 h-9 text-xs">
-									<HelpCircle className="h-4 w-4 mr-1" />
+								<Button variant="ghost" size="sm" className="flex-1 h-8 text-xs">
+									<HelpCircle className="h-3 w-3 mr-1" />
 									Help
 								</Button>
-							</div>
-
-							{/* Upgrade Card */}
-							<div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-4 text-white relative overflow-hidden">
-								<div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10" />
-								<div className="relative z-10">
-									<div className="flex items-center mb-2">
-										<Zap className="h-4 w-4 mr-2" />
-										<span className="text-sm font-semibold">Pro Features</span>
-									</div>
-									<p className="text-xs text-blue-100 mb-3">Unlock advanced AI capabilities and premium tools</p>
-									<Button size="sm" className="bg-white/20 hover:bg-white/30 text-white border-0 h-7 text-xs">
-										Upgrade Now
-									</Button>
-								</div>
 							</div>
 						</div>
 					)}
@@ -240,26 +213,26 @@ export default function LayoutPage() {
 			{/* Main Content */}
 			<div className="flex-1 overflow-hidden flex flex-col">
 				{/* Top Bar */}
-				<div className="h-16 bg-white/80 backdrop-blur-xl border-b border-white/20 flex items-center justify-between px-6 shadow-sm">
-					<div className="flex items-center space-x-4">
-						<div className="h-8 w-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-							<User className="h-4 w-4 text-gray-600" />
+				<div className="h-14 bg-card/50 backdrop-blur-sm border-b border-border flex items-center justify-between px-6">
+					<div className="flex items-center space-x-3">
+						<div className="h-7 w-7 rounded-lg bg-muted flex items-center justify-center">
+							<User className="h-4 w-4 text-muted-foreground" />
 						</div>
 						<div>
-							<p className="text-sm font-medium text-gray-900">Welcome back!</p>
-							<p className="text-xs text-gray-500">Ready to create amazing content?</p>
+							<p className="text-sm font-medium text-foreground">Welcome back!</p>
+							<p className="text-xs text-muted-foreground">Ready to create amazing content?</p>
 						</div>
 					</div>
 
 					<div className="flex items-center space-x-3">
-						<div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-							<span className="text-xs font-semibold text-white">U</span>
+						<div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center">
+							<span className="text-xs font-medium text-primary-foreground">U</span>
 						</div>
 					</div>
 				</div>
 
 				{/* Page Content */}
-				<div className="flex-1 overflow-auto bg-gradient-to-br from-white/50 to-gray-50/50">
+				<div className="flex-1 overflow-auto bg-background">
 					<div className="max-w-[1400px] mx-auto p-6 lg:p-8">
 						<Outlet />
 					</div>

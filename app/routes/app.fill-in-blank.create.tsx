@@ -52,30 +52,33 @@ export default function AppFillInBlankCreatePage() {
 	}, [generateFetcher.data])
 
 	return (
-		<div className="flex flex-col flex-auto p-6 gap-6 bg-gray-50 min-h-screen">
-			<generateFetcher.Form method="post" action="/app/fill-in-blank/generate" className="bg-white p-6 rounded-lg shadow-sm border">
+		<div className="flex flex-col flex-auto p-6 gap-6 bg-background min-h-screen">
+			<generateFetcher.Form method="post" action="/app/fill-in-blank/generate" className="bg-card p-6 rounded-lg shadow-soft border-border/50">
 				<div className="space-y-4">
 					<div className="space-y-2">
-						<h2 className="text-lg font-semibold">Generate Fill-in-blank Sentences</h2>
-						<p className="text-sm text-gray-500">Use AI to generate sentences for your fill-in-blank exercise.</p>
+						<h2 className="text-lg font-semibold text-foreground">Generate Fill-in-blank Sentences</h2>
+						<p className="text-sm text-muted-foreground">Use AI to generate sentences for your fill-in-blank exercise.</p>
 					</div>
 					<Textarea name="prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} className="min-h-[120px]" />
-					<LoadingButtonWithState state={generateFetcher.state} idleText="Generate Sentences" loadingText="Generating Sentences..." className="w-full sm:w-auto" />
+					<LoadingButtonWithState state={generateFetcher.state} idleText="Generate Sentences" loadingText="Generating Sentences..." className="w-full sm:w-auto shadow-soft" />
 				</div>
 			</generateFetcher.Form>
 
 			<div className="flex-auto overflow-auto space-y-6">
 				{sentences.map((sentence, index) => (
-					<div key={`${sentence.word}-${sentence.sentence}-${index}`} className="p-6 space-y-4 border bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-						<div className="flex justify-between items-center border-b pb-4">
-							<h3 className="font-semibold text-lg text-gray-900">Sentence {index + 1}</h3>
-							<Button variant="ghost" size="icon" onClick={() => onDelete(index)} className="hover:bg-red-50 hover:text-red-500 transition-colors">
+					<div
+						key={`${sentence.word}-${sentence.sentence}-${index}`}
+						className="p-6 space-y-4 border-border/50 bg-card rounded-lg shadow-soft hover:shadow-medium transition-shadow"
+					>
+						<div className="flex justify-between items-center border-b border-border pb-4">
+							<h3 className="font-semibold text-lg text-foreground">Sentence {index + 1}</h3>
+							<Button variant="ghost" size="icon" onClick={() => onDelete(index)} className="hover:bg-destructive/10 hover:text-destructive transition-colors">
 								<Trash2 className="h-4 w-4" />
 							</Button>
 						</div>
 						<div className="grid gap-4">
 							<div className="space-y-2">
-								<label htmlFor={`sentence-${index}`} className="text-sm font-medium text-gray-700">
+								<label htmlFor={`sentence-${index}`} className="text-sm font-medium text-foreground">
 									English Sentence
 								</label>
 								<Input
@@ -83,12 +86,12 @@ export default function AppFillInBlankCreatePage() {
 									placeholder="Enter the complete English sentence"
 									value={sentence.sentence}
 									onChange={(e) => onEdit(index, 'sentence', e.target.value)}
-									className="focus:ring-2 focus:ring-blue-100"
+									className="focus:ring-2 focus:ring-primary/20"
 								/>
 							</div>
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 								<div className="space-y-2">
-									<label htmlFor={`word-${index}`} className="text-sm font-medium text-gray-700">
+									<label htmlFor={`word-${index}`} className="text-sm font-medium text-foreground">
 										Target Word
 									</label>
 									<Input
@@ -96,11 +99,11 @@ export default function AppFillInBlankCreatePage() {
 										placeholder="Word to fill in"
 										value={sentence.word}
 										onChange={(e) => onEdit(index, 'word', e.target.value)}
-										className="focus:ring-2 focus:ring-blue-100"
+										className="focus:ring-2 focus:ring-primary/20"
 									/>
 								</div>
 								<div className="space-y-2">
-									<label htmlFor={`pronunciation-${index}`} className="text-sm font-medium text-gray-700">
+									<label htmlFor={`pronunciation-${index}`} className="text-sm font-medium text-foreground">
 										Pronunciation
 									</label>
 									<Input
@@ -108,12 +111,12 @@ export default function AppFillInBlankCreatePage() {
 										placeholder="Word pronunciation"
 										value={sentence.wordPronunciation}
 										onChange={(e) => onEdit(index, 'wordPronunciation', e.target.value)}
-										className="focus:ring-2 focus:ring-blue-100"
+										className="focus:ring-2 focus:ring-primary/20"
 									/>
 								</div>
 							</div>
 							<div className="space-y-2">
-								<label htmlFor={`sentence-zh-${index}`} className="text-sm font-medium text-gray-700">
+								<label htmlFor={`sentence-zh-${index}`} className="text-sm font-medium text-foreground">
 									Chinese Translation
 								</label>
 								<Input
@@ -121,11 +124,11 @@ export default function AppFillInBlankCreatePage() {
 									placeholder="Chinese translation of the sentence"
 									value={sentence.sentenceZh}
 									onChange={(e) => onEdit(index, 'sentenceZh', e.target.value)}
-									className="focus:ring-2 focus:ring-blue-100"
+									className="focus:ring-2 focus:ring-primary/20"
 								/>
 							</div>
 							<div className="space-y-2">
-								<label htmlFor={`word-zh-${index}`} className="text-sm font-medium text-gray-700">
+								<label htmlFor={`word-zh-${index}`} className="text-sm font-medium text-foreground">
 									Chinese Word
 								</label>
 								<Input
@@ -133,11 +136,11 @@ export default function AppFillInBlankCreatePage() {
 									placeholder="Chinese translation of the target word"
 									value={sentence.wordZh}
 									onChange={(e) => onEdit(index, 'wordZh', e.target.value)}
-									className="focus:ring-2 focus:ring-blue-100"
+									className="focus:ring-2 focus:ring-primary/20"
 								/>
 							</div>
 							<div className="space-y-2">
-								<label htmlFor={`word-in-sentence-zh-${index}`} className="text-sm font-medium text-gray-700">
+								<label htmlFor={`word-in-sentence-zh-${index}`} className="text-sm font-medium text-foreground">
 									Word Form in Chinese Sentence
 								</label>
 								<Input
@@ -145,7 +148,7 @@ export default function AppFillInBlankCreatePage() {
 									placeholder="How the word actually appears in Chinese sentence"
 									value={sentence.wordInSentenceZh}
 									onChange={(e) => onEdit(index, 'wordInSentenceZh', e.target.value)}
-									className="focus:ring-2 focus:ring-blue-100"
+									className="focus:ring-2 focus:ring-primary/20"
 								/>
 							</div>
 						</div>
@@ -153,10 +156,10 @@ export default function AppFillInBlankCreatePage() {
 				))}
 			</div>
 
-			<div className="flex gap-4 sticky bottom-0 bg-white/80 backdrop-blur-sm py-4 px-6 -mx-6 border-t">
+			<div className="flex gap-4 sticky bottom-0 bg-background/80 backdrop-blur-sm py-4 px-6 -mx-6 border-t border-border">
 				<Form method="post" className="flex-1">
 					<input type="hidden" name="sentences" value={JSON.stringify(sentences)} />
-					<Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+					<Button type="submit" className="w-full shadow-soft">
 						Create Exercise
 					</Button>
 				</Form>

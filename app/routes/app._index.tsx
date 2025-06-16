@@ -194,13 +194,13 @@ export default function AppDashboard() {
 			<PageHeader title="Dashboard" description="Welcome to your AI-powered video content creation hub">
 				<div className="flex gap-3">
 					<Link to="/app/downloads">
-						<Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+						<Button variant="outline" className="shadow-soft">
 							<Download className="h-4 w-4 mr-2" />
 							Downloads
 						</Button>
 					</Link>
 					<Link to="/app/tasks">
-						<Button variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50">
+						<Button variant="outline" className="shadow-soft">
 							<Clock className="h-4 w-4 mr-2" />
 							Tasks
 						</Button>
@@ -210,57 +210,57 @@ export default function AppDashboard() {
 
 			{/* Quick Stats */}
 			<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-				<Card className="border-0 shadow-soft bg-gradient-to-br from-blue-50 to-blue-100/50">
+				<Card className="border-border/50 shadow-soft bg-card/50">
 					<CardContent className="p-4">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-xs font-medium text-blue-600">Total Projects</p>
-								<p className="text-2xl font-bold text-blue-900">{Object.values(stats).reduce((sum, count) => sum + count, 0)}</p>
+								<p className="text-xs font-medium text-muted-foreground">Total Projects</p>
+								<p className="text-2xl font-bold text-foreground">{Object.values(stats).reduce((sum, count) => sum + count, 0)}</p>
 							</div>
-							<div className="h-8 w-8 rounded-lg bg-blue-500 flex items-center justify-center">
-								<Sparkles className="h-4 w-4 text-white" />
+							<div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+								<Sparkles className="h-4 w-4 text-primary" />
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="border-0 shadow-soft bg-gradient-to-br from-green-50 to-green-100/50">
+				<Card className="border-border/50 shadow-soft bg-card/50">
 					<CardContent className="p-4">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-xs font-medium text-green-600">Downloads</p>
-								<p className="text-2xl font-bold text-green-900">{stats.downloads}</p>
+								<p className="text-xs font-medium text-muted-foreground">Downloads</p>
+								<p className="text-2xl font-bold text-foreground">{stats.downloads}</p>
 							</div>
-							<div className="h-8 w-8 rounded-lg bg-green-500 flex items-center justify-center">
-								<Download className="h-4 w-4 text-white" />
+							<div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+								<Download className="h-4 w-4 text-primary" />
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="border-0 shadow-soft bg-gradient-to-br from-purple-50 to-purple-100/50">
+				<Card className="border-border/50 shadow-soft bg-card/50">
 					<CardContent className="p-4">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-xs font-medium text-purple-600">Active Tasks</p>
-								<p className="text-2xl font-bold text-purple-900">{stats.tasks}</p>
+								<p className="text-xs font-medium text-muted-foreground">Active Tasks</p>
+								<p className="text-2xl font-bold text-foreground">{stats.tasks}</p>
 							</div>
-							<div className="h-8 w-8 rounded-lg bg-purple-500 flex items-center justify-center">
-								<Zap className="h-4 w-4 text-white" />
+							<div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+								<Zap className="h-4 w-4 text-primary" />
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				<Card className="border-0 shadow-soft bg-gradient-to-br from-orange-50 to-orange-100/50">
+				<Card className="border-border/50 shadow-soft bg-card/50">
 					<CardContent className="p-4">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-xs font-medium text-orange-600">Success Rate</p>
-								<p className="text-2xl font-bold text-orange-900">98%</p>
+								<p className="text-xs font-medium text-muted-foreground">Success Rate</p>
+								<p className="text-2xl font-bold text-foreground">98%</p>
 							</div>
-							<div className="h-8 w-8 rounded-lg bg-orange-500 flex items-center justify-center">
-								<Target className="h-4 w-4 text-white" />
+							<div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
+								<Target className="h-4 w-4 text-success" />
 							</div>
 						</div>
 					</CardContent>
@@ -269,29 +269,29 @@ export default function AppDashboard() {
 
 			{/* Features Grid */}
 			<div>
-				<h2 className="text-xl font-semibold text-gray-900 mb-6">Features</h2>
+				<h2 className="text-xl font-semibold text-foreground mb-6">Features</h2>
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					{features.map((feature) => {
 						const Icon = feature.icon
 						return (
 							<Link key={feature.href} to={feature.href}>
-								<Card className="group border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 bg-white/80 backdrop-blur-sm">
+								<Card className="group border-border/50 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 bg-card/50 backdrop-blur-sm">
 									<CardHeader className="pb-3">
-										<div className={`h-12 w-12 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4`}>
-											<Icon className="h-6 w-6 text-white" />
+										<div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+											<Icon className="h-6 w-6 text-primary" />
 										</div>
-										<CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">{feature.title}</CardTitle>
-										<CardDescription className="text-sm text-gray-600">{feature.description}</CardDescription>
+										<CardTitle className="text-lg font-semibold text-foreground group-hover:text-foreground/80 transition-colors">{feature.title}</CardTitle>
+										<CardDescription className="text-sm text-muted-foreground">{feature.description}</CardDescription>
 									</CardHeader>
 
 									<CardContent className="pt-0">
 										<div className="flex items-center justify-between">
 											<div className="flex items-center gap-2">
-												<Badge variant="secondary" className="bg-gray-100 text-gray-700">
+												<Badge variant="secondary" className="bg-muted text-muted-foreground">
 													{feature.count} projects
 												</Badge>
 											</div>
-											<ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all" />
+											<ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
 										</div>
 									</CardContent>
 								</Card>
@@ -304,22 +304,22 @@ export default function AppDashboard() {
 			{/* Recent Activity */}
 			<div>
 				<div className="flex items-center justify-between mb-6">
-					<h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
-					<Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+					<h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
+					<Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
 						View All
 						<ArrowRight className="h-3 w-3 ml-1" />
 					</Button>
 				</div>
 
 				{recentActivity.length === 0 ? (
-					<Card className="border-0 shadow-soft">
+					<Card className="border-border/50 shadow-soft">
 						<CardContent className="p-8">
 							<div className="text-center">
-								<div className="h-16 w-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-									<Clock className="h-8 w-8 text-gray-400" />
+								<div className="h-16 w-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+									<Clock className="h-8 w-8 text-muted-foreground" />
 								</div>
-								<h3 className="text-lg font-semibold text-gray-900 mb-2">No recent activity</h3>
-								<p className="text-gray-600 mb-4">Start creating content to see your recent projects here.</p>
+								<h3 className="text-lg font-semibold text-foreground mb-2">No recent activity</h3>
+								<p className="text-muted-foreground mb-4">Start creating content to see your recent projects here.</p>
 							</div>
 						</CardContent>
 					</Card>
@@ -329,21 +329,21 @@ export default function AppDashboard() {
 							const Icon = getActivityIcon(activity.type)
 							return (
 								<Link key={`${activity.type}-${activity.id}`} to={getActivityHref(activity)}>
-									<Card className="group border-0 shadow-soft hover:shadow-medium transition-all duration-200 hover:bg-gray-50/50">
+									<Card className="group border-border/50 shadow-soft hover:shadow-medium transition-all duration-200 hover:bg-muted/20">
 										<CardContent className="p-4">
 											<div className="flex items-center gap-4">
-												<div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-													<Icon className="h-5 w-5 text-gray-600" />
+												<div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center group-hover:bg-muted/80 transition-colors">
+													<Icon className="h-5 w-5 text-muted-foreground" />
 												</div>
 												<div className="flex-1 min-w-0">
-													<p className="font-medium text-gray-900 truncate">{getActivityTitle(activity)}</p>
-													<p className="text-sm text-gray-600 capitalize">{activity.type.replace('-', ' ')}</p>
+													<p className="font-medium text-foreground truncate">{getActivityTitle(activity)}</p>
+													<p className="text-sm text-muted-foreground capitalize">{activity.type.replace('-', ' ')}</p>
 												</div>
 												<div className="text-right">
-													<p className="text-sm text-gray-500">{format(new Date(activity.createdAt), 'MMM dd')}</p>
-													<p className="text-xs text-gray-400">{format(new Date(activity.createdAt), 'HH:mm')}</p>
+													<p className="text-sm text-muted-foreground">{format(new Date(activity.createdAt), 'MMM dd')}</p>
+													<p className="text-xs text-muted-foreground/70">{format(new Date(activity.createdAt), 'HH:mm')}</p>
 												</div>
-												<ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all" />
+												<ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
 											</div>
 										</CardContent>
 									</Card>

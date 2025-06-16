@@ -277,57 +277,57 @@ export default function AppGeneralCommentCreate() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-50 py-8">
+		<div className="min-h-screen bg-background py-8">
 			<div className="max-w-4xl mx-auto px-4">
 				<div className="flex justify-between items-center mb-8">
-					<h1 className="text-3xl font-bold text-gray-900">Create General Comment</h1>
-					<Button onClick={handleImportTwitterData} className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500">
+					<h1 className="text-3xl font-bold text-foreground">Create General Comment</h1>
+					<Button onClick={handleImportTwitterData} className="shadow-soft">
 						Import Twitter Data
 					</Button>
 				</div>
 				<Form method="post" className="space-y-6" ref={formRef}>
 					{/* Basic Info Card */}
-					<div className="bg-white shadow rounded-lg p-6 space-y-4">
-						<h2 className="text-xl font-semibold text-gray-900 pb-4 border-b">Basic Information</h2>
+					<div className="bg-card shadow-soft rounded-lg p-6 space-y-4 border-border/50">
+						<h2 className="text-xl font-semibold text-foreground pb-4 border-b border-border">Basic Information</h2>
 						<div className="grid grid-cols-1 gap-4">
 							<input type="hidden" name="source" value={source} />
 							<div>
-								<label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-1">
+								<label htmlFor="author" className="block text-sm font-medium text-foreground mb-1">
 									Author
 								</label>
 								<Input id="author" type="text" name="author" required />
 							</div>
 
 							<div>
-								<label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+								<label htmlFor="title" className="block text-sm font-medium text-foreground mb-1">
 									Title
 								</label>
 								<Input id="title" type="text" name="title" onChange={handleContentChange} ref={titleInputRef} />
 							</div>
 
 							<div>
-								<label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+								<label htmlFor="content" className="block text-sm font-medium text-foreground mb-1">
 									Content
 								</label>
 								<Textarea id="content" name="content" rows={4} className="resize-none" onChange={handleContentChange} ref={contentTextareaRef} />
 							</div>
 
 							<div>
-								<label htmlFor="contentZh" className="block text-sm font-medium text-gray-700 mb-1">
+								<label htmlFor="contentZh" className="block text-sm font-medium text-foreground mb-1">
 									Content (Chinese)
 								</label>
 								<Textarea id="contentZh" name="contentZh" rows={4} className="resize-none" onChange={handleContentChange} ref={contentZhTextareaRef} />
 							</div>
 
 							{/* Content Preview */}
-							<div className="border-t pt-4 mt-4">
-								<h3 className="text-lg font-medium text-gray-900 mb-4">Content Preview</h3>
+							<div className="border-t border-border pt-4 mt-4">
+								<h3 className="text-lg font-medium text-foreground mb-4">Content Preview</h3>
 								<div className="space-y-4">
 									{/* Media Preview */}
 									<div className="space-y-4">
 										{/* Video Preview */}
 										{source === 'twitter' && (
-											<div ref={videoPreviewRef} className="aspect-video w-full bg-black rounded-lg overflow-hidden">
+											<div ref={videoPreviewRef} className="aspect-video w-full bg-muted rounded-lg overflow-hidden">
 												{/* Video will be injected here by handleImportTwitterData */}
 											</div>
 										)}
@@ -340,7 +340,7 @@ export default function AppGeneralCommentCreate() {
 														<button
 															type="button"
 															onClick={() => handleRemoveImage(images.indexOf(image))}
-															className="absolute top-2 right-2 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+															className="absolute top-2 right-2 p-1 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
 															aria-label="Remove image"
 														>
 															<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -363,19 +363,19 @@ export default function AppGeneralCommentCreate() {
 					</div>
 
 					{/* Images Card */}
-					<div className="bg-white shadow rounded-lg p-6 space-y-4">
-						<h2 className="text-xl font-semibold text-gray-900 pb-4 border-b">Images</h2>
+					<div className="bg-card shadow-soft rounded-lg p-6 space-y-4 border-border/50">
+						<h2 className="text-xl font-semibold text-foreground pb-4 border-b border-border">Images</h2>
 						<div className="space-y-4">
 							<div className="flex gap-3">
 								<Input type="text" value={newImage} onChange={(e) => setNewImage(e.target.value)} placeholder="Enter image URL" className="flex-1" />
-								<Button type="button" onClick={handleAddImage} className="px-6 bg-blue-600 hover:bg-blue-700 focus:ring-blue-500">
+								<Button type="button" onClick={handleAddImage} className="px-6 shadow-soft">
 									Add Image
 								</Button>
 							</div>
 							<input type="hidden" name="images" value={JSON.stringify(images)} />
 							<div className="space-y-3">
 								{images.map((image) => (
-									<div key={image} className="flex items-center gap-3 p-3 bg-gray-50 rounded-md">
+									<div key={image} className="flex items-center gap-3 p-3 bg-muted/50 rounded-md">
 										<img
 											src={image}
 											alt="Preview"
@@ -384,7 +384,7 @@ export default function AppGeneralCommentCreate() {
 												;(e.target as HTMLImageElement).src = 'https://placehold.co/48x48/png?text=Error'
 											}}
 										/>
-										<span className="flex-1 truncate text-gray-600">{image}</span>
+										<span className="flex-1 truncate text-muted-foreground">{image}</span>
 										<Button type="button" variant="destructive" onClick={() => handleRemoveImage(images.indexOf(image))} className="shrink-0">
 											Remove
 										</Button>
@@ -395,10 +395,10 @@ export default function AppGeneralCommentCreate() {
 					</div>
 
 					{/* Comments Card */}
-					<div className="bg-white shadow rounded-lg p-6 space-y-4">
-						<h2 className="text-xl font-semibold text-gray-900 pb-4 border-b">Comments</h2>
+					<div className="bg-card shadow-soft rounded-lg p-6 space-y-4 border-border/50">
+						<h2 className="text-xl font-semibold text-foreground pb-4 border-b border-border">Comments</h2>
 						<div className="space-y-4">
-							<div className="bg-gray-50 p-4 rounded-lg space-y-3">
+							<div className="bg-muted/50 p-4 rounded-lg space-y-3">
 								<Input type="text" value={newComment.author} onChange={(e) => setNewComment({ ...newComment, author: e.target.value })} placeholder="Comment author" />
 								<Textarea
 									value={newComment.content}
@@ -423,30 +423,30 @@ export default function AppGeneralCommentCreate() {
 										className="flex-1"
 									/>
 								</div>
-								<Button type="button" onClick={handleAddComment} className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-blue-500">
+								<Button type="button" onClick={handleAddComment} className="w-full shadow-soft">
 									Add Comment
 								</Button>
 							</div>
 							<input type="hidden" name="comments" value={JSON.stringify(comments)} />
 							<div className="space-y-3">
 								{comments.map((comment, index) => (
-									<div key={`${comment.id}-${index}`} className="bg-gray-50 p-4 rounded-lg">
+									<div key={`${comment.id}-${index}`} className="bg-muted/50 p-4 rounded-lg">
 										<div className="flex items-start gap-3">
 											<img src={comment.authorThumbnail || 'https://placehold.co/40x40/png?text=User'} alt={comment.author} className="w-10 h-10 rounded-full object-cover" />
 											<div className="flex-1 min-w-0">
 												<div className="flex items-center justify-between gap-2">
 													<div className="flex items-center gap-2">
-														<span className="font-medium text-gray-900">{comment.author}</span>
-														<span className="text-xs text-gray-500">•</span>
-														<span className="text-xs text-gray-500">👍 {comment.likes}</span>
+														<span className="font-medium text-foreground">{comment.author}</span>
+														<span className="text-xs text-muted-foreground">•</span>
+														<span className="text-xs text-muted-foreground">👍 {comment.likes}</span>
 													</div>
 													<Button type="button" variant="destructive" onClick={() => handleRemoveComment(index)} className="shrink-0">
 														<Trash className="h-3 w-3" />
 														Remove
 													</Button>
 												</div>
-												<div className="mt-1 text-gray-600">{comment.content}</div>
-												<div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+												<div className="mt-1 text-muted-foreground">{comment.content}</div>
+												<div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
 													<span>👍 {comment.likes}</span>
 													{comment.bookmarkCount !== undefined && (
 														<>
@@ -464,7 +464,7 @@ export default function AppGeneralCommentCreate() {
 												{comment.media && comment.media.length > 0 && (
 													<div className="mt-2 space-y-2">
 														{comment.media.map((m, mediaIndex) => (
-															<div key={`${m.url}-${mediaIndex}`} className={m.type === 'video' ? 'aspect-video w-full bg-black rounded-lg overflow-hidden' : ''}>
+															<div key={`${m.url}-${mediaIndex}`} className={m.type === 'video' ? 'aspect-video w-full bg-muted rounded-lg overflow-hidden' : ''}>
 																{m.type === 'video' ? (
 																	<video src={m.url} controls className="w-full h-full">
 																		<track kind="captions" src="" label="English" />
@@ -485,25 +485,25 @@ export default function AppGeneralCommentCreate() {
 					</div>
 
 					{/* Settings Card */}
-					<div className="bg-white shadow rounded-lg p-6 space-y-4">
-						<h2 className="text-xl font-semibold text-gray-900 pb-4 border-b">Video Settings</h2>
+					<div className="bg-card shadow-soft rounded-lg p-6 space-y-4 border-border/50">
+						<h2 className="text-xl font-semibold text-foreground pb-4 border-b border-border">Video Settings</h2>
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 							<div>
-								<label htmlFor="fps" className="block text-sm font-medium text-gray-700 mb-1">
+								<label htmlFor="fps" className="block text-sm font-medium text-foreground mb-1">
 									FPS
 								</label>
 								<Input id="fps" type="number" name="fps" defaultValue={30} />
 							</div>
 
 							<div>
-								<label htmlFor="coverDurationInSeconds" className="block text-sm font-medium text-gray-700 mb-1">
+								<label htmlFor="coverDurationInSeconds" className="block text-sm font-medium text-foreground mb-1">
 									Cover Duration (seconds)
 								</label>
 								<Input id="coverDurationInSeconds" type="number" name="coverDurationInSeconds" defaultValue={3} />
 							</div>
 
 							<div>
-								<label htmlFor="secondsForEvery30Words" className="block text-sm font-medium text-gray-700 mb-1">
+								<label htmlFor="secondsForEvery30Words" className="block text-sm font-medium text-foreground mb-1">
 									Seconds per 30 Words
 								</label>
 								<Input id="secondsForEvery30Words" type="number" name="secondsForEvery30Words" defaultValue={10} />
@@ -511,7 +511,7 @@ export default function AppGeneralCommentCreate() {
 						</div>
 					</div>
 
-					<Button type="submit" className="w-full py-3 text-lg bg-blue-600 hover:bg-blue-700 focus:ring-blue-500">
+					<Button type="submit" className="w-full py-3 text-lg shadow-soft">
 						Create General Comment
 					</Button>
 				</Form>
